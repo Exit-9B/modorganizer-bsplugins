@@ -6,12 +6,15 @@
 
 #include <QMenu>
 
+using namespace Qt::Literals::StringLiterals;
+
 namespace BSPluginList
 {
 
 PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
                              IPanelInterface* panelInterface, QWidget* parent)
-    : QWidget(parent), ui{new Ui_PluginsWidget()}, m_PanelInterface{panelInterface}
+    : QWidget(parent), ui{new Ui_PluginsWidget()}, m_PanelInterface{panelInterface},
+      m_Organizer{organizer}
 {
   ui->setupUi(this);
 
@@ -26,6 +29,9 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
+  connect(pluginList, &TESData::PluginList::pluginsListChanged, this,
+          &PluginsWidget::updatePluginCount);
+
   connect(pluginListModel, &PluginListModel::pluginStatesChanged, ui->pluginList,
           &PluginListView::updateOverwriteMarkers);
   connect(pluginListModel, &PluginListModel::pluginOrderChanged, ui->pluginList,
@@ -35,6 +41,11 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 
   connect(pluginListModel, &PluginListModel::pluginStatesChanged, this,
           &PluginsWidget::updatePluginCount);
+
+  connect(ui->espFilterEdit, &QLineEdit::textChanged, proxyModel,
+          &PluginSortFilterProxyModel::updateFilter);
+  connect(ui->espFilterEdit, &QLineEdit::textChanged, this,
+          &PluginsWidget::onFilterChanged);
 
   connect(ui->pluginList, &QTreeView::customContextMenuRequested,
           [=, this](const QPoint& pos) {
@@ -71,16 +82,93 @@ PluginsWidget::~PluginsWidget() noexcept
 
 void PluginsWidget::updatePluginCount()
 {
-  int activeVisibleCount = 0;
+  int activeMasterCount      = 0;
+  int activeLightMasterCount = 0;
+  int activeOverlayCount     = 0;
+  int activeRegularCount     = 0;
+  int masterCount            = 0;
+  int lightMasterCount       = 0;
+  int overlayCount           = 0;
+  int regularCount           = 0;
+  int activeVisibleCount     = 0;
 
-  for (int i = 0, count = pluginList->pluginCount(); i < count; ++i) {
-    const auto info = pluginList->getPlugin(i);
-    if (info && info->enabled()) {
-      ++activeVisibleCount;
+  const auto managedGame = m_Organizer->managedGame();
+  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+
+  const bool lightPluginsAreSupported =
+      tesSupport && tesSupport->lightPluginsAreSupported();
+  const bool overridePluginsAreSupported =
+      tesSupport && tesSupport->overridePluginsAreSupported();
+
+  for (int i = 0, count = pluginListModel->rowCount(); i < count; ++i) {
+    const auto index = pluginListModel->index(i, 0);
+    const auto info =
+        index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+    if (!info)
+      continue;
+
+    const bool active  = info->enabled();
+    const bool visible = proxyModel->filterAcceptsRow(index.row(), index.parent());
+    if (info->isSmallFile()) {
+      ++lightMasterCount;
+      activeLightMasterCount += active;
+      activeVisibleCount += visible && active;
+    } else if (info->isMasterFile()) {
+      ++masterCount;
+      activeMasterCount += active;
+      activeVisibleCount += visible && active;
+    } else if (info->isOverlayFlagged()) {
+      ++overlayCount;
+      activeOverlayCount += active;
+      activeVisibleCount += visible && active;
+    } else {
+      ++regularCount;
+      activeRegularCount += active;
+      activeVisibleCount += visible && active;
     }
-  }
 
-  ui->activePluginsCounter->display(activeVisibleCount);
+    const int activeCount = activeMasterCount + activeLightMasterCount +
+                            activeOverlayCount + activeRegularCount;
+    const int totalCount = masterCount + lightMasterCount + overlayCount + regularCount;
+
+    ui->activePluginsCounter->display(activeVisibleCount);
+
+    QString toolTip;
+    toolTip.reserve(575);
+    toolTip += uR"(<table cellspacing="6">)"_s
+               uR"(<tr><th>%1</th><th>%2</th><th>%3</th></tr>)"_s.arg(tr("Type"))
+                   .arg(tr("Active"), -12)
+                   .arg(tr("Total"));
+
+    const QString row = uR"(<tr><td>%1:</td><td align=right>%2    </td>)"_s
+                        uR"(<td align=right>%3</td></tr>)"_s;
+
+    toolTip += row.arg(tr("All plugins")).arg(activeCount).arg(totalCount);
+    toolTip += row.arg(tr("ESMs")).arg(activeMasterCount).arg(masterCount);
+    toolTip += row.arg(tr("ESPs")).arg(activeRegularCount).arg(regularCount);
+    toolTip += row.arg(tr("ESMs+ESPs"))
+                   .arg(activeMasterCount + activeRegularCount)
+                   .arg(masterCount + regularCount);
+    if (lightPluginsAreSupported)
+      toolTip += row.arg(tr("ESLs")).arg(activeLightMasterCount).arg(lightMasterCount);
+    if (overridePluginsAreSupported)
+      toolTip += row.arg(tr("Overlay")).arg(activeOverlayCount).arg(overlayCount);
+    toolTip += uR"(</table>)"_s;
+
+    ui->activePluginsCounter->setToolTip(toolTip);
+  }
+}
+
+void PluginsWidget::onFilterChanged(const QString& filter)
+{
+  if (!filter.isEmpty()) {
+    setStyleSheet("QTreeView { border: 2px ridge #f00; }");
+    ui->activePluginsCounter->setStyleSheet("QLCDNumber { border: 2px ridge #f00; }");
+  } else {
+    setStyleSheet("");
+    ui->activePluginsCounter->setStyleSheet("");
+  }
+  updatePluginCount();
 }
 
 void PluginsWidget::changeEvent(QEvent* e)
@@ -100,7 +188,7 @@ void PluginsWidget::onSelectionChanged(
     [[maybe_unused]] const QItemSelection& deselected)
 {
   QList<QString> selectedFiles;
-  for (auto& idx : ui->pluginList->selectionModel()->selectedRows()) {
+  for (const auto& idx : ui->pluginList->selectionModel()->selectedRows()) {
     const auto model = ui->pluginList->model();
     const auto& name = model->data(idx, Qt::DisplayRole).toString();
     selectedFiles.append(name);
@@ -122,6 +210,7 @@ void PluginsWidget::toggleHideForceEnabled()
 {
   const bool doHide = toggleForceEnabled->isChecked();
   proxyModel->hideForceEnabledFiles(doHide);
+  updatePluginCount();
 }
 
 QMenu* PluginsWidget::listOptionsMenu()

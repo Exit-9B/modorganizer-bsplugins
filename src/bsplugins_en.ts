@@ -93,6 +93,42 @@
         <source>Hide force-enabled files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ESMs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ESPs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ESMs+ESPs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ESLs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overlay</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>

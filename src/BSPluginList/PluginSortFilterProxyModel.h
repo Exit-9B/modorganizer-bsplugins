@@ -13,14 +13,19 @@ class PluginSortFilterProxyModel : public QSortFilterProxyModel
 public:
   void hideForceEnabledFiles(bool doHide);
 
+  [[nodiscard]] bool filterMatchesPlugin(const QString& plugin) const;
+
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row,
                        int column, const QModelIndex& parent) const override;
 
-protected:
   bool filterAcceptsRow(int source_row,
                         const QModelIndex& source_parent) const override;
 
+public slots:
+  void updateFilter(const QString& filter);
+
 private:
+  QString m_CurrentFilter;
   bool m_HideForceEnabledFiles = false;
 };
 

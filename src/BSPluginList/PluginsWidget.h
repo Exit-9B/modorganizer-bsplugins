@@ -34,6 +34,7 @@ public:
 
 public slots:
   void updatePluginCount();
+  void onFilterChanged(const QString& filter);
 
 protected:
   void changeEvent(QEvent* e) override;
@@ -62,6 +63,8 @@ private:
 
   QMenu* optionsMenu          = nullptr;
   QAction* toggleForceEnabled = nullptr;
+
+  MOBase::IOrganizer* m_Organizer;
 };
 
 }  // namespace BSPluginList
