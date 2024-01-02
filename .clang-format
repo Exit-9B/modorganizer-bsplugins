@@ -1,0 +1,39 @@
+---
+BasedOnStyle: LLVM
+IndentWidth: 2
+---
+Language: Cpp
+LineEnding: CRLF
+DerivePointerAlignment: false
+PointerAlignment: Left
+AlignConsecutiveAssignments: Consecutive
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
+AccessModifierOffset: -2
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 2
+NamespaceIndentation: Inner
+MaxEmptyLinesToKeep: 1
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: true
+  AfterControlStatement: Never
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: true
+ColumnLimit: 88
+ForEachMacros: ['Q_FOREACH', 'foreach']

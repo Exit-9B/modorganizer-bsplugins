@@ -1,0 +1,72 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-2022",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/vsbuild",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": {
+          "type": "STRING",
+          "value": "Release"
+        },
+        "DEPENDENCIES_DIR": {
+          "type": "PATH",
+          "value": "${sourceDir}/../.."
+        },
+        "BOOST_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../boost_1_83_0"
+        },
+        "BOOST_LIBRARYDIR": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../boost_1_83_0/lib64-msvc-14.3/lib"
+        },
+        "FMT_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../fmt-8.1.1"
+        },
+        "SPDLOG_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../spdlog-v1.10.0"
+        },
+        "LOOT_PATH": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../libloot-0.22.1-win64"
+        },
+        "LZ4_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../lz4-v1.9.4"
+        },
+        "QT_ROOT": {
+          "type": "PATH",
+          "value": "C:/Qt/6.5.3/msvc2019_64"
+        },
+        "ZLIB_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../zlib-v1.3"
+        },
+        "PYTHON_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../python-3.11.5"
+        },
+        "SEVENZ_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../7zip-23.01"
+        },
+        "LIBBSARCH_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../libbsarch-0.0.9-release-x64"
+        },
+        "BOOST_DI_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../di"
+        },
+        "GTEST_ROOT": {
+          "type": "PATH",
+          "value": "${sourceDir}/../../googletest"
+        }
+      }
+    }
+  ]
+}
