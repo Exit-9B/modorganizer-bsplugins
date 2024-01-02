@@ -105,7 +105,9 @@ public:
   [[nodiscard]] const auto& archives() const { return m_FileSystemData.archives; }
   void addArchive(const QString& archive) { m_FileSystemData.archives.insert(archive); }
 
+  [[nodiscard]] const QString& author() const { return m_Metadata.author; }
   void setAuthor(const QString& author) { m_Metadata.author = author; }
+  [[nodiscard]] const QString& description() const { return m_Metadata.description; }
   void setDescription(const QString& text) { m_Metadata.description = text; }
   [[nodiscard]] bool isMasterFlagged() const { return m_Metadata.isMasterFlagged; }
   void setMasterFlagged(bool value) { m_Metadata.isMasterFlagged = value; }
@@ -123,6 +125,8 @@ public:
   {
     return !m_Metadata.masterUnset.empty();
   }
+
+  [[nodiscard]] const auto& missingMasters() const { return m_Metadata.masterUnset; }
 
   template <std::ranges::input_range R>
   void setMissingMasters(R&& range) const
