@@ -11,6 +11,7 @@
 #include <boost/container/flat_set.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <ranges>
 #include <tuple>
 
@@ -191,6 +192,7 @@ void PluginList::refresh(bool invalidate)
   m_Refreshing = true;
   scanDataFiles(invalidate);
   readPluginLists();
+  testMasters();
   m_Refreshing = false;
   m_Refreshed();
 }
@@ -208,6 +210,7 @@ void PluginList::setEnabled(int id, bool enable)
     computeCompileIndices();
     refreshLoadOrder();
     pluginStatesChanged({plugin->name()}, shouldEnable ? STATE_ACTIVE : STATE_INACTIVE);
+    testMasters();
   }
 }
 
@@ -231,6 +234,7 @@ void PluginList::setEnabled(const std::vector<int>& ids, bool enable)
     computeCompileIndices();
     refreshLoadOrder();
     pluginStatesChanged(changed, enable ? STATE_ACTIVE : STATE_INACTIVE);
+    testMasters();
   }
 }
 
@@ -433,6 +437,7 @@ void PluginList::setState(const QString& name, PluginStates state)
     computeCompileIndices();
     refreshLoadOrder();
     pluginStatesChanged({plugin->name()}, shouldEnable ? STATE_ACTIVE : STATE_INACTIVE);
+    testMasters();
   }
 }
 
@@ -770,6 +775,24 @@ void PluginList::enforcePluginRelationships()
 
   computeCompileIndices();
   refreshLoadOrder();
+}
+
+void PluginList::testMasters()
+{
+  boost::container::flat_set<QString, MOBase::FileNameComparator> enabledMasters;
+  for (const auto& plugin : m_Plugins) {
+    if (plugin->enabled()) {
+      enabledMasters.insert(plugin->name());
+    }
+  }
+
+  for (auto& plugin : m_Plugins) {
+    std::vector<QString> missingMasters;
+    std::ranges::set_difference(plugin->masters(), enabledMasters,
+                                std::back_inserter(missingMasters),
+                                MOBase::FileNameComparator{});
+    plugin->setMissingMasters(missingMasters);
+  }
 }
 
 void PluginList::updateCache()

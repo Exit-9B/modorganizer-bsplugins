@@ -119,6 +119,19 @@ public:
   [[nodiscard]] const auto& masters() const { return m_Metadata.masters; }
   void addMaster(const QString& master) { m_Metadata.masters.insert(master); }
 
+  [[nodiscard]] bool hasMissingMasters() const
+  {
+    return !m_Metadata.masterUnset.empty();
+  }
+
+  template <std::ranges::input_range R>
+  void setMissingMasters(R&& range) const
+  {
+    m_Metadata.masterUnset.clear();
+    m_Metadata.masterUnset.insert(boost::container::ordered_unique_range,
+                                  std::begin(range), std::end(range));
+  }
+
   [[nodiscard]] bool enabled() const { return m_State.enabled; }
   void setEnabled(bool enabled) { m_State.enabled = enabled; }
   [[nodiscard]] int priority() const { return m_State.priority; }

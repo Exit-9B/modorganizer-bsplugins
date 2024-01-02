@@ -228,6 +228,10 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
 
   QVariantList result;
 
+  if (plugin->hasMissingMasters()) {
+    result.append(":/MO/gui/warning");
+  }
+
   if (plugin->hasIni()) {
     result.append(":/MO/gui/attachment");
   }

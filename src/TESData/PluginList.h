@@ -118,6 +118,7 @@ private:
 
   void pluginStatesChanged(const QStringList& pluginNames, PluginStates state) const;
   void enforcePluginRelationships();
+  void testMasters();
   void updateCache();
   void computeCompileIndices();
   void refreshLoadOrder();
