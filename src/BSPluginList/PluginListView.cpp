@@ -1,5 +1,6 @@
 #include "PluginListView.h"
 
+#include "GUI/CopyEventFilter.h"
 #include "GUI/GenericIconDelegate.h"
 #include "PluginListModel.h"
 #include "PluginListStyledItemDelegate.h"
@@ -20,6 +21,7 @@ PluginListView::PluginListView(QWidget* parent) : QTreeView(parent)
   setVerticalScrollBar(new PluginListViewMarkingScrollBar(this));
   MOBase::setCustomizableColumns(this);
   setItemDelegate(new PluginListStyledItemDelegate(this));
+  installEventFilter(new GUI::CopyEventFilter(this));
 }
 
 void PluginListView::setup()
@@ -133,8 +135,8 @@ bool PluginListView::event(QEvent* event)
     } else if (keyEvent->key() == Qt::Key_Space) {
       return toggleSelectionState();
     }
-    return QTreeView::event(event);
   }
+
   return QTreeView::event(event);
 }
 
