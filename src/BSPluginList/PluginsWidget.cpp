@@ -47,11 +47,6 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   connect(pluginListModel, &PluginListModel::pluginStatesChanged, this,
           &PluginsWidget::updatePluginCount);
 
-  connect(ui->espFilterEdit, &QLineEdit::textChanged, proxyModel,
-          &PluginSortFilterProxyModel::updateFilter);
-  connect(ui->espFilterEdit, &QLineEdit::textChanged, this,
-          &PluginsWidget::onFilterChanged);
-
   connect(ui->pluginList, &QTreeView::customContextMenuRequested,
           [=, this](const QPoint& pos) {
             PluginListContextMenu menu{ui->pluginList->indexAt(pos), pluginListModel,
@@ -164,8 +159,10 @@ void PluginsWidget::updatePluginCount()
   }
 }
 
-void PluginsWidget::onFilterChanged(const QString& filter)
+void PluginsWidget::on_espFilterEdit_textChanged(const QString& filter)
 {
+  proxyModel->updateFilter(filter);
+
   if (!filter.isEmpty()) {
     setStyleSheet("QTreeView { border: 2px ridge #f00; }");
     ui->activePluginsCounter->setStyleSheet("QLCDNumber { border: 2px ridge #f00; }");

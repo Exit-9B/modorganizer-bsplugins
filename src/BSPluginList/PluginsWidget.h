@@ -34,7 +34,6 @@ public:
 
 public slots:
   void updatePluginCount();
-  void onFilterChanged(const QString& filter);
 
 protected:
   void changeEvent(QEvent* e) override;
@@ -49,6 +48,7 @@ private slots:
 
   void toggleHideForceEnabled();
 
+  void on_espFilterEdit_textChanged(const QString& filter);
   void on_restoreButton_clicked();
   void on_saveButton_clicked();
 
