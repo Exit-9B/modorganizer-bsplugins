@@ -225,31 +225,44 @@ QMenu* PluginsWidget::listOptionsMenu()
 
 void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
 {
+  static bool refreshing = false;
+  static std::function<void()> setRefreshing;
+  setRefreshing = [=, this] {
+    refreshing = true;
+    pluginListModel->invalidate();
+    organizer->onNextRefresh(setRefreshing, false);
+  };
+
+  organizer->onNextRefresh(setRefreshing, false);
+
   MOBase::IPluginList* const ipluginlist = organizer->pluginList();
   if (ipluginlist == nullptr || ipluginlist == pluginList) {
     return;
   }
 
+  ipluginlist->onRefreshed([]() {
+    refreshing = false;
+  });
+
   ipluginlist->onPluginMoved(
       [this](const QString& name, int oldPriority, int newPriority) {
+        if (refreshing)
+          return;
         pluginListModel->movePlugin(name, oldPriority, newPriority);
       });
 
   ipluginlist->onPluginStateChanged(
       [this](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
+        if (refreshing)
+          return;
         pluginListModel->changePluginStates(infos);
       });
-
-  ipluginlist->onRefreshed([=, this]() {
-    pluginListModel->invalidate();
-  });
 
   pluginList->onPluginMoved(
       [=, pluginList = pluginList](const QString& name,
                                    [[maybe_unused]] int oldPriority, int newPriority) {
-        if (pluginList->isRefreshing()) {
+        if (refreshing)
           return;
-        }
 
         ipluginlist->setPriority(name, newPriority);
       });
@@ -257,9 +270,8 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
   pluginList->onPluginStateChanged(
       [=, pluginList = pluginList](
           const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
-        if (pluginList->isRefreshing() || infos.empty()) {
+        if (refreshing || infos.empty())
           return;
-        }
 
         for (const auto& [name, state] : infos) {
           ipluginlist->setState(name, state);

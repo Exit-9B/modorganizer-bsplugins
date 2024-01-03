@@ -434,10 +434,13 @@ void PluginList::setState(const QString& name, PluginStates state)
 
   if (shouldEnable != enabled) {
     plugin->setEnabled(shouldEnable);
-    computeCompileIndices();
-    refreshLoadOrder();
-    pluginStatesChanged({plugin->name()}, shouldEnable ? STATE_ACTIVE : STATE_INACTIVE);
-    testMasters();
+    if (!isRefreshing()) {
+      computeCompileIndices();
+      refreshLoadOrder();
+      pluginStatesChanged({plugin->name()},
+                          shouldEnable ? STATE_ACTIVE : STATE_INACTIVE);
+      testMasters();
+    }
   }
 }
 
