@@ -31,7 +31,7 @@ QString BSPlugins::author() const
 
 QString BSPlugins::description() const
 {
-  return tr("Manages plugin load order for Bethesda Game Studios game engines");
+  return tr("Manages plugin load order for BGS game engines");
 }
 
 MOBase::VersionInfo BSPlugins::version() const
