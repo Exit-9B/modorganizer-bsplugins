@@ -1,10 +1,15 @@
 #include "PluginsWidget.h"
 
+#include "GUI/MessageDialog.h"
+#include "GUI/SelectionDialog.h"
 #include "PluginListContextMenu.h"
 #include "PluginSortFilterProxyModel.h"
 #include "ui_pluginswidget.h"
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include <QMenu>
+#include <QMessageBox>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -211,6 +216,103 @@ void PluginsWidget::toggleHideForceEnabled()
   const bool doHide = toggleForceEnabled->isChecked();
   proxyModel->hideForceEnabledFiles(doHide);
   updatePluginCount();
+}
+
+constexpr auto PATTERN_BACKUP_GLOB  = R"/(.????_??_??_??_??_??)/";
+constexpr auto PATTERN_BACKUP_REGEX = R"/(\.(\d\d\d\d_\d\d_\d\d_\d\d_\d\d_\d\d))/";
+constexpr auto PATTERN_BACKUP_DATE  = R"/(yyyy_MM_dd_hh_mm_ss)/";
+
+static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
+{
+  QFileInfo pluginFileInfo(filePath);
+  QString pattern     = pluginFileInfo.fileName() + ".*";
+  QFileInfoList files = pluginFileInfo.absoluteDir().entryInfoList(
+      QStringList(pattern), QDir::Files, QDir::Name);
+
+  GUI::SelectionDialog dialog(QObject::tr("Choose backup to restore"), parent);
+  QRegularExpression exp(QRegularExpression::anchoredPattern(pluginFileInfo.fileName() +
+                                                             PATTERN_BACKUP_REGEX));
+  QRegularExpression exp2(
+      QRegularExpression::anchoredPattern(pluginFileInfo.fileName() + "\\.(.*)"));
+  for (const QFileInfo& info : boost::adaptors::reverse(files)) {
+    auto match  = exp.match(info.fileName());
+    auto match2 = exp2.match(info.fileName());
+    if (match.hasMatch()) {
+      QDateTime time = QDateTime::fromString(match.captured(1), PATTERN_BACKUP_DATE);
+      dialog.addChoice(time.toString(), "", match.captured(1));
+    } else if (match2.hasMatch()) {
+      dialog.addChoice(match2.captured(1), "", match2.captured(1));
+    }
+  }
+
+  if (dialog.numChoices() == 0) {
+    QMessageBox::information(parent, QObject::tr("No Backups"),
+                             QObject::tr("There are no backups to restore"));
+    return QString();
+  }
+
+  if (dialog.exec() == QDialog::Accepted) {
+    return dialog.getChoiceData().toString();
+  } else {
+    return QString();
+  }
+}
+
+void PluginsWidget::on_restoreButton_clicked()
+{
+  const auto app         = this->topLevelWidget();
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
+
+  QString choice = queryRestore(pluginsName, app);
+  if (!choice.isEmpty()) {
+    const auto loadOrderName =
+        QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
+
+    if (!MOBase::shellCopy(pluginsName + "." + choice, pluginsName, true, app) ||
+        !MOBase::shellCopy(loadOrderName + "." + choice, loadOrderName, true, app)) {
+
+      const auto e = ::GetLastError();
+
+      QMessageBox::critical(
+          this, tr("Restore failed"),
+          tr("Failed to restore the backup. Errorcode: %1")
+              .arg(QString::fromStdWString(MOBase::formatSystemMessage(e))));
+    }
+    pluginListModel->invalidate();
+  }
+}
+
+static bool createBackup(const QString& filePath, const QDateTime& time,
+                         QWidget* parent = nullptr)
+{
+  QString outPath = filePath + "." + time.toString(PATTERN_BACKUP_DATE);
+  if (MOBase::shellCopy(QStringList(filePath), QStringList(outPath), parent)) {
+    QFileInfo fileInfo(filePath);
+    MOBase::removeOldFiles(fileInfo.absolutePath(),
+                           fileInfo.fileName() + PATTERN_BACKUP_GLOB, 10, QDir::Name);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void PluginsWidget::on_saveButton_clicked()
+{
+  const auto app         = this->topLevelWidget();
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
+  const auto loadOrderName =
+      QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
+  const auto lockedOrderName =
+      QDir::cleanPath(profilePath.absoluteFilePath("lockedorder.txt"));
+
+  const QDateTime now = QDateTime::currentDateTime();
+
+  if (createBackup(pluginsName, now, app) && createBackup(loadOrderName, now, app) &&
+      createBackup(lockedOrderName, now, app)) {
+    GUI::MessageDialog::showMessage(tr("Backup of load order created"), app);
+  }
 }
 
 QMenu* PluginsWidget::listOptionsMenu()

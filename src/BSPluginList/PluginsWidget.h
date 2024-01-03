@@ -49,6 +49,9 @@ private slots:
 
   void toggleHideForceEnabled();
 
+  void on_restoreButton_clicked();
+  void on_saveButton_clicked();
+
 private:
   [[nodiscard]] QMenu* listOptionsMenu();
 

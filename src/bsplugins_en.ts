@@ -86,6 +86,66 @@
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This plugin can&apos;t be disabled or moved (enforced by the game).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This plugin can&apos;t be disabled (enforced by the game).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing Masters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enabled Masters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads Archives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are Archives connected to this plugin. Their assets will be added to your game, overwriting in case of conflicts following the plugin order. Loose files will always overwrite assets from Archives.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads INI settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is an ini file connected to this plugin. Its settings will be added to your game settings, overwriting in case of conflicts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This %1 is flagged as an ESL. It will adhere to the %1 load order but the records will be loaded in ESL space.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This plugin is flagged as an overlay plugin. It contains only modified records and will overlay those changes onto the existing records in memory. It takes no memory space.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a dummy plugin. It contains no records and is typically used to load a paired archive file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This game does not currently permit custom plugin loading. There may be manual workarounds.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginsWidget</name>
@@ -129,6 +189,18 @@
         <source>Overlay</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Restore failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to restore the backup. Errorcode: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup of load order created</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>
@@ -139,6 +211,13 @@
     </message>
     <message>
         <source>Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MessageDialog</name>
+    <message>
+        <source>Placeholder</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -294,6 +373,36 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QObject</name>
+    <message>
+        <source>Choose backup to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No Backups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no backups to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SelectionDialog</name>
+    <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Placeholder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
