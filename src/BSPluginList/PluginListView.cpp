@@ -35,10 +35,11 @@ void PluginListView::setup()
       new GUI::GenericIconDelegate(this, PluginListModel::FlagsIconRole));
 
   header()->resizeSection(PluginListModel::COL_NAME, 292);
-  header()->resizeSection(PluginListModel::COL_CONFLICTS, 56);
-  header()->resizeSection(PluginListModel::COL_FLAGS, 40);
-  header()->resizeSection(PluginListModel::COL_PRIORITY, 49);
-  header()->resizeSection(PluginListModel::COL_MODINDEX, 68);
+  header()->resizeSection(PluginListModel::COL_CONFLICTS, 71);
+  header()->resizeSection(PluginListModel::COL_FLAGS, 60);
+  header()->resizeSection(PluginListModel::COL_PRIORITY, 62);
+  header()->resizeSection(PluginListModel::COL_MODINDEX, 79);
+  header()->setSectionResizeMode(PluginListModel::COL_MODINDEX, QHeaderView::Stretch);
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &PluginListView::updateOverwriteMarkers);
