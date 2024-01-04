@@ -3,6 +3,7 @@
 
 #include "FileEntry.h"
 #include "FileInfo.h"
+#include "MOTools/ILootCache.h"
 #include "TESFile/Type.h"
 
 #include <gameplugins.h>
@@ -25,7 +26,9 @@
 namespace TESData
 {
 
-class PluginList final : public QObject, public MOBase::IPluginList
+class PluginList final : public QObject,
+                         public MOBase::IPluginList,
+                         public MOTools::ILootCache
 {
   Q_OBJECT
 
@@ -103,6 +106,12 @@ public:
   [[nodiscard]] bool isOverlayFlagged(const QString& name) const override;
   [[nodiscard]] bool hasNoRecords(const QString& name) const override;
 
+  // ILootCache
+
+  void clearAdditionalInformation() override;
+  void addLootReport(const QString& name, MOTools::Loot::Plugin plugin) override;
+  [[nodiscard]] const MOTools::Loot::Plugin* getLootReport(const QString& name) const;
+
 public slots:
   void writePluginLists() const;
 
@@ -129,6 +138,8 @@ private:
 
   std::map<QString, int, MOBase::FileNameComparator> m_PluginsByName;
   std::vector<int> m_PluginsByPriority;
+
+  std::map<QString, MOTools::Loot::Plugin, MOBase::FileNameComparator> m_LootInfo;
 
   TESFileHandle m_NextHandle = 0;
   std::map<std::string, std::shared_ptr<FileEntry>> m_EntriesByName;

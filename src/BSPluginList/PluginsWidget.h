@@ -49,6 +49,7 @@ private slots:
   void toggleHideForceEnabled();
 
   void on_espFilterEdit_textChanged(const QString& filter);
+  void on_sortButton_clicked();
   void on_restoreButton_clicked();
   void on_saveButton_clicked();
 
@@ -68,6 +69,8 @@ private:
   QAction* toggleForceEnabled = nullptr;
 
   MOBase::IOrganizer* m_Organizer;
+
+  bool m_DidUpdateMasterList = false;
 };
 
 }  // namespace BSPluginList

@@ -14,6 +14,8 @@
 #include <iterator>
 #include <ranges>
 #include <tuple>
+#include <utility>
+
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -588,6 +590,30 @@ bool PluginList::hasNoRecords(const QString& name) const
 }
 
 #pragma endregion IPluginList
+#pragma region ILootCache
+
+void PluginList::clearAdditionalInformation()
+{
+  m_LootInfo.clear();
+}
+
+void PluginList::addLootReport(const QString& name, MOTools::Loot::Plugin plugin)
+{
+  const auto it = m_PluginsByName.find(name);
+  if (it != m_PluginsByName.end()) {
+    m_LootInfo[name] = std::move(plugin);
+  } else {
+    MOBase::log::warn("failed to associate loot report for \"{}\"", name);
+  }
+}
+
+const MOTools::Loot::Plugin* PluginList::getLootReport(const QString& name) const
+{
+  const auto it = m_LootInfo.find(name);
+  return it != m_LootInfo.end() ? &it->second : nullptr;
+}
+
+#pragma endregion ILootCache
 #pragma region Slots
 
 void PluginList::writePluginLists() const

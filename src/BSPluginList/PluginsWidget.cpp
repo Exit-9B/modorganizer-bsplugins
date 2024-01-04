@@ -2,6 +2,7 @@
 
 #include "GUI/MessageDialog.h"
 #include "GUI/SelectionDialog.h"
+#include "MOTools/Loot.h"
 #include "PluginListContextMenu.h"
 #include "PluginSortFilterProxyModel.h"
 #include "ui_pluginswidget.h"
@@ -252,6 +253,45 @@ static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
     return dialog.getChoiceData().toString();
   } else {
     return QString();
+  }
+}
+
+void PluginsWidget::on_sortButton_clicked()
+{
+  // TODO: get these from settings
+  const auto logLevel = lootcli::LogLevels::Info;
+  const bool offline = false;
+
+  auto r = QMessageBox::No;
+
+  if (offline) {
+    r = QMessageBox::question(topLevelWidget(), tr("Sorting plugins"),
+                              tr("Are you sure you want to sort your plugins list?") +
+                                  "\r\n\r\n" +
+                                  tr("Note: You are currently in offline mode and LOOT "
+                                     "will not update the master list."),
+                              QMessageBox::Yes | QMessageBox::No);
+  } else {
+    r = QMessageBox::question(topLevelWidget(), tr("Sorting plugins"),
+                              tr("Are you sure you want to sort your plugins list?"),
+                              QMessageBox::Yes | QMessageBox::No);
+  }
+
+  if (r != QMessageBox::Yes) {
+    return;
+  }
+
+  // don't try to update the master list in offline mode
+  const bool didUpdateMasterList = offline ? true : m_DidUpdateMasterList;
+
+  if (MOTools::runLoot(topLevelWidget(), m_Organizer, pluginList, logLevel,
+                       didUpdateMasterList)) {
+    // don't assume the master list was updated in offline mode
+    if (!offline) {
+      m_DidUpdateMasterList = true;
+    }
+
+    pluginListModel->invalidate();
   }
 }
 

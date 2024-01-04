@@ -209,10 +209,59 @@ static QString truncateString(const QString& text, int length = 1024)
   return new_text;
 }
 
+static QString makeLootTooltip(const MOTools::Loot::Plugin& lootInfo)
+{
+  QString s;
+  for (const auto& f : lootInfo.incompatibilities) {
+    s += "<li>" +
+         QObject::tr("Incompatible with %1")
+             .arg(!f.displayName.isEmpty() ? f.displayName : f.name) +
+         "</li>";
+  }
+
+  for (const auto& m : lootInfo.messages) {
+    s += "<li>";
+
+    switch (m.type) {
+    case MOBase::log::Warning:
+      s += QObject::tr("Warning") + ": ";
+      break;
+
+    case MOBase::log::Error:
+      s += QObject::tr("Error") + ": ";
+      break;
+
+    case MOBase::log::Info:
+    case MOBase::log::Debug:
+      break;
+    }
+
+    s += m.text + "</li>";
+  }
+
+  for (const auto& d : lootInfo.dirty) {
+    s += "<li>" + d.toString(false) + "</li>";
+  }
+
+  for (const auto& c : lootInfo.clean) {
+    s += "<li>" + c.toString(true) + "</li>";
+  }
+
+  if (s.isEmpty()) {
+    return s;
+  }
+
+  return "<hr>"
+         "<ul style=\"margin-top:0px; padding-top:0px; margin-left:15px; "
+         "-qt-list-indent: 0;\">" +
+         s + "</ul>";
+}
+
 QVariant PluginListModel::tooltipData(const QModelIndex& index) const
 {
-  const int id       = index.row();
-  const auto& plugin = m_Plugins->getPlugin(id);
+  const int id        = index.row();
+  const auto plugin   = m_Plugins->getPlugin(id);
+  const auto lootInfo = m_Plugins->getLootReport(plugin->name());
 
   QString toolTip;
 
@@ -304,6 +353,10 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
                                "loading. There may be manual workarounds.");
   }
 
+  if (lootInfo) {
+    toolTip += makeLootTooltip(*lootInfo);
+  }
+
   return toolTip;
 }
 
@@ -325,14 +378,35 @@ QVariant PluginListModel::conflictData(const QModelIndex& index) const
   return result;
 }
 
+static bool isProblematic(const TESData::FileInfo* plugin,
+                          const MOTools::Loot::Plugin* lootInfo)
+{
+  if (plugin && plugin->hasMissingMasters()) {
+    return true;
+  }
+
+  if (lootInfo) {
+    if (!lootInfo->incompatibilities.empty()) {
+      return true;
+    }
+
+    if (!lootInfo->missingMasters.empty()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 QVariant PluginListModel::iconData(const QModelIndex& index) const
 {
-  const int id      = index.row();
-  const auto plugin = m_Plugins->getPlugin(id);
+  const int id        = index.row();
+  const auto plugin   = m_Plugins->getPlugin(id);
+  const auto lootInfo = m_Plugins->getLootReport(plugin->name());
 
   QVariantList result;
 
-  if (plugin->hasMissingMasters()) {
+  if (isProblematic(plugin, lootInfo)) {
     result.append(":/MO/gui/warning");
   }
 

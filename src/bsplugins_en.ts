@@ -201,16 +201,94 @@
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Sorting plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to sort your plugins list?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note: You are currently in offline mode and LOOT will not update the master list.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>
     <message>
-        <source>Manages plugin load order for Bethesda Game Studios game engines</source>
-        <oldsource>Manages plugin load order for Bethesda Game Studios games</oldsource>
+        <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Plugins</source>
+        <source>Manages plugin load order for BGS game engines</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LootDialog</name>
+    <message>
+        <source>LOOT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>about:blank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open JSON report</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MOTools::Loot</name>
+    <message>
+        <source>Loot failed to run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No errors were reported. The log below might have more information.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get more information by using the LOOT application to sort your load order.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>failed to start loot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loot failed. Exit code was: 0x%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MOTools::LootDialog</name>
+    <message>
+        <source>Stopping LOOT...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running LOOT...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -388,6 +466,82 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>There are no backups to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incompatible with %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>General messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incompatibilities</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing masters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Verified clean by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 found %2 ITM record(s), %3 deleted reference(s) and %4 deleted navmesh(es).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>failed to run loot: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking masterlist existence</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updating masterlist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading lists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reading plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sorting plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing loadorder.txt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Parsing loot messages</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

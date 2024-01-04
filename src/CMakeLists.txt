@@ -8,6 +8,9 @@ target_include_directories(bsplugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 mo2_configure_plugin(
 	bsplugins
 	WARNINGS OFF
-	PRIVATE_DEPENDS boost fmt uibase zlib
+	PRIVATE_DEPENDS
+		lootcli uibase
+		boost fmt zlib
+		Qt::WebEngineWidgets
 )
 mo2_install_target(bsplugins)
