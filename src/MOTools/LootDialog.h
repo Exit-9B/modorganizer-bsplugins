@@ -78,7 +78,9 @@ public:
 
 private:
   std::unique_ptr<Ui::LootDialog> ui;
+#ifdef LOOT_STDOUT_AVAILABLE
   MOBase::ExpanderWidget m_Expander;
+#endif
   MOBase::IOrganizer* m_Organizer;
   Loot& m_Loot;
   ILootCache* m_LootCache;

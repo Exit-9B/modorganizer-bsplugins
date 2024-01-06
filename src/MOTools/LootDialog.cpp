@@ -5,6 +5,7 @@
 
 #include <utility.h>
 
+#include <QCloseEvent>
 #include <QWebChannel>
 
 using namespace MOBase;
@@ -212,7 +213,9 @@ void LootDialog::createUI()
     log::error("can't open '{}', {}", path, f.errorString());
   }
 
+#ifdef LOOT_STDOUT_AVAILABLE
   m_Expander.set(ui->details, ui->detailsPanel);
+#endif
   ui->openJsonReport->setEnabled(false);
   connect(ui->openJsonReport, &QPushButton::clicked, [&] {
     openReport();
@@ -240,7 +243,9 @@ void LootDialog::closeEvent(QCloseEvent* e)
 
 void LootDialog::addLineOutput(const QString& line)
 {
+#ifdef LOOT_STDOUT_AVAILABLE
   ui->output->appendPlainText(line);
+#endif
 }
 
 void LootDialog::onFinished()

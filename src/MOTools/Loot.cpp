@@ -239,7 +239,7 @@ QString Loot::Report::toMarkdown() const
 
     if (errors.empty() && warnings.empty()) {
 // FIXME: we can't pass an stdout handle to lootcli, so we can't get errors
-#if 0
+#ifdef LOOT_STDOUT_AVAILABLE
       s += tr("No errors were reported. The log below might have more information.\n");
 #else
       s += tr("Get more information by using the LOOT application to sort your load "
