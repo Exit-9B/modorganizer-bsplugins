@@ -87,6 +87,10 @@ public slots:
   //
   void shiftPluginsPriority(const QModelIndexList& indices, int offset);
 
+  // toggle the active state of mods at the given indices
+  //
+  void toggleState(const QModelIndexList& indices);
+
 signals:
   void pluginStatesChanged(const QModelIndexList& indices) const;
   void pluginOrderChanged() const;

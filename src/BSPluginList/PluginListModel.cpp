@@ -601,4 +601,15 @@ void PluginListModel::shiftPluginsPriority(const QModelIndexList& indices, int o
   emit pluginOrderChanged();
 }
 
+void PluginListModel::toggleState(const QModelIndexList& indices)
+{
+  std::vector<int> ids;
+  ids.reserve(indices.size());
+  std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
+    return idx.row();
+  });
+  m_Plugins->toggleState(std::move(ids));
+  emit pluginStatesChanged(indices);
+}
+
 }  // namespace BSPluginList

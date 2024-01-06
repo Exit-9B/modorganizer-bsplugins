@@ -166,12 +166,18 @@ bool PluginListView::moveSelection(int key)
 
 bool PluginListView::toggleSelectionState()
 {
-  const auto selection = selectionModel()->selectedRows();
-  for (const auto& idx : selection) {
-    const int state = idx.data(Qt::CheckStateRole).toInt();
-    model()->setData(idx, state != Qt::Checked ? Qt::Checked : Qt::Unchecked,
-                     Qt::CheckStateRole);
+  const auto sortProxy   = static_cast<PluginSortFilterProxyModel*>(model());
+  const auto pluginModel = qobject_cast<PluginListModel*>(sortProxy->sourceModel());
+
+  if (pluginModel == nullptr) {
+    return false;
   }
+
+  const auto sourceRows =
+      indexViewToModel(selectionModel()->selectedRows(), pluginModel);
+
+  pluginModel->toggleState(sourceRows);
+
   return true;
 }
 

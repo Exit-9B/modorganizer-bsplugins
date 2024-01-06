@@ -16,7 +16,6 @@
 #include <tuple>
 #include <utility>
 
-
 using namespace Qt::Literals::StringLiterals;
 
 namespace TESData
@@ -236,6 +235,40 @@ void PluginList::setEnabled(const std::vector<int>& ids, bool enable)
     computeCompileIndices();
     refreshLoadOrder();
     pluginStatesChanged(changed, enable ? STATE_ACTIVE : STATE_INACTIVE);
+    testMasters();
+  }
+}
+
+void PluginList::toggleState(const std::vector<int>& ids)
+{
+  QStringList active;
+  QStringList inactive;
+  for (const int id : ids) {
+    const auto plugin = m_Plugins.at(id);
+
+    const bool enabled      = plugin->enabled();
+    const bool shouldEnable = (!enabled && !plugin->forceDisabled()) ||
+                              plugin->forceLoaded() || plugin->forceEnabled();
+
+    if (shouldEnable != enabled) {
+      plugin->setEnabled(shouldEnable);
+      if (shouldEnable) {
+        active.append(plugin->name());
+      } else {
+        inactive.append(plugin->name());
+      }
+    }
+  }
+
+  if (!active.isEmpty() || !inactive.isEmpty()) {
+    computeCompileIndices();
+    refreshLoadOrder();
+    if (!active.isEmpty()) {
+      pluginStatesChanged(active, STATE_ACTIVE);
+    }
+    if (!inactive.isEmpty()) {
+      pluginStatesChanged(inactive, STATE_INACTIVE);
+    }
     testMasters();
   }
 }

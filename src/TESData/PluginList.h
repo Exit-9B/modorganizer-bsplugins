@@ -70,6 +70,7 @@ public:
 
   void setEnabled(int id, bool enable);
   void setEnabled(const std::vector<int>& ids, bool enable);
+  void toggleState(const std::vector<int>& ids);
 
   [[nodiscard]] bool canMoveToPriority(const std::vector<int>& ids,
                                        int newPriority) const;
