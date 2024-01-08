@@ -123,14 +123,20 @@ QVariant PluginListModel::data(const QModelIndex& index, int role) const
 
 QVariant PluginListModel::displayData(const QModelIndex& index) const
 {
-  const int id = index.row();
+  const int id      = index.row();
+  const auto plugin = m_Plugins->getPlugin(id);
+
+  if (!plugin) {
+    return QVariant();
+  }
+
   switch (index.column()) {
   case COL_NAME:
-    return m_Plugins->getPlugin(id)->name();
+    return plugin->name();
   case COL_PRIORITY:
-    return m_Plugins->getPlugin(id)->priority();
+    return plugin->priority();
   case COL_MODINDEX:
-    return m_Plugins->getPlugin(id)->index();
+    return plugin->index();
   default:
     return QVariant();
   }
@@ -141,19 +147,27 @@ QVariant PluginListModel::checkstateData(const QModelIndex& index) const
   const int id      = index.row();
   const auto plugin = m_Plugins->getPlugin(id);
 
+  if (!plugin) {
+    return QVariant();
+  }
+
   if (plugin->forceLoaded() || plugin->forceEnabled()) {
     return QVariant();
   } else if (plugin->forceDisabled()) {
     return QVariant();
   }
 
-  return m_Plugins->getPlugin(id)->enabled() ? Qt::Checked : Qt::Unchecked;
+  return plugin->enabled() ? Qt::Checked : Qt::Unchecked;
 }
 
 QVariant PluginListModel::foregroundData(const QModelIndex& index) const
 {
   const int id      = index.row();
   const auto plugin = m_Plugins->getPlugin(id);
+
+  if (!plugin) {
+    return QVariant();
+  }
 
   if (index.column() == COL_NAME) {
     if (plugin->hasNoRecords()) {
@@ -180,7 +194,7 @@ QVariant PluginListModel::fontData(const QModelIndex& index) const
   QFont result;
 
   if (index.column() == COL_NAME) {
-    if (plugin->hasNoRecords()) {
+    if (plugin && plugin->hasNoRecords()) {
       result.setItalic(true);
     }
   }
@@ -262,6 +276,10 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
   const int id        = index.row();
   const auto plugin   = m_Plugins->getPlugin(id);
   const auto lootInfo = m_Plugins->getLootReport(plugin->name());
+
+  if (!plugin) {
+    return QVariant();
+  }
 
   QString toolTip;
 
@@ -403,6 +421,10 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
   const int id        = index.row();
   const auto plugin   = m_Plugins->getPlugin(id);
   const auto lootInfo = m_Plugins->getLootReport(plugin->name());
+
+  if (!plugin) {
+    return QVariant();
+  }
 
   QVariantList result;
 
