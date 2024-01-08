@@ -276,7 +276,7 @@ void PluginList::toggleState(const std::vector<int>& ids)
 bool PluginList::canMoveToPriority(const std::vector<int>& ids, int newPriority) const
 {
   if (std::ranges::any_of(ids, [this](int id) {
-        return m_Plugins.at(id)->isPrimaryFile();
+        return m_Plugins.at(id)->forceLoaded();
       })) {
     return false;
   }

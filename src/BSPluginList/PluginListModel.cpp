@@ -35,11 +35,11 @@ Qt::ItemFlags PluginListModel::flags(const QModelIndex& index) const
 
   if (index.isValid()) {
     const auto plugin = m_Plugins->getPlugin(id);
-    if (!plugin ||
-        !plugin->forceLoaded() && !plugin->forceEnabled() && !plugin->forceDisabled())
+    if (plugin && (!plugin->forceLoaded() && !plugin->forceDisabled())) {
+      if (index.column() == COL_PRIORITY)
+        result |= Qt::ItemIsEditable;
       result |= Qt::ItemIsUserCheckable;
-    if (index.column() == COL_PRIORITY)
-      result |= Qt::ItemIsEditable;
+    }
     result |= Qt::ItemIsDragEnabled;
     result &= ~Qt::ItemIsDropEnabled;
   } else {

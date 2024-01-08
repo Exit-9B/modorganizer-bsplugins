@@ -53,7 +53,7 @@ bool FileInfo::mustLoadAfter(const FileInfo& other) const
     return false;
   }
 
-  if (other.isPrimaryFile() && !this->isPrimaryFile()) {
+  if (other.forceLoaded() && !this->forceLoaded()) {
     return true;
   }
 
