@@ -1,6 +1,7 @@
 #include "PluginListModel.h"
 #include "PluginListDropInfo.h"
 
+#include <QGuiApplication>
 #include <QMimeData>
 
 #include <algorithm>
@@ -152,12 +153,13 @@ QVariant PluginListModel::checkstateData(const QModelIndex& index) const
   }
 
   if (plugin->forceLoaded() || plugin->forceEnabled()) {
+    // HACK: PluginListStyledItemDelegate draws the checkbox separately
     return QVariant();
   } else if (plugin->forceDisabled()) {
     return QVariant();
+  } else {
+    return plugin->enabled() ? Qt::Checked : Qt::Unchecked;
   }
-
-  return plugin->enabled() ? Qt::Checked : Qt::Unchecked;
 }
 
 QVariant PluginListModel::foregroundData(const QModelIndex& index) const
@@ -170,11 +172,10 @@ QVariant PluginListModel::foregroundData(const QModelIndex& index) const
   }
 
   if (index.column() == COL_NAME) {
-    if (plugin->hasNoRecords()) {
-      return QBrush(Qt::gray);
-    }
     if (plugin->forceDisabled()) {
       return QBrush(Qt::darkRed);
+    } else if (plugin->hasNoRecords()) {
+      return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::Text);
     }
   }
 
