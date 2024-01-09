@@ -266,28 +266,33 @@ void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 
 void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
 {
-  if (!index.data(PluginListModel::InfoRole).isValid()) {
+  if (!index.data(PluginListModel::IndexRole).isValid()) {
     return;
   }
 
-  const auto fileName = index.data(Qt::DisplayRole).toString();
-
   Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
-    const auto modInfo = m_Organizer->modList()->getMod(m_PluginList->origin(fileName));
+    const int id       = index.data(PluginListModel::IndexRole).toInt();
+    const auto origin  = m_PluginList->getOriginName(id);
+    const auto modInfo = m_Organizer->modList()->getMod(origin);
+
     if (modInfo == nullptr) {
       return;
     }
+
     MOBase::shell::Explore(modInfo->absolutePath());
   } else {
+    const int id        = index.data(PluginListModel::IndexRole).toInt();
+    const auto fileName = m_PluginList->getPlugin(id)->name();
     m_PanelInterface->displayOriginInformation(fileName);
   }
 }
 
 void PluginsWidget::on_pluginList_openOriginExplorer(const QModelIndex& index)
 {
-  const QString fileName = index.data().toString();
-  const auto modInfo = m_Organizer->modList()->getMod(m_PluginList->origin(fileName));
+  const int id       = index.data(PluginListModel::IndexRole).toInt();
+  const auto origin  = m_PluginList->getOriginName(id);
+  const auto modInfo = m_Organizer->modList()->getMod(origin);
 
   if (modInfo == nullptr) {
     return;

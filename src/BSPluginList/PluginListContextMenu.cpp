@@ -102,11 +102,12 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
       });
 
       if (m_Selected.size() == 1) {
-        QString fileName   = m_Index.data().toString();
-        const auto modInfo = modList->getMod(pluginList->origin(fileName));
+        const auto nameIdx  = m_Index.siblingAtColumn(PluginListModel::COL_NAME);
+        const auto fileName = nameIdx.data().toString();
+        const auto modInfo  = modList->getMod(pluginList->origin(fileName));
         if (modInfo && !modInfo->isForeign()) {
-          const auto infoAction = addAction(tr("Open Origin Info..."), [this] {
-            emit openModInformation(m_Index);
+          const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
+            emit openModInformation(nameIdx);
           });
           setDefaultAction(infoAction);
         }
