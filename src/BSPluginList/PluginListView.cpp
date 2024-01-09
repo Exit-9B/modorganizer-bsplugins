@@ -14,6 +14,8 @@
 #include <QHeaderView>
 #include <QSortFilterProxyModel>
 
+#include <stdexcept>
+
 namespace BSPluginList
 {
 
@@ -44,6 +46,29 @@ void PluginListView::setup()
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &PluginListView::updateOverwriteMarkers);
+}
+
+void PluginListView::setModel(QAbstractItemModel* model)
+{
+  for (auto nextModel = model; nextModel;) {
+    const auto proxyModel = qobject_cast<QAbstractProxyModel*>(nextModel);
+    if (proxyModel) {
+      if (const auto sortProxy =
+              qobject_cast<PluginSortFilterProxyModel*>(proxyModel)) {
+        m_SortProxy = sortProxy;
+      }
+      nextModel = proxyModel->sourceModel();
+    } else {
+      if (const auto pluginModel = qobject_cast<PluginListModel*>(nextModel)) {
+        m_PluginModel = pluginModel;
+      } else {
+        throw std::logic_error("PluginListView's model should be a PluginListModel");
+      }
+      nextModel = nullptr;
+    }
+  }
+
+  QTreeView::setModel(model);
 }
 
 QColor PluginListView::markerColor(const QModelIndex& index) const
@@ -167,21 +192,18 @@ void PluginListView::paintEvent(QPaintEvent* event)
 
 bool PluginListView::moveSelection(int key)
 {
-  const auto sortProxy   = static_cast<PluginSortFilterProxyModel*>(model());
-  const auto pluginModel = qobject_cast<PluginListModel*>(sortProxy->sourceModel());
-
-  if (pluginModel == nullptr) {
+  if (m_PluginModel == nullptr) {
     return false;
   }
 
-  const auto cindex = indexViewToModel(currentIndex(), pluginModel);
+  const auto cindex = indexViewToModel(currentIndex(), m_PluginModel);
   const auto sourceRows =
-      indexViewToModel(selectionModel()->selectedRows(), pluginModel);
+      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel);
 
-  const int offset =
-      key == Qt::Key_Up && sortProxy->sortOrder() == Qt::AscendingOrder ? -1 : 1;
+  const auto sortOrder = m_SortProxy ? m_SortProxy->sortOrder() : Qt::DescendingOrder;
+  const int offset     = key == Qt::Key_Up && sortOrder == Qt::AscendingOrder ? -1 : 1;
 
-  pluginModel->shiftPluginsPriority(sourceRows, offset);
+  m_PluginModel->shiftPluginsPriority(sourceRows, offset);
 
   // setSelected(cindex, sourceRows);
 
@@ -190,17 +212,14 @@ bool PluginListView::moveSelection(int key)
 
 bool PluginListView::toggleSelectionState()
 {
-  const auto sortProxy   = static_cast<PluginSortFilterProxyModel*>(model());
-  const auto pluginModel = qobject_cast<PluginListModel*>(sortProxy->sourceModel());
-
-  if (pluginModel == nullptr) {
+  if (m_PluginModel == nullptr) {
     return false;
   }
 
   const auto sourceRows =
-      indexViewToModel(selectionModel()->selectedRows(), pluginModel);
+      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel);
 
-  pluginModel->toggleState(sourceRows);
+  m_PluginModel->toggleState(sourceRows);
 
   return true;
 }

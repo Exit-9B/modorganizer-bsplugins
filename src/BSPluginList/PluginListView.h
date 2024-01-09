@@ -16,6 +16,9 @@ struct MarkerInfos
   QSet<uint> highlight;
 };
 
+class PluginListModel;
+class PluginSortFilterProxyModel;
+
 class PluginListView final : public QTreeView
 {
   Q_OBJECT
@@ -24,6 +27,8 @@ public:
   explicit PluginListView(QWidget* parent = nullptr);
 
   void setup();
+
+  void setModel(QAbstractItemModel* model) override;
 
   [[nodiscard]] QColor markerColor(const QModelIndex& index) const;
 
@@ -54,6 +59,8 @@ private:
 private:
   bool m_FirstPaint = true;
   MarkerInfos m_Markers;
+  PluginListModel* m_PluginModel;
+  PluginSortFilterProxyModel* m_SortProxy;
 };
 
 }  // namespace BSPluginList
