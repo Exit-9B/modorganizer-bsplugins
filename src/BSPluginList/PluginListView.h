@@ -32,6 +32,9 @@ public slots:
   void clearOverwriteMarkers();
   void updateOverwriteMarkers();
 
+signals:
+  void openOriginExplorer(const QModelIndex& index);
+
 protected:
   bool event(QEvent* event) override;
 

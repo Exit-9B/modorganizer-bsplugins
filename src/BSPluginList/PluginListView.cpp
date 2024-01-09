@@ -125,6 +125,18 @@ bool PluginListView::event(QEvent* event)
   if (event->type() == QEvent::KeyPress) {
     QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
+    if (keyEvent->modifiers() == Qt::ControlModifier &&
+        (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter)) {
+
+      if (selectionModel()->hasSelection() &&
+          selectionModel()->selectedRows().count() == 1) {
+
+        QModelIndex idx = selectionModel()->currentIndex();
+        emit openOriginExplorer(idx);
+        return true;
+      }
+    }
+
     bool sorted = false;
     if (const auto proxy = qobject_cast<const PluginSortFilterProxyModel*>(model())) {
       sorted = proxy->sortColumn() == PluginListModel::COL_PRIORITY;

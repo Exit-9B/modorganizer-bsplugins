@@ -284,6 +284,18 @@ void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
   }
 }
 
+void PluginsWidget::on_pluginList_openOriginExplorer(const QModelIndex& index)
+{
+  const QString fileName = index.data().toString();
+  const auto modInfo = m_Organizer->modList()->getMod(m_PluginList->origin(fileName));
+
+  if (modInfo == nullptr) {
+    return;
+  }
+
+  MOBase::shell::Explore(modInfo->absolutePath());
+}
+
 void PluginsWidget::on_sortButton_clicked()
 {
   // TODO: get these from settings
