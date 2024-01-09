@@ -25,28 +25,28 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 {
   ui->setupUi(this);
 
-  pluginList      = new TESData::PluginList(organizer);
-  pluginListModel = new PluginListModel(pluginList);
-  proxyModel      = new PluginSortFilterProxyModel();
-  proxyModel->setSourceModel(pluginListModel);
-  proxyModel->setDynamicSortFilter(true);
-  ui->pluginList->setModel(proxyModel);
+  m_PluginList      = new TESData::PluginList(organizer);
+  m_PluginListModel = new PluginListModel(m_PluginList);
+  m_SortProxy       = new PluginSortFilterProxyModel();
+  m_SortProxy->setSourceModel(m_PluginListModel);
+  m_SortProxy->setDynamicSortFilter(true);
+  ui->pluginList->setModel(m_SortProxy);
   ui->pluginList->setup();
   ui->pluginList->sortByColumn(PluginListModel::COL_PRIORITY, Qt::AscendingOrder);
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
-  connect(pluginList, &TESData::PluginList::pluginsListChanged, this,
+  connect(m_PluginList, &TESData::PluginList::pluginsListChanged, this,
           &PluginsWidget::updatePluginCount);
 
-  connect(pluginListModel, &PluginListModel::pluginStatesChanged, ui->pluginList,
+  connect(m_PluginListModel, &PluginListModel::pluginStatesChanged, ui->pluginList,
           &PluginListView::updateOverwriteMarkers);
-  connect(pluginListModel, &PluginListModel::pluginOrderChanged, ui->pluginList,
+  connect(m_PluginListModel, &PluginListModel::pluginOrderChanged, ui->pluginList,
           &PluginListView::updateOverwriteMarkers);
-  connect(pluginListModel, &QAbstractItemModel::modelReset, ui->pluginList,
+  connect(m_PluginListModel, &QAbstractItemModel::modelReset, ui->pluginList,
           &PluginListView::clearOverwriteMarkers);
 
-  connect(pluginListModel, &PluginListModel::pluginStatesChanged, this,
+  connect(m_PluginListModel, &PluginListModel::pluginStatesChanged, this,
           &PluginsWidget::updatePluginCount);
 
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -67,10 +67,11 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 PluginsWidget::~PluginsWidget() noexcept
 {
   delete ui;
-  delete pluginList;
-  delete pluginListModel;
-  delete proxyModel;
   delete optionsMenu;
+
+  delete m_PluginList;
+  delete m_PluginListModel;
+  delete m_SortProxy;
 }
 
 void PluginsWidget::updatePluginCount()
@@ -93,15 +94,15 @@ void PluginsWidget::updatePluginCount()
   const bool overridePluginsAreSupported =
       tesSupport && tesSupport->overridePluginsAreSupported();
 
-  for (int i = 0, count = pluginListModel->rowCount(); i < count; ++i) {
-    const auto index = pluginListModel->index(i, 0);
+  for (int i = 0, count = m_PluginListModel->rowCount(); i < count; ++i) {
+    const auto index = m_PluginListModel->index(i, 0);
     const auto info =
         index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
     if (!info)
       continue;
 
     const bool active  = info->enabled();
-    const bool visible = proxyModel->filterAcceptsRow(index.row(), index.parent());
+    const bool visible = m_SortProxy->filterAcceptsRow(index.row(), index.parent());
     if (info->isSmallFile()) {
       ++lightMasterCount;
       activeLightMasterCount += active;
@@ -154,7 +155,7 @@ void PluginsWidget::updatePluginCount()
 
 void PluginsWidget::on_espFilterEdit_textChanged(const QString& filter)
 {
-  proxyModel->updateFilter(filter);
+  m_SortProxy->updateFilter(filter);
 
   if (!filter.isEmpty()) {
     setStyleSheet("QTreeView { border: 2px ridge #f00; }");
@@ -193,7 +194,7 @@ void PluginsWidget::onSelectionChanged(
 
 void PluginsWidget::onPanelActivated()
 {
-  pluginListModel->refresh();
+  m_PluginListModel->refresh();
 }
 
 void PluginsWidget::onSelectedOriginsChanged(const QList<QString>& origins)
@@ -204,7 +205,7 @@ void PluginsWidget::onSelectedOriginsChanged(const QList<QString>& origins)
 void PluginsWidget::toggleHideForceEnabled()
 {
   const bool doHide = toggleForceEnabled->isChecked();
-  proxyModel->hideForceEnabledFiles(doHide);
+  m_SortProxy->hideForceEnabledFiles(doHide);
   updatePluginCount();
 }
 
@@ -250,8 +251,8 @@ static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
 
 void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 {
-  PluginListContextMenu menu{ui->pluginList->indexAt(pos), pluginListModel,
-                             ui->pluginList, m_Organizer->modList(), pluginList};
+  PluginListContextMenu menu{ui->pluginList->indexAt(pos), m_PluginListModel,
+                             ui->pluginList, m_Organizer->modList(), m_PluginList};
 
   connect(&menu, &PluginListContextMenu::openModInformation,
           [this](const QModelIndex& index) {
@@ -273,7 +274,7 @@ void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
 
   Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
-    const auto modInfo = m_Organizer->modList()->getMod(pluginList->origin(fileName));
+    const auto modInfo = m_Organizer->modList()->getMod(m_PluginList->origin(fileName));
     if (modInfo == nullptr) {
       return;
     }
@@ -311,14 +312,14 @@ void PluginsWidget::on_sortButton_clicked()
   // don't try to update the master list in offline mode
   const bool didUpdateMasterList = offline ? true : m_DidUpdateMasterList;
 
-  if (MOTools::runLoot(topLevelWidget(), m_Organizer, pluginList, logLevel,
+  if (MOTools::runLoot(topLevelWidget(), m_Organizer, m_PluginList, logLevel,
                        didUpdateMasterList)) {
     // don't assume the master list was updated in offline mode
     if (!offline) {
       m_DidUpdateMasterList = true;
     }
 
-    pluginListModel->invalidate();
+    m_PluginListModel->invalidate();
   }
 }
 
@@ -343,7 +344,7 @@ void PluginsWidget::on_restoreButton_clicked()
           tr("Failed to restore the backup. Errorcode: %1")
               .arg(QString::fromStdWString(MOBase::formatSystemMessage(e))));
     }
-    pluginListModel->invalidate();
+    m_PluginListModel->invalidate();
   }
 }
 
@@ -395,14 +396,14 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
   static std::function<void()> setRefreshing;
   setRefreshing = [=, this] {
     refreshing = true;
-    pluginListModel->invalidate();
+    m_PluginListModel->invalidate();
     organizer->onNextRefresh(setRefreshing, false);
   };
 
   organizer->onNextRefresh(setRefreshing, false);
 
   MOBase::IPluginList* const ipluginlist = organizer->pluginList();
-  if (ipluginlist == nullptr || ipluginlist == pluginList) {
+  if (ipluginlist == nullptr || ipluginlist == m_PluginList) {
     return;
   }
 
@@ -414,27 +415,27 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
       [this](const QString& name, int oldPriority, int newPriority) {
         if (refreshing)
           return;
-        pluginListModel->movePlugin(name, oldPriority, newPriority);
+        m_PluginListModel->movePlugin(name, oldPriority, newPriority);
       });
 
   ipluginlist->onPluginStateChanged(
       [this](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
         if (refreshing)
           return;
-        pluginListModel->changePluginStates(infos);
+        m_PluginListModel->changePluginStates(infos);
       });
 
-  pluginList->onPluginMoved(
-      [=, pluginList = pluginList](const QString& name,
-                                   [[maybe_unused]] int oldPriority, int newPriority) {
+  m_PluginList->onPluginMoved(
+      [=, pluginList = m_PluginList](
+          const QString& name, [[maybe_unused]] int oldPriority, int newPriority) {
         if (refreshing)
           return;
 
         ipluginlist->setPriority(name, newPriority);
       });
 
-  pluginList->onPluginStateChanged(
-      [=, pluginList = pluginList](
+  m_PluginList->onPluginStateChanged(
+      [=, pluginList = m_PluginList](
           const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
         if (refreshing || infos.empty())
           return;

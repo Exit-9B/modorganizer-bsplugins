@@ -30,7 +30,7 @@ public:
   PluginsWidget& operator=(const PluginsWidget&) = delete;
   PluginsWidget& operator=(PluginsWidget&&)      = delete;
 
-  [[nodiscard]] TESData::PluginList* getPluginList() { return pluginList; }
+  [[nodiscard]] TESData::PluginList* getPluginList() { return m_PluginList; }
 
 public slots:
   void updatePluginCount();
@@ -62,13 +62,14 @@ private:
   void synchronizePluginLists(MOBase::IOrganizer* organizer);
 
   Ui_PluginsWidget* ui;
-  TESData::PluginList* pluginList        = nullptr;
-  PluginListModel* pluginListModel       = nullptr;
-  PluginSortFilterProxyModel* proxyModel = nullptr;
-  IPanelInterface* m_PanelInterface;
 
   QMenu* optionsMenu          = nullptr;
   QAction* toggleForceEnabled = nullptr;
+
+  TESData::PluginList* m_PluginList       = nullptr;
+  PluginListModel* m_PluginListModel      = nullptr;
+  PluginSortFilterProxyModel* m_SortProxy = nullptr;
+  IPanelInterface* m_PanelInterface;
 
   MOBase::IOrganizer* m_Organizer;
 
