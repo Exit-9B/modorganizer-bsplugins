@@ -29,6 +29,7 @@ public:
   void setup();
 
   void setModel(QAbstractItemModel* model) override;
+  QRect visualRect(const QModelIndex& index) const override;
 
   [[nodiscard]] QColor markerColor(const QModelIndex& index) const;
 

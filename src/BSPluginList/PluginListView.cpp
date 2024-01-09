@@ -37,7 +37,7 @@ void PluginListView::setup()
       PluginListModel::COL_FLAGS,
       new GUI::GenericIconDelegate(this, PluginListModel::FlagsIconRole));
 
-  header()->resizeSection(PluginListModel::COL_NAME, 292);
+  header()->resizeSection(PluginListModel::COL_NAME, 332);
   header()->resizeSection(PluginListModel::COL_CONFLICTS, 71);
   header()->resizeSection(PluginListModel::COL_FLAGS, 60);
   header()->resizeSection(PluginListModel::COL_PRIORITY, 62);
@@ -71,6 +71,15 @@ void PluginListView::setModel(QAbstractItemModel* model)
   QTreeView::setModel(model);
 }
 
+QRect PluginListView::visualRect(const QModelIndex& index) const
+{
+  QRect rect = QTreeView::visualRect(index);
+  if (index.column() == 0 && index.isValid() && index.parent().isValid()) {
+    rect.adjust(-indentation(), 0, 0, 0);
+  }
+  return rect;
+}
+
 QColor PluginListView::markerColor(const QModelIndex& index) const
 {
   const uint pluginIndex    = index.data(PluginListModel::IndexRole).toUInt();
@@ -95,19 +104,31 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
   return QColor();
 }
 
+static void visitRows(const QAbstractItemModel* model,
+                      std::function<void(const QModelIndex&)> visit,
+                      const QModelIndex& root = QModelIndex())
+{
+  if (root.isValid()) {
+    visit(root);
+  }
+
+  for (int i = 0, count = model->rowCount(root); i < count; ++i) {
+    const auto idx = model->index(i, 0, root);
+    visitRows(model, visit, idx);
+  }
+}
+
 void PluginListView::setHighlightedOrigins(const QStringList& origins)
 {
   m_Markers.highlight.clear();
-  for (int i = 0, rowCount = model()->rowCount(); i < rowCount; ++i) {
-    const auto idx    = model()->index(i, 0);
+  visitRows(model(), [this, &origins](auto&& idx) {
     const auto origin = idx.data(PluginListModel::OriginRole).toString();
     if (origins.contains(origin)) {
       m_Markers.highlight.insert(idx.data(PluginListModel::IndexRole).toUInt());
     }
-  }
+  });
 
-  dataChanged(model()->index(0, 0),
-              model()->index(model()->rowCount() - 1, model()->columnCount() - 1));
+  viewport()->update();
   verticalScrollBar()->repaint();
 }
 
@@ -141,8 +162,7 @@ void PluginListView::updateOverwriteMarkers()
            model()->data(idx, PluginListModel::OverwrittenAuxRole).toList());
   }
 
-  dataChanged(model()->index(0, 0),
-              model()->index(model()->rowCount() - 1, model()->columnCount() - 1));
+  viewport()->update();
   verticalScrollBar()->repaint();
 }
 
