@@ -183,7 +183,8 @@ QVariant PluginListModel::foregroundData(const QModelIndex& index) const
   return QVariant();
 }
 
-QVariant PluginListModel::backgroundData(const QModelIndex& index) const
+QVariant
+PluginListModel::backgroundData([[maybe_unused]] const QModelIndex& index) const
 {
   return QVariant();
 }
@@ -500,7 +501,7 @@ Qt::DropActions PluginListModel::supportedDropActions() const
 }
 
 bool PluginListModel::canDropMimeData(const QMimeData* data, Qt::DropAction action,
-                                      int row, int column,
+                                      int row, [[maybe_unused]] int column,
                                       const QModelIndex& parent) const
 {
   if (action == Qt::IgnoreAction) {
@@ -516,7 +517,8 @@ bool PluginListModel::canDropMimeData(const QMimeData* data, Qt::DropAction acti
 }
 
 bool PluginListModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
-                                   int row, int column, const QModelIndex& parent)
+                                   int row, [[maybe_unused]] int column,
+                                   const QModelIndex& parent)
 {
   if (action == Qt::IgnoreAction) {
     return true;
@@ -549,7 +551,8 @@ void PluginListModel::invalidate()
   emit endResetModel();
 }
 
-void PluginListModel::movePlugin(const QString& name, int oldPriority, int newPriority)
+void PluginListModel::movePlugin(const QString& name, [[maybe_unused]] int oldPriority,
+                                 int newPriority)
 {
   m_Plugins->setPriority(name, newPriority);
   emit dataChanged(index(0, COL_PRIORITY), index(rowCount() - 1, COL_MODINDEX),

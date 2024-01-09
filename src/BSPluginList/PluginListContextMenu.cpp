@@ -44,14 +44,10 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
 
   if (!m_Selected.isEmpty()) {
     addAction(tr("Enable selected"), [this]() {
-      for (const auto& idx : m_Selected) {
-        m_Model->setEnabled(m_Selected, true);
-      }
+      m_Model->setEnabled(m_Selected, true);
     });
     addAction(tr("Disable selected"), [this]() {
-      for (const auto& idx : m_Selected) {
-        m_Model->setEnabled(m_Selected, false);
-      }
+      m_Model->setEnabled(m_Selected, false);
     });
 
     addSeparator();

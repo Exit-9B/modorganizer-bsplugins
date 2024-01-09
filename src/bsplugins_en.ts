@@ -32,10 +32,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open Origin in Explorer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Send to... </source>
         <translation type="unfinished"></translation>
     </message>
@@ -59,33 +55,13 @@
         <source>Set the priority of the selected plugins</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Open Origin in Explorer</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginListModel</name>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Flags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Priority</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mod Index</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Origin</source>
         <translation type="unfinished"></translation>
@@ -146,13 +122,33 @@
         <source>This game does not currently permit custom plugin loading. There may be manual workarounds.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Flags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Priority</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mod Index</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginsWidget</name>
-    <message>
-        <source>Hide force-enabled files</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Type</source>
         <translation type="unfinished"></translation>
@@ -190,6 +186,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sorting plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to sort your plugins list?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Note: You are currently in offline mode and LOOT will not update the master list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -202,26 +210,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sorting plugins</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to sort your plugins list?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Note: You are currently in offline mode and LOOT will not update the master list.</source>
+        <source>Hide force-enabled files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>BSPlugins</name>
     <message>
-        <source>Plugins</source>
+        <source>Manages plugin load order for BGS game engines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Manages plugin load order for BGS game engines</source>
+        <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -237,10 +237,6 @@
     </message>
     <message>
         <source>about:blank</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -457,18 +453,6 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>QObject</name>
     <message>
-        <source>Choose backup to restore</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No Backups</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>There are no backups to restore</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Incompatible with %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -478,6 +462,18 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose backup to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No Backups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -5,6 +5,17 @@ add_library(bsplugins SHARED)
 set_property(TARGET bsplugins PROPERTY CXX_STANDARD 20)
 target_include_directories(bsplugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
+if(MSVC)
+	target_compile_options(
+		bsplugins
+		PRIVATE
+			/W4     # level 4 warnings
+			/WX     # treat all compiler warnings as errors
+			/wd4201 # nonstandard extension used: nameless struct/union
+			/wd4458 # declaration of 'identifier' hides class member
+	)
+endif()
+
 mo2_configure_plugin(
 	bsplugins
 	WARNINGS OFF

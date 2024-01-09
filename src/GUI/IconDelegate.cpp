@@ -28,7 +28,8 @@ IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize)
 }
 
 void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& option,
-                              const QModelIndex& index, const QList<QString>& icons)
+                              [[maybe_unused]] const QModelIndex& index,
+                              const QList<QString>& icons)
 {
   int x = 4;
   painter->save();

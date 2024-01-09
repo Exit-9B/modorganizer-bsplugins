@@ -241,7 +241,7 @@ void LootDialog::closeEvent(QCloseEvent* e)
   }
 }
 
-void LootDialog::addLineOutput(const QString& line)
+void LootDialog::addLineOutput([[maybe_unused]] const QString& line)
 {
 #ifdef LOOT_STDOUT_AVAILABLE
   ui->output->appendPlainText(line);

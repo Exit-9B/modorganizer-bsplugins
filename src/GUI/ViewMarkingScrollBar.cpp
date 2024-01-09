@@ -16,7 +16,7 @@ static QModelIndexList visibleIndexImpl(QTreeView* view, int column,
 
   const auto* const model = view->model();
   QModelIndexList index;
-  for (std::size_t i = 0; i < model->rowCount(parent); ++i) {
+  for (int i = 0; i < model->rowCount(parent); ++i) {
     index.append(model->index(i, column, parent));
     index.append(visibleIndexImpl(view, column, index.back()));
   }

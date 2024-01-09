@@ -91,8 +91,6 @@ bool FileReaderHandler::Chunk(TESFile::Type type)
     }
     return false;
   }
-
-  return false;
 }
 
 void FileReaderHandler::ChunkData(TESFile::Type type, std::istream& stream)
@@ -148,8 +146,9 @@ void FileReaderHandler::ChunkData(TESFile::Type type, std::istream& stream)
     switch (type) {
     case "DNAM"_ts:
       while (!stream.eof()) {
-        const TESFile::Type name   = TESFile::readType<TESFile::Type>(stream);
-        const std::uint32_t formId = TESFile::readType<std::uint32_t>(stream);
+        const TESFile::Type name = TESFile::readType<TESFile::Type>(stream);
+        [[maybe_unused]] const std::uint32_t formId =
+            TESFile::readType<std::uint32_t>(stream);
         if (name == TESFile::Type()) {
           continue;
         }

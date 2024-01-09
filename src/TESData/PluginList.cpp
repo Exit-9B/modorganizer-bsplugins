@@ -40,7 +40,7 @@ PluginList::~PluginList() noexcept
 
 int PluginList::pluginCount() const
 {
-  return m_Plugins.size();
+  return static_cast<int>(m_Plugins.size());
 }
 
 int PluginList::getIndex(const QString& pluginName) const
@@ -813,11 +813,11 @@ void PluginList::enforcePluginRelationships()
 {
   MOBase::TimeThis tt{"TESData::PluginList::enforcePluginRelationships"};
 
-  for (int i = 0, size = m_PluginsByPriority.size(); i < size; ++i) {
+  for (int i = 0; i < m_PluginsByPriority.size(); ++i) {
     const int firstIndex    = m_PluginsByPriority[i];
     const auto& firstPlugin = m_Plugins.at(firstIndex);
 
-    for (int j = i + 1; j < size; ++j) {
+    for (int j = i + 1; j < m_PluginsByPriority.size(); ++j) {
       const int secondIndex    = m_PluginsByPriority[j];
       const auto& secondPlugin = m_Plugins.at(secondIndex);
 
@@ -892,7 +892,7 @@ void PluginList::computeCompileIndices()
   const bool overridePluginsAreSupported =
       tesSupport && tesSupport->overridePluginsAreSupported();
 
-  for (int priority = 0, max = m_PluginsByPriority.size(); priority < max; ++priority) {
+  for (int priority = 0; priority < m_PluginsByPriority.size(); ++priority) {
     const int index   = m_PluginsByPriority[priority];
     const auto plugin = m_Plugins.at(index);
 
