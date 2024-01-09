@@ -23,7 +23,7 @@ QModelIndex PluginListModel::index(int row, int column,
   return createIndex(row, column, row);
 }
 
-QModelIndex PluginListModel::parent([[maybe_unused]] const QModelIndex& parent) const
+QModelIndex PluginListModel::parent([[maybe_unused]] const QModelIndex& index) const
 {
   return QModelIndex();
 }
