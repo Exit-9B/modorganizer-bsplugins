@@ -170,6 +170,12 @@ QVariant PluginListModel::foregroundData(const QModelIndex& index) const
     return QVariant();
   }
 
+  if (plugin->hasNoRecords()) {
+    if (index.column() == COL_NAME) {
+      return QBrush(Qt::gray);
+    }
+  }
+
   if (plugin->forceLoaded()) {
     if (index.column() == COL_PRIORITY || index.column() == COL_MODINDEX) {
       return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::Text);
