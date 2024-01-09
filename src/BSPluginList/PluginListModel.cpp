@@ -153,10 +153,9 @@ QVariant PluginListModel::checkstateData(const QModelIndex& index) const
   }
 
   if (plugin->forceLoaded() || plugin->forceEnabled()) {
-    // HACK: PluginListStyledItemDelegate draws the checkbox separately
-    return QVariant();
+    return Qt::Checked;
   } else if (plugin->forceDisabled()) {
-    return QVariant();
+    return Qt::Unchecked;
   } else {
     return plugin->enabled() ? Qt::Checked : Qt::Unchecked;
   }
@@ -171,11 +170,13 @@ QVariant PluginListModel::foregroundData(const QModelIndex& index) const
     return QVariant();
   }
 
-  if (index.column() == COL_NAME) {
-    if (plugin->forceDisabled()) {
-      return QBrush(Qt::darkRed);
-    } else if (plugin->hasNoRecords()) {
+  if (plugin->forceLoaded()) {
+    if (index.column() == COL_PRIORITY || index.column() == COL_MODINDEX) {
       return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::Text);
+    }
+  } else if (plugin->forceDisabled()) {
+    if (index.column() == COL_NAME) {
+      return QBrush(Qt::darkRed);
     }
   }
 
