@@ -290,9 +290,7 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled or moved (enforced by the game).") +
                "</i></b>";
-  }
-
-  if (plugin->forceEnabled()) {
+  } else if (plugin->forceEnabled()) {
     toolTip += "<br><b><i>" +
                tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
   }
@@ -346,9 +344,8 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
                   "be added to your game settings, overwriting in case of conflicts.");
   }
 
-  if (plugin->isLightFlagged() && !plugin->isMasterFlagged() &&
-      !plugin->hasLightExtension()) {
-    QString type = plugin->hasMasterExtension() ? "ESM" : "ESP";
+  if (plugin->isSmallFile()) {
+    QString type = plugin->isMasterFile() ? "ESM" : "ESP";
     toolTip +=
         "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
                         "order but the records will be loaded in ESL space.")
