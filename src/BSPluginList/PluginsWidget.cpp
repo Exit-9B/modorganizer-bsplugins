@@ -9,6 +9,7 @@
 
 #include <boost/range/adaptor/reversed.hpp>
 
+#include <QApplication>
 #include <QMenu>
 #include <QMessageBox>
 
@@ -47,15 +48,6 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 
   connect(pluginListModel, &PluginListModel::pluginStatesChanged, this,
           &PluginsWidget::updatePluginCount);
-
-  connect(ui->pluginList, &QTreeView::customContextMenuRequested,
-          [=, this](const QPoint& pos) {
-            PluginListContextMenu menu{ui->pluginList->indexAt(pos), pluginListModel,
-                                       ui->pluginList, organizer->modList(),
-                                       pluginList};
-            const QPoint p = ui->pluginList->viewport()->mapToGlobal(pos);
-            menu.exec(p);
-          });
 
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
           this, &PluginsWidget::onSelectionChanged);
@@ -256,11 +248,46 @@ static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
   }
 }
 
+void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
+{
+  PluginListContextMenu menu{ui->pluginList->indexAt(pos), pluginListModel,
+                             ui->pluginList, m_Organizer->modList(), pluginList};
+
+  connect(&menu, &PluginListContextMenu::openModInformation,
+          [this](const QModelIndex& index) {
+            const auto fileName = index.data(Qt::DisplayRole).toString();
+            m_PanelInterface->displayOriginInformation(fileName);
+          });
+
+  const QPoint p = ui->pluginList->viewport()->mapToGlobal(pos);
+  menu.exec(p);
+}
+
+void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
+{
+  if (!index.data(PluginListModel::InfoRole).isValid()) {
+    return;
+  }
+
+  const auto fileName = index.data(Qt::DisplayRole).toString();
+
+  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+  if (modifiers.testFlag(Qt::ControlModifier)) {
+    const auto modInfo = m_Organizer->modList()->getMod(pluginList->origin(fileName));
+    if (modInfo == nullptr) {
+      return;
+    }
+    MOBase::shell::Explore(modInfo->absolutePath());
+  } else {
+    m_PanelInterface->displayOriginInformation(fileName);
+  }
+}
+
 void PluginsWidget::on_sortButton_clicked()
 {
   // TODO: get these from settings
   const auto logLevel = lootcli::LogLevels::Info;
-  const bool offline = false;
+  const bool offline  = false;
 
   auto r = QMessageBox::No;
 

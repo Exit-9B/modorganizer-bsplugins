@@ -12,6 +12,10 @@ public:
   //
   virtual void setSelectedFiles(const QList<QString>& selectedFiles) = 0;
 
+  // request mod info dialog for origin of file
+  //
+  virtual void displayOriginInformation(const QString& file) = 0;
+
   virtual bool onPanelActivated(const std::function<void()>& func) = 0;
 
   virtual bool

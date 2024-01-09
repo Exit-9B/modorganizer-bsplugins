@@ -33,6 +33,8 @@ public:
 
   void setSelectedFiles(const QList<QString>& selectedFiles) override;
 
+  void displayOriginInformation(const QString& file) override;
+
   bool onPanelActivated(const std::function<void()>& func) override;
 
   bool onSelectedOriginsChanged(

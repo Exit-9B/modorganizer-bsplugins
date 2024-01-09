@@ -48,6 +48,8 @@ private slots:
 
   void toggleHideForceEnabled();
 
+  void on_pluginList_customContextMenuRequested(const QPoint& pos);
+  void on_pluginList_doubleClicked(const QModelIndex& index);
   void on_espFilterEdit_textChanged(const QString& filter);
   void on_sortButton_clicked();
   void on_restoreButton_clicked();

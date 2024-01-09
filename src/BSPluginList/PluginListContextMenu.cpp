@@ -100,6 +100,17 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
       addAction(tr("Open Origin in Explorer"), [=, this]() {
         openOriginExplorer(m_Selected, modList, pluginList);
       });
+
+      if (m_Selected.size() == 1) {
+        QString fileName   = m_Index.data().toString();
+        const auto modInfo = modList->getMod(pluginList->origin(fileName));
+        if (modInfo && !modInfo->isForeign()) {
+          const auto infoAction = addAction(tr("Open Origin Info..."), [this] {
+            emit openModInformation(m_Index);
+          });
+          setDefaultAction(infoAction);
+        }
+      }
     }
   }
 }

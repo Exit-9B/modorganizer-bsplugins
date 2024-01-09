@@ -23,7 +23,7 @@ public:
                         MOBase::IPluginList* pluginList);
 
 signals:
-  void openModInformation();
+  void openModInformation(const QModelIndex& index);
 
 private:
   QModelIndex m_Index;

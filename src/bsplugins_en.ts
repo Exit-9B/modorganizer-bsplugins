@@ -59,6 +59,10 @@
         <source>Open Origin in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Open Origin Info...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginListModel</name>

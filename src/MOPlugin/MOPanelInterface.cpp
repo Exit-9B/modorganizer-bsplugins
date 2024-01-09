@@ -1,5 +1,7 @@
 #include "MOPanelInterface.h"
 
+#include <log.h>
+
 #include <algorithm>
 #include <iterator>
 
@@ -52,6 +54,27 @@ void MOPanelInterface::setSelectedFiles(const QList<QString>& selectedFiles)
 
   m_PluginListView->selectionModel()->select(selection,
                                              QItemSelectionModel::ClearAndSelect);
+}
+
+// FIXME: only works for files in the plugins panel
+void MOPanelInterface::displayOriginInformation(const QString& file)
+{
+  const auto model = m_PluginListView->model();
+  for (int row = 0, count = model->rowCount(); row < count; ++row) {
+    const auto index = model->index(row, 0);
+    const auto other = index.data(Qt::DisplayRole).toString();
+    if (file.compare(other, Qt::CaseInsensitive) == 0) {
+      m_PluginListView->selectionModel()->select(
+          QItemSelection(index, model->index(row, model->columnCount() - 1)),
+          QItemSelectionModel::ClearAndSelect);
+      m_PluginListView->selectionModel()->setCurrentIndex(index,
+                                                          QItemSelectionModel::Current);
+      m_PluginListView->doubleClicked(index);
+      return;
+    }
+  }
+
+  MOBase::log::warn("failed to open origin info for \"{}\"", file);
 }
 
 bool MOPanelInterface::onPanelActivated(const std::function<void()>& func)
