@@ -409,23 +409,23 @@ QMenu* PluginsWidget::listOptionsMenu()
 
 void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
 {
-  static bool refreshing = false;
-  static std::function<void()> setRefreshing;
-  setRefreshing = [=, this] {
-    refreshing = true;
-    m_PluginListModel->invalidate();
-    organizer->onNextRefresh(setRefreshing, false);
-  };
-
-  organizer->onNextRefresh(setRefreshing, false);
-
   MOBase::IPluginList* const ipluginlist = organizer->pluginList();
   if (ipluginlist == nullptr || ipluginlist == m_PluginList) {
     return;
   }
 
-  ipluginlist->onRefreshed([]() {
+  static bool refreshing = false;
+  static std::function<void()> setRefreshing;
+  setRefreshing = [this] {
+    refreshing = true;
+    m_PluginListModel->invalidate();
+  };
+
+  organizer->onNextRefresh(setRefreshing, false);
+
+  ipluginlist->onRefreshed([organizer]() {
     refreshing = false;
+    organizer->onNextRefresh(setRefreshing, false);
   });
 
   ipluginlist->onPluginMoved(
