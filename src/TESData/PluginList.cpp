@@ -671,12 +671,30 @@ static bool isPluginFile(const QString& filename)
 static void checkBsa(TESData::FileInfo& info,
                      const std::shared_ptr<const MOBase::IFileTree>& fileTree)
 {
-  QString baseName = QFileInfo(info.name()).completeBaseName();
-  for (const auto& candidate :
-       {baseName + (u".bsa"_s), baseName + (u" - Textures.bsa"_s),
-        baseName + (u".ba2"_s), baseName + (u" - Textures.ba2"_s)}) {
-    if (fileTree->find(candidate, MOBase::FileTreeEntry::FILE) != nullptr) {
-      info.addArchive(candidate);
+  const QString baseName = QFileInfo(info.name()).completeBaseName();
+  for (const auto entry : *fileTree) {
+    if (!entry) {
+      continue;
+    }
+
+    const auto candidate = entry->name();
+    if (!candidate.startsWith(baseName)) {
+      continue;
+    }
+
+    if (candidate.endsWith(u".bsa"_s)) {
+      if (candidate.compare(baseName + u".bsa"_s, Qt::CaseInsensitive) == 0 ||
+          candidate.compare(baseName + u" - Textures.bsa"_s, Qt::CaseInsensitive) ==
+              0) {
+        info.addArchive(candidate);
+      }
+    } else if (candidate.endsWith(u".ba2"_s)) {
+      if (candidate.compare(baseName + u" - Main.ba2"_s, Qt::CaseInsensitive) == 0 ||
+          candidate.compare(baseName + u" - Textures.ba2"_s, Qt::CaseInsensitive) ==
+              0 ||
+          candidate.startsWith(baseName + u" - Voices_"_s, Qt::CaseInsensitive)) {
+        info.addArchive(candidate);
+      }
     }
   }
 }
