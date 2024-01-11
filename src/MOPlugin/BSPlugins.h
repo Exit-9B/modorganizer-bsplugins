@@ -10,6 +10,8 @@ class BSPlugins final : public IPluginPanel
   Q_PLUGIN_METADATA(IID "org.tannin.BSPlugins" FILE "bsplugins.json")
 
 public:
+  inline static const QString NAME = QStringLiteral("Bethesda Plugin Manager");
+
   BSPlugins() = default;
 
   // IPlugin

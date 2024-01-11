@@ -37,6 +37,8 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
+  restoreState();
+
   connect(m_PluginList, &TESData::PluginList::pluginsListChanged, this,
           &PluginsWidget::updatePluginCount);
 
@@ -52,6 +54,10 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
           this, &PluginsWidget::onSelectionChanged);
+
+  connect(ui->pluginList->header(), &QHeaderView::geometriesChanged, [this]() {
+    Settings::instance()->saveState(ui->pluginList->header());
+  });
 
   panelInterface->onPanelActivated([this]() {
     this->onPanelActivated();
@@ -208,6 +214,8 @@ void PluginsWidget::toggleHideForceEnabled()
   const bool doHide = toggleForceEnabled->isChecked();
   m_SortProxy->hideForceEnabledFiles(doHide);
   updatePluginCount();
+
+  Settings::instance()->set("hide_force_enabled", doHide);
 }
 
 constexpr auto PATTERN_BACKUP_GLOB  = R"/(.????_??_??_??_??_??)/";
@@ -405,6 +413,15 @@ QMenu* PluginsWidget::listOptionsMenu()
   toggleForceEnabled->setCheckable(true);
 
   return menu;
+}
+
+void PluginsWidget::restoreState()
+{
+  Settings::instance()->restoreState(ui->pluginList->header());
+
+  const bool doHide = Settings::instance()->get<bool>("hide_force_enabled", false);
+  toggleForceEnabled->setChecked(doHide);
+  toggleHideForceEnabled();
 }
 
 void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)

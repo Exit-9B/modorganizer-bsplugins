@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include "BSPlugins.h"
 
 #include <QDir>
 #include <QStandardPaths>
@@ -23,6 +24,16 @@ void Settings::init(MOBase::IOrganizer* organizer)
 Settings* Settings::instance()
 {
   return Instance;
+}
+
+void Settings::set(const QString& setting, const QVariant& value)
+{
+  Organizer->setPersistent(BSPlugins::NAME, setting, value);
+}
+
+[[nodiscard]] QVariant Settings::get(const QString& setting, const QVariant& def) const
+{
+  return Organizer->persistent(BSPlugins::NAME, setting, def);
 }
 
 QColor Settings::overwrittenLooseFilesColor() const
@@ -67,4 +78,24 @@ lootcli::LogLevels Settings::lootLogLevel() const
   return MOSettings
       .value("Settings/loot_log_level", static_cast<int>(lootcli::LogLevels::Info))
       .value<lootcli::LogLevels>();
+}
+
+static QString stateSettingName(const QHeaderView* header)
+{
+  return header->parent()->objectName() + "_header";
+}
+
+void Settings::saveState(const QHeaderView* header)
+{
+  Organizer->setPersistent(BSPlugins::NAME, stateSettingName(header),
+                           header->saveState());
+}
+
+void Settings::restoreState(QHeaderView* header) const
+{
+  const auto state =
+      Organizer->persistent(BSPlugins::NAME, stateSettingName(header)).toByteArray();
+  if (!state.isEmpty()) {
+    header->restoreState(state);
+  }
 }

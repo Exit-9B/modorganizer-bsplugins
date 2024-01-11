@@ -58,6 +58,7 @@ private slots:
 
 private:
   [[nodiscard]] QMenu* listOptionsMenu();
+  void restoreState();
 
   // HACK: Attempt to keep our custom plugin list synchronized with the built-in panel
   void synchronizePluginLists(MOBase::IOrganizer* organizer);

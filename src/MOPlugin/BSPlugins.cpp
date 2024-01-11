@@ -14,7 +14,7 @@ bool BSPlugins::initPlugin(MOBase::IOrganizer* organizer)
 
 QString BSPlugins::name() const
 {
-  return u"Bethesda Plugin Manager"_s;
+  return NAME;
 }
 
 std::vector<std::shared_ptr<const MOBase::IPluginRequirement>>
