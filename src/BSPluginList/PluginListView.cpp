@@ -40,7 +40,7 @@ void PluginListView::setup()
   header()->resizeSection(PluginListModel::COL_FLAGS, 60);
   header()->resizeSection(PluginListModel::COL_PRIORITY, 62);
   header()->resizeSection(PluginListModel::COL_MODINDEX, 79);
-  header()->setSectionResizeMode(PluginListModel::COL_MODINDEX, QHeaderView::Stretch);
+  header()->setSectionResizeMode(0, QHeaderView::Stretch);
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &PluginListView::updateOverwriteMarkers);
@@ -152,6 +152,17 @@ bool PluginListView::event(QEvent* event)
   }
 
   return QTreeView::event(event);
+}
+
+void PluginListView::paintEvent(QPaintEvent* event)
+{
+  if (m_FirstPaint) {
+    header()->setSectionResizeMode(0, QHeaderView::Interactive);
+    header()->setStretchLastSection(true);
+    m_FirstPaint = false;
+  }
+
+  QTreeView::paintEvent(event);
 }
 
 bool PluginListView::moveSelection(int key)

@@ -37,6 +37,7 @@ signals:
 
 protected:
   bool event(QEvent* event) override;
+  void paintEvent(QPaintEvent* event) override;
 
   bool moveSelection(int key);
   bool toggleSelectionState();
@@ -51,6 +52,7 @@ private:
                                    const QAbstractItemModel* model) const;
 
 private:
+  bool m_FirstPaint = true;
   MarkerInfos m_Markers;
 };
 
