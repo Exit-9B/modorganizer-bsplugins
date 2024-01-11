@@ -1,12 +1,14 @@
 #include "BSPlugins.h"
 
 #include "BSPluginList/PluginsWidget.h"
+#include "Settings.h"
 
 using namespace Qt::Literals::StringLiterals;
 
 bool BSPlugins::initPlugin(MOBase::IOrganizer* organizer)
 {
   m_Organizer = organizer;
+  Settings::init(organizer);
   return true;
 }
 

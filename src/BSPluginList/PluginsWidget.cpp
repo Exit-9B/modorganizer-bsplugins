@@ -2,6 +2,7 @@
 
 #include "GUI/MessageDialog.h"
 #include "GUI/SelectionDialog.h"
+#include "MOPlugin/Settings.h"
 #include "MOTools/Loot.h"
 #include "PluginListContextMenu.h"
 #include "PluginSortFilterProxyModel.h"
@@ -303,9 +304,8 @@ void PluginsWidget::on_pluginList_openOriginExplorer(const QModelIndex& index)
 
 void PluginsWidget::on_sortButton_clicked()
 {
-  // TODO: get these from settings
-  const auto logLevel = lootcli::LogLevels::Info;
-  const bool offline  = false;
+  const auto logLevel = Settings::instance()->lootLogLevel();
+  const bool offline  = Settings::instance()->offlineMode();
 
   auto r = QMessageBox::No;
 

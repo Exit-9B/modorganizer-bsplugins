@@ -2,6 +2,7 @@
 
 #include "GUI/CopyEventFilter.h"
 #include "GUI/GenericIconDelegate.h"
+#include "MOPlugin/Settings.h"
 #include "PluginListModel.h"
 #include "PluginListStyledItemDelegate.h"
 #include "PluginListViewMarkingScrollBar.h"
@@ -55,15 +56,15 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
   const bool overwrittenAux = m_Markers.overwrittenAux.contains(pluginIndex);
 
   if (highlight) {
-    return QColor(0, 0, 255, 64);
+    return Settings::instance()->containedColor();
   } else if (overridden) {
-    return QColor(255, 0, 0, 64);
+    return Settings::instance()->overwrittenLooseFilesColor();
   } else if (overriding) {
-    return QColor(0, 255, 0, 64);
+    return Settings::instance()->overwritingLooseFilesColor();
   } else if (overwrittenAux) {
-    return QColor(255, 0, 255, 64);
+    return Settings::instance()->overwrittenArchiveFilesColor();
   } else if (overwritingAux) {
-    return QColor(0, 255, 255, 64);
+    return Settings::instance()->overwritingArchiveFilesColor();
   }
 
   return QColor();
