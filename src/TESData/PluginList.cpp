@@ -202,9 +202,9 @@ void PluginList::setEnabled(int id, bool enable)
 {
   const auto plugin = m_Plugins.at(id);
 
-  const bool enabled      = plugin->enabled();
-  const bool shouldEnable = (enable && !plugin->forceDisabled()) ||
-                            plugin->forceLoaded() || plugin->forceEnabled();
+  const bool enabled = plugin->enabled();
+  const bool shouldEnable =
+      (enable && !plugin->forceDisabled()) || plugin->isAlwaysEnabled();
 
   if (shouldEnable != enabled) {
     plugin->setEnabled(shouldEnable);
@@ -221,9 +221,9 @@ void PluginList::setEnabled(const std::vector<int>& ids, bool enable)
   for (const int id : ids) {
     const auto plugin = m_Plugins.at(id);
 
-    const bool enabled      = plugin->enabled();
-    const bool shouldEnable = (enable && !plugin->forceDisabled()) ||
-                              plugin->forceLoaded() || plugin->forceEnabled();
+    const bool enabled = plugin->enabled();
+    const bool shouldEnable =
+        (enable && !plugin->forceDisabled()) || plugin->isAlwaysEnabled();
 
     if (shouldEnable != enabled) {
       plugin->setEnabled(shouldEnable);
@@ -246,9 +246,9 @@ void PluginList::toggleState(const std::vector<int>& ids)
   for (const int id : ids) {
     const auto plugin = m_Plugins.at(id);
 
-    const bool enabled      = plugin->enabled();
-    const bool shouldEnable = (!enabled && !plugin->forceDisabled()) ||
-                              plugin->forceLoaded() || plugin->forceEnabled();
+    const bool enabled = plugin->enabled();
+    const bool shouldEnable =
+        (!enabled && !plugin->forceDisabled()) || plugin->isAlwaysEnabled();
 
     if (shouldEnable != enabled) {
       plugin->setEnabled(shouldEnable);
@@ -463,9 +463,9 @@ void PluginList::setState(const QString& name, PluginStates state)
     return;
   }
 
-  const bool enabled      = plugin->enabled();
-  const bool shouldEnable = (state == STATE_ACTIVE && !plugin->forceDisabled()) ||
-                            plugin->forceLoaded() || plugin->forceEnabled();
+  const bool enabled = plugin->enabled();
+  const bool shouldEnable =
+      (state == STATE_ACTIVE && !plugin->forceDisabled()) || plugin->isAlwaysEnabled();
 
   if (shouldEnable != enabled) {
     plugin->setEnabled(shouldEnable);

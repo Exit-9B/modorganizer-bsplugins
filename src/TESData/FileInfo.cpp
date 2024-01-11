@@ -26,11 +26,6 @@ FileInfo::FileInfo(PluginList* pluginList, const QString& name, bool forceLoaded
       }}
 {}
 
-bool FileInfo::isPrimaryFile() const
-{
-  return m_FileSystemData.forceLoaded || m_FileSystemData.forceEnabled;
-}
-
 bool FileInfo::isMasterFile() const
 {
   return m_Metadata.isMasterFlagged || m_FileSystemData.hasMasterExtension ||
@@ -40,6 +35,17 @@ bool FileInfo::isMasterFile() const
 bool FileInfo::isSmallFile() const
 {
   return m_Metadata.isLightFlagged || m_FileSystemData.hasLightExtension;
+}
+
+bool FileInfo::isAlwaysEnabled() const
+{
+  return m_FileSystemData.forceLoaded || m_FileSystemData.forceEnabled;
+}
+
+bool FileInfo::canBeToggled() const
+{
+  return !m_FileSystemData.forceLoaded && !m_FileSystemData.forceEnabled &&
+         !m_FileSystemData.forceDisabled;
 }
 
 bool FileInfo::mustLoadAfter(const FileInfo& other) const

@@ -63,7 +63,8 @@ bool PluginSortFilterProxyModel::filterAcceptsRow(
   const auto source_index = sourceModel()->index(source_row, 0);
   const auto plugin =
       source_index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
-  if (m_HideForceEnabledFiles && plugin && plugin->isPrimaryFile()) {
+  if (m_HideForceEnabledFiles && plugin &&
+      (plugin->forceLoaded() || plugin->forceEnabled())) {
     return false;
   }
 

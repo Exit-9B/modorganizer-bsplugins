@@ -169,9 +169,10 @@ public:
     return m_Conflicts.value().m_OverwrittenArchiveList;
   }
 
-  [[nodiscard]] bool isPrimaryFile() const;
   [[nodiscard]] bool isMasterFile() const;
   [[nodiscard]] bool isSmallFile() const;
+  [[nodiscard]] bool isAlwaysEnabled() const;
+  [[nodiscard]] bool canBeToggled() const;
   [[nodiscard]] bool mustLoadAfter(const FileInfo& other) const;
 
 private:

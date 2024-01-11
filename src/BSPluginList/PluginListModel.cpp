@@ -152,7 +152,7 @@ QVariant PluginListModel::checkstateData(const QModelIndex& index) const
     return QVariant();
   }
 
-  if (plugin->forceLoaded() || plugin->forceEnabled()) {
+  if (plugin->isAlwaysEnabled()) {
     return Qt::Checked;
   } else if (plugin->forceDisabled()) {
     return Qt::Unchecked;

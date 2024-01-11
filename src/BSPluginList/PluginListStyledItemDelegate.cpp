@@ -35,8 +35,7 @@ void PluginListStyledItemDelegate::initStyleOption(QStyleOptionViewItem* option,
     const auto plugin =
         index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
 
-    if (plugin &&
-        (plugin->forceLoaded() || plugin->forceEnabled() || plugin->forceDisabled())) {
+    if (plugin && !plugin->canBeToggled()) {
       option->state &= ~QStyle::State_Enabled;
     }
   }
