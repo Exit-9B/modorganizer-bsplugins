@@ -2,6 +2,7 @@
 #define BSPLUGINLIST_PLUGINSWIDGET_H
 
 #include "MOPlugin/IPanelInterface.h"
+#include "PluginGroupProxyModel.h"
 #include "PluginListModel.h"
 #include "PluginSortFilterProxyModel.h"
 #include "TESData/PluginList.h"
@@ -71,6 +72,7 @@ private:
   TESData::PluginList* m_PluginList       = nullptr;
   PluginListModel* m_PluginListModel      = nullptr;
   PluginSortFilterProxyModel* m_SortProxy = nullptr;
+  PluginGroupProxyModel* m_GroupProxy     = nullptr;
   IPanelInterface* m_PanelInterface;
 
   MOBase::IOrganizer* m_Organizer;

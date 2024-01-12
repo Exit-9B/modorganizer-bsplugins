@@ -46,6 +46,10 @@ void PluginListView::setup()
 
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &PluginListView::updateOverwriteMarkers);
+
+  connect(model(), &QAbstractItemModel::layoutChanged, [this] {
+    expandAll();
+  });
 }
 
 void PluginListView::setModel(QAbstractItemModel* model)

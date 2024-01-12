@@ -30,8 +30,9 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   m_PluginListModel = new PluginListModel(m_PluginList);
   m_SortProxy       = new PluginSortFilterProxyModel();
   m_SortProxy->setSourceModel(m_PluginListModel);
-  m_SortProxy->setDynamicSortFilter(true);
-  ui->pluginList->setModel(m_SortProxy);
+  m_GroupProxy = new PluginGroupProxyModel(organizer);
+  m_GroupProxy->setSourceModel(m_SortProxy);
+  ui->pluginList->setModel(m_GroupProxy);
   ui->pluginList->setup();
   ui->pluginList->sortByColumn(PluginListModel::COL_PRIORITY, Qt::AscendingOrder);
   optionsMenu = listOptionsMenu();
@@ -79,6 +80,7 @@ PluginsWidget::~PluginsWidget() noexcept
   delete m_PluginList;
   delete m_PluginListModel;
   delete m_SortProxy;
+  delete m_GroupProxy;
 }
 
 void PluginsWidget::updatePluginCount()
@@ -460,8 +462,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
       });
 
   m_PluginList->onPluginMoved(
-      [=, pluginList = m_PluginList](
-          const QString& name, [[maybe_unused]] int oldPriority, int newPriority) {
+      [=](const QString& name, [[maybe_unused]] int oldPriority, int newPriority) {
         if (refreshing)
           return;
 
@@ -469,8 +470,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
       });
 
   m_PluginList->onPluginStateChanged(
-      [=, pluginList = m_PluginList](
-          const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
+      [=](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
         if (refreshing || infos.empty())
           return;
 
