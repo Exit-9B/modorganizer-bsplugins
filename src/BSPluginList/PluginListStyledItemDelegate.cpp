@@ -26,7 +26,22 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
   const auto color    = m_View->markerColor(index);
   opt.backgroundBrush = color;
 
-  QStyledItemDelegate::paint(painter, opt, index);
+  if (!index.siblingAtColumn(0).data(Qt::DisplayRole).isValid()) {
+    const auto widget = option.widget;
+    const auto style  = widget ? widget->style() : QApplication::style();
+
+    QStyleOptionFrame optFrame;
+    optFrame.initFrom(widget);
+    optFrame.rect         = opt.rect;
+    optFrame.frameShape   = QFrame::HLine;
+    optFrame.lineWidth    = 0;
+    optFrame.midLineWidth = 1;
+    optFrame.state |= QStyle::State_Sunken;
+
+    style->drawControl(QStyle::CE_ShapedFrame, &optFrame, painter, widget);
+  } else {
+    QStyledItemDelegate::paint(painter, opt, index);
+  }
 }
 
 void PluginListStyledItemDelegate::initStyleOption(QStyleOptionViewItem* option,
