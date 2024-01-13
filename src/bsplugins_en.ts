@@ -63,6 +63,26 @@
         <source>Open Origin Info...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Create Group...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Please enter a name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename Group...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove Group...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to remove &quot;%1&quot;?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginListModel</name>

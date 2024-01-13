@@ -421,6 +421,13 @@ void PluginList::shiftPriority(const std::vector<int>& ids, int offset)
   }
 }
 
+void PluginList::setGroup(const std::vector<int>& ids, const QString& group)
+{
+  for (const int id : ids) {
+    m_Plugins.at(id)->setGroup(group);
+  }
+}
+
 QStringList PluginList::loadOrder() const
 {
   QStringList result;

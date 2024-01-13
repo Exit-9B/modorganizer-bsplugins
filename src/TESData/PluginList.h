@@ -77,6 +77,8 @@ public:
   void moveToPriority(std::vector<int> ids, int destination);
   void shiftPriority(const std::vector<int>& ids, int offset);
 
+  void setGroup(const std::vector<int>& ids, const QString& group);
+
   [[nodiscard]] bool isRefreshing() const { return m_Refreshing; }
 
   [[nodiscard]] QStringList loadOrder() const;

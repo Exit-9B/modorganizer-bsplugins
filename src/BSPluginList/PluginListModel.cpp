@@ -71,10 +71,11 @@ QVariant PluginListModel::data(const QModelIndex& index, int role) const
     return alignmentData(index);
   case Qt::ToolTipRole:
     return tooltipData(index);
-  case ConflictsIconRole:
-    return conflictData(index);
-  case FlagsIconRole:
-    return iconData(index);
+  case GroupingRole: {
+    const auto id     = index.row();
+    const auto plugin = m_Plugins->getPlugin(id);
+    return plugin ? plugin->group() : QVariant();
+  }
   case IndexRole:
     return index.row();
   case InfoRole: {
@@ -82,6 +83,10 @@ QVariant PluginListModel::data(const QModelIndex& index, int role) const
     const auto plugin = m_Plugins->getPlugin(id);
     return QVariant::fromValue(plugin);
   }
+  case ConflictsIconRole:
+    return conflictData(index);
+  case FlagsIconRole:
+    return iconData(index);
   case OriginRole: {
     const int id = index.row();
     return m_Plugins->getOriginName(id);
@@ -640,6 +645,18 @@ void PluginListModel::toggleState(const QModelIndexList& indices)
   });
   m_Plugins->toggleState(std::move(ids));
   emit pluginStatesChanged(indices);
+}
+
+void PluginListModel::setGroup(const QModelIndexList& indices, const QString& group)
+{
+  std::vector<int> ids;
+  ids.reserve(indices.size());
+  std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
+    return idx.row();
+  });
+  m_Plugins->setGroup(std::move(ids), group);
+  emit dataChanged(this->index(0, 0), this->index(rowCount() - 1, COL_MODINDEX),
+                   {GroupingRole});
 }
 
 }  // namespace BSPluginList

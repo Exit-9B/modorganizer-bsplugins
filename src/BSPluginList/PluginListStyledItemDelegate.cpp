@@ -18,8 +18,7 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
   QStyleOptionViewItem opt(option);
 
   if (index.column() == 0) {
-    if (!index.model()->hasChildren(index) && index.parent().isValid() ||
-        !index.data().isValid()) {
+    if (!index.model()->hasChildren(index) || !index.data().isValid()) {
       opt.rect.adjust(-m_View->indentation(), 0, 0, 0);
     }
   }

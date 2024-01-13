@@ -67,6 +67,7 @@ public:
     int priority = -1;
     QString index;
     int loadOrder;
+    QString group;
 
     bool operator<(const State& other) const { return (loadOrder < other.loadOrder); }
   };
@@ -148,6 +149,8 @@ public:
   void setIndex(const QString& index) { m_State.index = index; }
   [[nodiscard]] int loadOrder() const { return m_State.loadOrder; }
   void setLoadOrder(int loadOrder) { m_State.loadOrder = loadOrder; }
+  [[nodiscard]] const QString& group() const { return m_State.group; }
+  void setGroup(const QString& group) { m_State.group = group; }
 
   [[nodiscard]] const auto& getPluginOverriding() const
   {

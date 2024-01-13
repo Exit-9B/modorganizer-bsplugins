@@ -1,4 +1,5 @@
 #include "PluginGroupProxyModel.h"
+#include "PluginListDropInfo.h"
 #include "PluginListModel.h"
 
 #include <QSortFilterProxyModel>
@@ -265,13 +266,55 @@ bool PluginGroupProxyModel::canDropMimeData(const QMimeData* data,
          sourceModel()->canDropMimeData(data, action, sourceRow, column, QModelIndex());
 }
 
+template <typename T>
+static T* findBaseModel(QAbstractItemModel* sourceModel)
+{
+  for (auto nextModel = sourceModel; nextModel;) {
+    const auto proxyModel = qobject_cast<QAbstractProxyModel*>(nextModel);
+    if (proxyModel) {
+      nextModel = proxyModel->sourceModel();
+    } else {
+      if (const auto baseModel = qobject_cast<T*>(nextModel)) {
+        return baseModel;
+      }
+      nextModel = nullptr;
+    }
+  }
+  return nullptr;
+}
+
 bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
                                          int row, int column, const QModelIndex& parent)
 {
   const auto idx      = row != rowCount(parent) ? index(row, column, parent)
                                                 : index(parent.row() + 1, column);
   const int sourceRow = mapLowerBoundToSourceRow(idx);
-  return sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex());
+  if (!sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex())) {
+    return false;
+  }
+
+  if (const auto baseModel = findBaseModel<PluginListModel>(sourceModel())) {
+    PluginListDropInfo dropInfo{data, row, parent, baseModel->m_Plugins};
+
+    QString&& groupName = QString();
+    if (parent.isValid()) {
+      QModelIndex groupIdx = parent;
+      while (groupIdx.parent().isValid()) {
+        groupIdx = groupIdx.parent();
+      }
+
+      const auto& parentItem = m_ProxyItems.at(groupIdx.internalId());
+      const auto& groupInfo  = parentItem.groupInfo;
+      groupName              = groupInfo ? groupInfo->name : QString();
+    }
+
+    baseModel->m_Plugins->setGroup(dropInfo.sourceRows(), groupName);
+    emit layoutAboutToBeChanged();
+    buildGroups();
+    emit layoutChanged();
+  }
+
+  return true;
 }
 
 void PluginGroupProxyModel::onSourceDataChanged(const QModelIndex& topLeft,
@@ -375,15 +418,20 @@ void PluginGroupProxyModel::buildGroups()
     const auto idx      = sourceModel()->index(i, 0);
     const QString group = idx.data(PluginListModel::GroupingRole).toString();
 
-    if (sorted && !group.isNull() && group != lastGroup) {
+    if (sorted && group != lastGroup) {
       lastGroup = group;
-      groupId   = m_ProxyItems.size();
 
-      const int row        = static_cast<int>(m_TopLevel.size());
-      const std::size_t id = m_ProxyItems.size();
-      m_TopLevel.push_back(id);
-      m_ProxyItems.emplace_back(row, -1, NO_ID, std::make_shared<Group>(group));
-      m_SourceMap[i] = m_ProxyItems.size();
+      if (group.isNull()) {
+        groupId = NO_ID;
+      } else {
+        groupId = m_ProxyItems.size();
+
+        const int row        = static_cast<int>(m_TopLevel.size());
+        const std::size_t id = m_ProxyItems.size();
+        m_TopLevel.push_back(id);
+        m_ProxyItems.emplace_back(row, -1, NO_ID, std::make_shared<Group>(group));
+        m_SourceMap[i] = m_ProxyItems.size();
+      }
     }
 
     {

@@ -13,6 +13,8 @@ class PluginListModel final : public QAbstractItemModel
   Q_OBJECT
 
 public:
+  friend class PluginGroupProxyModel;
+
   enum ItemDataRole
   {
     GroupingRole = Qt::UserRole,
@@ -45,7 +47,7 @@ public:
                     const QModelIndex& parent = QModelIndex()) const override;
   QModelIndex parent(const QModelIndex& index) const override;
 
-  Qt::ItemFlags flags(const QModelIndex& index) const;
+  Qt::ItemFlags flags(const QModelIndex& index) const override;
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role) const override;
@@ -90,6 +92,10 @@ public slots:
   // toggle the active state of mods at the given indices
   //
   void toggleState(const QModelIndexList& indices);
+
+  // assign plugins to a group
+  //
+  void setGroup(const QModelIndexList& indices, const QString& group);
 
 signals:
   void pluginStatesChanged(const QModelIndexList& indices) const;

@@ -79,7 +79,8 @@ QRect PluginListView::visualRect(const QModelIndex& index) const
 {
   QRect rect = QTreeView::visualRect(index);
   if (index.column() == 0) {
-    if (index.isValid() && index.parent().isValid() || !index.data().isValid()) {
+    if (index.isValid() && !index.model()->hasChildren(index) ||
+        !index.data().isValid()) {
       rect.adjust(-indentation(), 0, 0, 0);
     }
   }

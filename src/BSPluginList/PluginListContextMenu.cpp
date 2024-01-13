@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 namespace BSPluginList
 {
@@ -36,8 +37,9 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
                                              MOBase::IPluginList* pluginList)
     : QMenu(view), m_Index{index}, m_Model{model}, m_View{view}
 {
-  if (view->selectionModel()->hasSelection()) {
-    m_Selected = view->indexViewToModel(view->selectionModel()->selectedRows(), model);
+  const auto selectedRows = view->selectionModel()->selectedRows();
+  if (!selectedRows.isEmpty()) {
+    m_Selected = view->indexViewToModel(selectedRows, model);
   } else if (index.isValid()) {
     m_Selected = {index};
   }
@@ -88,29 +90,96 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
 
       m_Model->sendToPriority(m_Selected, newPriority);
     });
+
+    const bool filesSelected = std::ranges::all_of(selectedRows, [=](auto&& idx) {
+      return !idx.model()->hasChildren(idx);
+    });
+
+    const bool groupsSelected = std::ranges::all_of(selectedRows, [=](auto&& idx) {
+      return idx.model()->hasChildren(idx);
+    });
+
+    if (filesSelected) {
+      addAction(tr("Create Group..."), [this]() {
+        bool ok;
+        const QString group = QInputDialog::getText(
+            m_View->topLevelWidget(), tr("Create Group..."), tr("Please enter a name:"),
+            QLineEdit::Normal, "", &ok);
+
+        if (!ok || group.isEmpty())
+          return;
+
+        m_Model->setGroup(m_Selected, group);
+      });
+    } else if (groupsSelected) {
+      if (selectedRows.length() == 1) {
+        addAction(tr("Rename Group..."), [this]() {
+          const auto selectedRows = m_View->selectionModel()->selectedRows();
+          const auto& selected    = selectedRows.first();
+          QModelIndexList indices;
+          for (int i = 0, count = selected.model()->rowCount(selected); i < count;
+               ++i) {
+            const auto child = selected.model()->index(i, 0, selected);
+            auto&& index     = m_View->indexViewToModel(child, m_Model);
+            indices.append(std::move(index));
+          }
+
+          bool ok;
+          const QString group = QInputDialog::getText(
+              m_View->topLevelWidget(), tr("Rename Group..."),
+              tr("Please enter a name:"), QLineEdit::Normal, "", &ok);
+
+          if (!ok || group.isEmpty())
+            return;
+
+          m_Model->setGroup(indices, group);
+        });
+      }
+
+      addAction(tr("Remove Group..."), [this]() {
+        const auto selectedRows = m_View->selectionModel()->selectedRows();
+        QModelIndexList indices;
+        for (const auto& selected : selectedRows) {
+          for (int i = 0, count = selected.model()->rowCount(selected); i < count;
+               ++i) {
+            const auto child = selected.model()->index(i, 0, selected);
+            auto&& index     = m_View->indexViewToModel(child, m_Model);
+            indices.append(std::move(index));
+          }
+        }
+
+        if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
+                                  tr("Are you sure you want to remove \"%1\"?")
+                                      .arg(selectedRows.first().data().toString()),
+                                  QMessageBox::Yes | QMessageBox::No) ==
+            QMessageBox::Yes) {
+          m_Model->setGroup(indices, QString());
+        }
+      });
+    }
   }
 
   if (m_Index.isValid()) {
     addSeparator();
 
     if (std::ranges::any_of(m_Selected, [=](auto&& idx) {
-          QString fileName = idx.data().toString();
-          return modList->getMod(pluginList->origin(fileName)) != nullptr;
+          QString fileName   = idx.data().toString();
+          const auto modInfo = modList->getMod(pluginList->origin(fileName));
+          return modInfo != nullptr;
         })) {
       addAction(tr("Open Origin in Explorer"), [=, this]() {
         openOriginExplorer(m_Selected, modList, pluginList);
       });
 
-      if (m_Selected.size() == 1) {
-        const auto nameIdx  = m_Index.siblingAtColumn(PluginListModel::COL_NAME);
-        const auto fileName = nameIdx.data().toString();
-        const auto modInfo  = modList->getMod(pluginList->origin(fileName));
-        if (modInfo && !modInfo->isForeign()) {
-          const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
-            emit openModInformation(nameIdx);
-          });
-          setDefaultAction(infoAction);
-        }
+      const auto selectedIdx = m_Selected.length() == 1 ? m_Selected.first() : m_Index;
+      const auto nameIdx     = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
+      const auto fileName    = nameIdx.data().toString();
+      const auto modInfo     = modList->getMod(pluginList->origin(fileName));
+      if (modInfo && !modInfo->isForeign()) {
+        const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
+          emit openModInformation(nameIdx);
+        });
+        setDefaultAction(infoAction);
       }
     }
   }
