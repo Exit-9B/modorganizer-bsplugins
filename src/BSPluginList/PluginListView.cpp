@@ -78,8 +78,10 @@ void PluginListView::setModel(QAbstractItemModel* model)
 QRect PluginListView::visualRect(const QModelIndex& index) const
 {
   QRect rect = QTreeView::visualRect(index);
-  if (index.column() == 0 && index.isValid() && index.parent().isValid()) {
-    rect.adjust(-indentation(), 0, 0, 0);
+  if (index.column() == 0) {
+    if (index.isValid() && index.parent().isValid() || !index.data().isValid()) {
+      rect.adjust(-indentation(), 0, 0, 0);
+    }
   }
   return rect;
 }

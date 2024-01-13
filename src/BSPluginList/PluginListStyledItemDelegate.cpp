@@ -18,7 +18,8 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
   QStyleOptionViewItem opt(option);
 
   if (index.column() == 0) {
-    if (!index.model()->hasChildren(index) && index.parent().isValid()) {
+    if (!index.model()->hasChildren(index) && index.parent().isValid() ||
+        !index.data().isValid()) {
       opt.rect.adjust(-m_View->indentation(), 0, 0, 0);
     }
   }
@@ -26,7 +27,7 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
   const auto color    = m_View->markerColor(index);
   opt.backgroundBrush = color;
 
-  if (!index.siblingAtColumn(0).data(Qt::DisplayRole).isValid()) {
+  if (!index.siblingAtColumn(0).data().isValid()) {
     const auto widget = option.widget;
     const auto style  = widget ? widget->style() : QApplication::style();
 
