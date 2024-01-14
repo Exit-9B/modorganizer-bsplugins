@@ -110,56 +110,56 @@ void PluginsWidget::updatePluginCount()
     if (!info)
       continue;
 
-    const bool active  = info->enabled();
+    const bool active  = info->enabled() || info->isAlwaysEnabled();
     const bool visible = m_SortProxy->filterAcceptsRow(index.row(), index.parent());
     if (info->isSmallFile()) {
       ++lightMasterCount;
-      activeLightMasterCount += active;
-      activeVisibleCount += visible && active;
+      activeLightMasterCount += active ? 1 : 0;
+      activeVisibleCount += visible && active ? 1 : 0;
     } else if (info->isMasterFile()) {
       ++masterCount;
-      activeMasterCount += active;
-      activeVisibleCount += visible && active;
+      activeMasterCount += active ? 1 : 0;
+      activeVisibleCount += visible && active ? 1 : 0;
     } else if (info->isOverlayFlagged()) {
       ++overlayCount;
-      activeOverlayCount += active;
-      activeVisibleCount += visible && active;
+      activeOverlayCount += active ? 1 : 0;
+      activeVisibleCount += visible && active ? 1 : 0;
     } else {
       ++regularCount;
-      activeRegularCount += active;
-      activeVisibleCount += visible && active;
+      activeRegularCount += active ? 1 : 0;
+      activeVisibleCount += visible && active ? 1 : 0;
     }
-
-    const int activeCount = activeMasterCount + activeLightMasterCount +
-                            activeOverlayCount + activeRegularCount;
-    const int totalCount = masterCount + lightMasterCount + overlayCount + regularCount;
-
-    ui->activePluginsCounter->display(activeVisibleCount);
-
-    QString toolTip;
-    toolTip.reserve(575);
-    toolTip += uR"(<table cellspacing="6">)"_s
-               uR"(<tr><th>%1</th><th>%2</th><th>%3</th></tr>)"_s.arg(tr("Type"))
-                   .arg(tr("Active"), -12)
-                   .arg(tr("Total"));
-
-    const QString row = uR"(<tr><td>%1:</td><td align=right>%2    </td>)"_s
-                        uR"(<td align=right>%3</td></tr>)"_s;
-
-    toolTip += row.arg(tr("All plugins")).arg(activeCount).arg(totalCount);
-    toolTip += row.arg(tr("ESMs")).arg(activeMasterCount).arg(masterCount);
-    toolTip += row.arg(tr("ESPs")).arg(activeRegularCount).arg(regularCount);
-    toolTip += row.arg(tr("ESMs+ESPs"))
-                   .arg(activeMasterCount + activeRegularCount)
-                   .arg(masterCount + regularCount);
-    if (lightPluginsAreSupported)
-      toolTip += row.arg(tr("ESLs")).arg(activeLightMasterCount).arg(lightMasterCount);
-    if (overridePluginsAreSupported)
-      toolTip += row.arg(tr("Overlay")).arg(activeOverlayCount).arg(overlayCount);
-    toolTip += uR"(</table>)"_s;
-
-    ui->activePluginsCounter->setToolTip(toolTip);
   }
+
+  const int activeCount = activeMasterCount + activeLightMasterCount +
+                          activeOverlayCount + activeRegularCount;
+  const int totalCount = masterCount + lightMasterCount + overlayCount + regularCount;
+
+  ui->activePluginsCounter->display(activeVisibleCount);
+
+  QString toolTip;
+  toolTip.reserve(575);
+  toolTip += uR"(<table cellspacing="6">)"_s
+             uR"(<tr><th>%1</th><th>%2</th><th>%3</th></tr>)"_s.arg(tr("Type"))
+                 .arg(tr("Active"), -12)
+                 .arg(tr("Total"));
+
+  const QString row = uR"(<tr><td>%1:</td><td align=right>%2    </td>)"_s
+                      uR"(<td align=right>%3</td></tr>)"_s;
+
+  toolTip += row.arg(tr("All plugins")).arg(activeCount).arg(totalCount);
+  toolTip += row.arg(tr("ESMs")).arg(activeMasterCount).arg(masterCount);
+  toolTip += row.arg(tr("ESPs")).arg(activeRegularCount).arg(regularCount);
+  toolTip += row.arg(tr("ESMs+ESPs"))
+                 .arg(activeMasterCount + activeRegularCount)
+                 .arg(masterCount + regularCount);
+  if (lightPluginsAreSupported)
+    toolTip += row.arg(tr("ESLs")).arg(activeLightMasterCount).arg(lightMasterCount);
+  if (overridePluginsAreSupported)
+    toolTip += row.arg(tr("Overlay")).arg(activeOverlayCount).arg(overlayCount);
+  toolTip += uR"(</table>)"_s;
+
+  ui->activePluginsCounter->setToolTip(toolTip);
 }
 
 void PluginsWidget::on_espFilterEdit_textChanged(const QString& filter)

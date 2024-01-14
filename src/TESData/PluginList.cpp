@@ -569,7 +569,6 @@ void PluginList::setLoadOrder(const QStringList& pluginList)
   }
 
   updateCache();
-  emit pluginsListChanged();
 }
 
 bool PluginList::isMaster(const QString& name) const
@@ -1016,8 +1015,7 @@ void PluginList::computeCompileIndices()
       continue;
     }
 
-    if (lightPluginsAreSupported &&
-        (plugin->hasLightExtension() || plugin->isLightFlagged())) {
+    if (lightPluginsAreSupported && plugin->isSmallFile()) {
       const int ESLpos = 0xFE + (numESLs >> 12);
       plugin->setIndex((u"%1:%2"_s)
                            .arg(ESLpos, 2, 16, QChar(u'0'))
