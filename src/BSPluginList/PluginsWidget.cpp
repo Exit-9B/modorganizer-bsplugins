@@ -402,6 +402,8 @@ static bool createBackup(const QString& filePath, const QDateTime& time,
 
 void PluginsWidget::on_saveButton_clicked()
 {
+  m_PluginList->writePluginLists();
+
   const auto app         = this->topLevelWidget();
   const auto profilePath = QDir(m_Organizer->profilePath());
   const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));

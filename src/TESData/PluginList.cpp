@@ -688,6 +688,10 @@ void PluginList::writePluginLists() const
   if (tesSupport) {
     tesSupport->writePluginLists(this);
   }
+
+  if (const auto groupsFile = groupsPath(); !groupsFile.isEmpty()) {
+    writeGroups(groupsFile);
+  }
 }
 
 #pragma endregion Slots
