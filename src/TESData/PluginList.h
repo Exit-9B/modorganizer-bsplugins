@@ -79,9 +79,9 @@ public:
 
   void setGroup(const std::vector<int>& ids, const QString& group);
 
-  [[nodiscard]] bool isRefreshing() const { return m_Refreshing; }
-
   [[nodiscard]] QStringList loadOrder() const;
+
+  [[nodiscard]] bool isRefreshing() const { return m_Refreshing; }
 
   // IPluginList
 
@@ -127,6 +127,9 @@ private:
 
   void scanDataFiles(bool invalidate);
   void readPluginLists();
+
+  void readGroups(const QString& fileName);
+  void writeGroups(const QString& fileName) const;
 
   void pluginStatesChanged(const QStringList& pluginNames, PluginStates state) const;
   void enforcePluginRelationships();
