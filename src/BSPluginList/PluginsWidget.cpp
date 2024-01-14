@@ -358,12 +358,23 @@ void PluginsWidget::on_restoreButton_clicked()
 
   QString choice = queryRestore(pluginsName, app);
   if (!choice.isEmpty()) {
+    const auto groupsName =
+        QDir::cleanPath(profilePath.absoluteFilePath("plugingroups.txt"));
     const auto loadOrderName =
         QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
 
-    if (!MOBase::shellCopy(pluginsName + "." + choice, pluginsName, true, app) ||
-        !MOBase::shellCopy(loadOrderName + "." + choice, loadOrderName, true, app)) {
+    const auto tryRestore = [&choice, app](const QString& fileName,
+                                           bool required) -> bool {
+      const auto backupName = fileName + "." + choice;
+      if (required || QFileInfo::exists(backupName)) {
+        return MOBase::shellCopy(backupName, fileName, true, app);
+      } else {
+        return !QFileInfo::exists(fileName) || MOBase::shellDeleteQuiet(fileName, app);
+      }
+    };
 
+    if (!tryRestore(pluginsName, true) || !tryRestore(loadOrderName, true) ||
+        !tryRestore(groupsName, false)) {
       const auto e = ::GetLastError();
 
       QMessageBox::critical(
@@ -394,6 +405,8 @@ void PluginsWidget::on_saveButton_clicked()
   const auto app         = this->topLevelWidget();
   const auto profilePath = QDir(m_Organizer->profilePath());
   const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
+  const auto groupsName =
+      QDir::cleanPath(profilePath.absoluteFilePath("plugingroups.txt"));
   const auto loadOrderName =
       QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
   const auto lockedOrderName =
@@ -402,7 +415,7 @@ void PluginsWidget::on_saveButton_clicked()
   const QDateTime now = QDateTime::currentDateTime();
 
   if (createBackup(pluginsName, now, app) && createBackup(loadOrderName, now, app) &&
-      createBackup(lockedOrderName, now, app)) {
+      createBackup(groupsName, now, app) && createBackup(lockedOrderName, now, app)) {
     GUI::MessageDialog::showMessage(tr("Backup of load order created"), app);
   }
 }

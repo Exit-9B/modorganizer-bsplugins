@@ -11,6 +11,7 @@
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
 
+#include <QDir>
 #include <QFile>
 #include <QStringTokenizer>
 #include <QTextStream>
@@ -191,6 +192,16 @@ void PluginList::addDefaultObject(const std::string& pluginName, TESFile::Type t
 #pragma endregion Record Access
 #pragma region List Management
 
+QString PluginList::groupsPath() const
+{
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  if (profilePath.isEmpty()) {
+    return QString();
+  }
+
+  return QDir::cleanPath(profilePath.absoluteFilePath(u"plugingroups.txt"_s));
+}
+
 void PluginList::refresh(bool invalidate)
 {
   MOBase::TimeThis tt{"TESData::PluginList::refresh()"};
@@ -199,8 +210,7 @@ void PluginList::refresh(bool invalidate)
   scanDataFiles(invalidate);
   readPluginLists();
 
-  if (const auto profile = m_Organizer->profilePath(); !profile.isEmpty()) {
-    const auto groupsFile = QDir(profile).filePath(u"plugingroups.txt"_s);
+  if (const auto groupsFile = groupsPath(); !groupsFile.isEmpty()) {
     readGroups(groupsFile);
   }
 
@@ -439,8 +449,7 @@ void PluginList::setGroup(const std::vector<int>& ids, const QString& group)
     m_Plugins.at(id)->setGroup(group);
   }
 
-  if (const auto profile = m_Organizer->profilePath(); !profile.isEmpty()) {
-    const auto groupsFile = QDir(profile).filePath(u"plugingroups.txt"_s);
+  if (const auto groupsFile = groupsPath(); !groupsFile.isEmpty()) {
     writeGroups(groupsFile);
   }
 }
@@ -836,8 +845,17 @@ void PluginList::readPluginLists()
   enforcePluginRelationships();
 }
 
+void PluginList::clearGroups()
+{
+  for (const auto& plugin : m_Plugins) {
+    plugin->setGroup(QString());
+  }
+}
+
 void PluginList::readGroups(const QString& fileName)
 {
+  clearGroups();
+
   QFile file{fileName};
   if (!file.exists()) {
     return;

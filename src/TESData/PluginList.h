@@ -128,6 +128,8 @@ private:
   void scanDataFiles(bool invalidate);
   void readPluginLists();
 
+  [[nodiscard]] QString groupsPath() const;
+  void clearGroups();
   void readGroups(const QString& fileName);
   void writeGroups(const QString& fileName) const;
 
