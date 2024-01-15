@@ -42,6 +42,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;
 
+  QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row,
                        int column, const QModelIndex& parent) const override;
   bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
@@ -98,6 +99,8 @@ private:
   boost::container::flat_multimap<QString, std::size_t> m_ItemMap;
   std::vector<std::size_t> m_TopLevel;
   std::vector<std::size_t> m_SourceMap;
+
+  mutable std::vector<std::size_t> m_DraggingGroups;
 
   MOBase::IOrganizer* m_Organizer;
 };

@@ -241,6 +241,27 @@ bool PluginGroupProxyModel::isBelowDivider(std::size_t id) const
   return false;
 }
 
+QMimeData* PluginGroupProxyModel::mimeData(const QModelIndexList& indexes) const
+{
+  m_DraggingGroups.clear();
+
+  QModelIndexList sourceIndexes;
+
+  for (const auto& idx : indexes) {
+    const auto sourceIndex = mapToSource(idx);
+    if (sourceIndex.isValid()) {
+      sourceIndexes.append(sourceIndex);
+    } else {
+      m_DraggingGroups.push_back(idx.internalId());
+      for (int i = 0, count = rowCount(idx); i < count; ++i) {
+        sourceIndexes.append(mapToSource(index(i, 0, idx)));
+      }
+    }
+  }
+
+  return sourceModel()->mimeData(sourceIndexes);
+}
+
 bool PluginGroupProxyModel::canDropMimeData(const QMimeData* data,
                                             Qt::DropAction action, int row, int column,
                                             const QModelIndex& parent) const
@@ -283,8 +304,10 @@ static T* findBaseModel(QAbstractItemModel* sourceModel)
 bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
                                          int row, int column, const QModelIndex& parent)
 {
-  const auto idx = row != -1 && row != rowCount(parent) ? index(row, column, parent)
-                                                        : index(parent.row() + 1, 0);
+  const bool draggedOntoGroup = row == -1;
+  const bool draggedToBottom  = row == rowCount(parent);
+  const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
+                                                            : index(row, column, parent);
   const int sourceRow = mapLowerBoundToSourceRow(idx);
 
   QString groupName;
@@ -306,12 +329,43 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
     return false;
   }
 
-  if (baseModel) {
-    baseModel->m_Plugins->setGroup(dropInfo.sourceRows(), groupName);
-    emit layoutAboutToBeChanged();
-    buildGroups();
-    emit layoutChanged();
+  if (!baseModel) {
+    return true;
   }
+
+  if (!draggedToBottom && !groupName.isEmpty()) {
+    baseModel->m_Plugins->setGroup(dropInfo.sourceRows(), groupName);
+  } else {
+    auto sourceRows = dropInfo.sourceRows();
+    for (const std::size_t id : m_DraggingGroups) {
+      const auto& groupItem = m_ProxyItems.at(id);
+      const auto group      = groupItem.groupInfo;
+
+      for (const std::size_t childId : group->children) {
+        const auto& childItem = m_ProxyItems.at(childId);
+        const auto childIndex = createIndex(childItem.row, 0, childId);
+
+        auto sourceIndex = mapToSource(childIndex);
+        for (auto model = sourceModel(); model != baseModel;) {
+          const auto proxyModel = qobject_cast<QAbstractProxyModel*>(model);
+          if (proxyModel) {
+            sourceIndex = proxyModel->mapToSource(sourceIndex);
+            model       = proxyModel->sourceModel();
+          } else {
+            break;
+          }
+        }
+
+        std::erase(sourceRows, sourceIndex.row());
+      }
+    }
+    baseModel->m_Plugins->setGroup(sourceRows, groupName);
+    m_DraggingGroups.clear();
+  }
+
+  emit layoutAboutToBeChanged();
+  buildGroups();
+  emit layoutChanged();
 
   return true;
 }
