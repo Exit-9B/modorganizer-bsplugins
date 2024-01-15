@@ -28,7 +28,7 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
 
   if (!index.siblingAtColumn(0).data().isValid()) {
     const auto widget = option.widget;
-    const auto style  = widget ? widget->style() : QApplication::style();
+    const auto style  = QApplication::style();
 
     QStyleOptionFrame optFrame;
     optFrame.initFrom(widget);
