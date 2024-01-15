@@ -283,8 +283,8 @@ static T* findBaseModel(QAbstractItemModel* sourceModel)
 bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
                                          int row, int column, const QModelIndex& parent)
 {
-  const auto idx      = row != rowCount(parent) ? index(row, column, parent)
-                                                : index(parent.row() + 1, column);
+  const auto idx = row != -1 && row != rowCount(parent) ? index(row, column, parent)
+                                                        : index(parent.row() + 1, 0);
   const int sourceRow = mapLowerBoundToSourceRow(idx);
 
   QString groupName;
@@ -302,7 +302,7 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
     groupName              = groupInfo ? groupInfo->name : QString();
   }
 
-  if (!sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex())) {
+  if (!sourceModel()->dropMimeData(data, action, sourceRow, 0, QModelIndex())) {
     return false;
   }
 
