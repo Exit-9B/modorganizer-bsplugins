@@ -219,16 +219,13 @@ bool PluginListView::moveSelection(int key)
     return false;
   }
 
-  const auto cindex = indexViewToModel(currentIndex(), m_PluginModel);
   const auto sourceRows =
-      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel);
+      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel, true);
 
   const auto sortOrder = m_SortProxy ? m_SortProxy->sortOrder() : Qt::DescendingOrder;
   const int offset     = key == Qt::Key_Up && sortOrder == Qt::AscendingOrder ? -1 : 1;
 
   m_PluginModel->shiftPluginsPriority(sourceRows, offset);
-
-  // setSelected(cindex, sourceRows);
 
   return true;
 }
@@ -240,7 +237,7 @@ bool PluginListView::toggleSelectionState()
   }
 
   const auto sourceRows =
-      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel);
+      indexViewToModel(selectionModel()->selectedRows(), m_PluginModel, false);
 
   m_PluginModel->toggleState(sourceRows);
 
@@ -261,15 +258,28 @@ QModelIndex PluginListView::indexViewToModel(const QModelIndex& index,
 }
 
 QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& indices,
-                                                 const QAbstractItemModel* model) const
+                                                 const QAbstractItemModel* model,
+                                                 bool includeChildren) const
 {
   QModelIndexList result;
+
   for (const auto& idx : indices) {
     const auto modelIdx = indexViewToModel(idx, model);
     if (modelIdx.isValid()) {
       result.append(modelIdx);
     }
+
+    if (includeChildren) {
+      for (int row = 0, count = idx.model()->rowCount(idx); row < count; ++row) {
+        const auto childIdx = idx.model()->index(row, 0, idx);
+        const auto modelChildIdx = indexViewToModel(childIdx, model);
+        if (modelChildIdx.isValid()) {
+          result.append(modelChildIdx);
+        }
+      }
+    }
   }
+
   return result;
 }
 

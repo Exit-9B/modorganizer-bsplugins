@@ -55,7 +55,8 @@ private:
                                const QAbstractItemModel* model) const;
 
   QModelIndexList indexViewToModel(const QModelIndexList& indices,
-                                   const QAbstractItemModel* model) const;
+                                   const QAbstractItemModel* model,
+                                   bool includeChildren = true) const;
 
 private:
   bool m_FirstPaint = true;
