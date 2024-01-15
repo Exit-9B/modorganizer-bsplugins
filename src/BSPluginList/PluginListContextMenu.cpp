@@ -44,7 +44,47 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
     m_Selected = {index};
   }
 
-  if (!m_Selected.isEmpty()) {
+  const bool filesSelected =
+      !selectedRows.isEmpty() && std::ranges::all_of(selectedRows, [=](auto&& idx) {
+        return !idx.model()->hasChildren(idx);
+      });
+
+  const bool groupsSelected =
+      !selectedRows.isEmpty() && std::ranges::all_of(selectedRows, [=](auto&& idx) {
+        return idx.model()->hasChildren(idx);
+      });
+
+  QMenu* const allItemsMenu = addMenu(tr("All Items"));
+
+  allItemsMenu->addAction(tr("Collapse all"), [this]() {
+    m_View->collapseAll();
+    m_View->scrollToTop();
+  });
+  allItemsMenu->addAction(tr("Expand all"), [this]() {
+    m_View->expandAll();
+    m_View->scrollToTop();
+  });
+
+  allItemsMenu->addSeparator();
+
+  allItemsMenu->addAction(tr("Enable all"), [this]() {
+    if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
+                              tr("Really enable all plugins?"),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_Model->setEnabledAll(true);
+    }
+  });
+  allItemsMenu->addAction(tr("Disable all"), [this]() {
+    if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
+                              tr("Really disable all plugins?"),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_Model->setEnabledAll(false);
+    }
+  });
+
+  addSeparator();
+
+  if (filesSelected) {
     addAction(tr("Enable selected"), [this]() {
       m_Model->setEnabled(m_Selected, true);
     });
@@ -55,49 +95,45 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
     addSeparator();
   }
 
-  addAction(tr("Enable all"), [this]() {
-    if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
-                              tr("Really enable all plugins?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_Model->setEnabledAll(true);
-    }
-  });
-  addAction(tr("Disable all"), [this]() {
-    if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
-                              tr("Really disable all plugins?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_Model->setEnabledAll(false);
-    }
-  });
+  if (groupsSelected && selectedRows.length() == 1) {
+    const auto selectedIndex = selectedRows.first();
+    const bool expanded      = view->isExpanded(selectedIndex);
+    addAction(tr("Collapse others"), [=, this]() {
+      m_View->collapseAll();
+      m_View->setExpanded(selectedIndex, expanded);
+      m_View->scrollTo(selectedIndex);
+    });
+
+    addSeparator();
+  }
 
   if (!m_Selected.isEmpty()) {
     addSeparator();
     QMenu* const sendToMenu = addMenu(tr("Send to... "));
-    sendToMenu->addAction(tr("Top"), [this]() {
+    sendToMenu->addAction(tr("Top"), [this, selectedIndex = selectedRows.first()]() {
+      const auto persistentIndex = QPersistentModelIndex(selectedIndex);
       m_Model->sendToPriority(m_Selected, 0);
+      m_View->scrollTo(persistentIndex);
     });
-    sendToMenu->addAction(tr("Bottom"), [this]() {
+    sendToMenu->addAction(tr("Bottom"), [this, selectedIndex = selectedRows.first()]() {
+      const auto persistentIndex = QPersistentModelIndex(selectedIndex);
       m_Model->sendToPriority(m_Selected, std::numeric_limits<int>::max());
+      m_View->scrollTo(persistentIndex);
     });
-    sendToMenu->addAction(tr("Priority..."), [this]() {
-      bool ok;
-      const int newPriority =
-          QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
-                               tr("Set the priority of the selected plugins"), 0, 0,
-                               std::numeric_limits<int>::max(), 1, &ok);
-      if (!ok)
-        return;
+    sendToMenu->addAction(
+        tr("Priority..."), [this, selectedIndex = selectedRows.first()]() {
+          bool ok;
+          const int newPriority =
+              QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
+                                   tr("Set the priority of the selected plugins"), 0, 0,
+                                   std::numeric_limits<int>::max(), 1, &ok);
+          if (!ok)
+            return;
 
-      m_Model->sendToPriority(m_Selected, newPriority);
-    });
-
-    const bool filesSelected = std::ranges::all_of(selectedRows, [=](auto&& idx) {
-      return !idx.model()->hasChildren(idx);
-    });
-
-    const bool groupsSelected = std::ranges::all_of(selectedRows, [=](auto&& idx) {
-      return idx.model()->hasChildren(idx);
-    });
+          const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+          m_Model->sendToPriority(m_Selected, newPriority);
+          m_View->scrollTo(persistentIndex);
+        });
 
     if (filesSelected) {
       addAction(tr("Create Group..."), [this]() {
