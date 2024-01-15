@@ -19,7 +19,7 @@ jobs:
         with:
           mo2-third-parties: boost fmt libloot zlib
           mo2-dependencies: cmake_common lootcli uibase
-          qt-modules: qtwebchannel qtwebengine
+          qt-modules: qtpositioning qtwebchannel qtwebengine
 
       - name: Install
         run: cmake --install ${{env.SOURCE_ROOT}}/vsbuild --config ${{env.BUILD_TYPE}} --prefix ${{env.SOURCE_ROOT}}/install
