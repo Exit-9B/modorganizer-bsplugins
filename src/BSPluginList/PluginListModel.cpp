@@ -498,9 +498,26 @@ bool PluginListModel::setData(const QModelIndex& index, const QVariant& value, i
     const int id = index.row();
     m_Plugins->setEnabled(id, value.toInt() == Qt::Checked);
     emit dataChanged(this->index(0, 0), this->index(rowCount() - 1, COL_MODINDEX),
-                     {Qt::DisplayRole, Qt::CheckStateRole});
+                     {Qt::EditRole, Qt::CheckStateRole});
     emit pluginStatesChanged({index});
     return true;
+  } else if (role == Qt::EditRole) {
+    if (index.column() == COL_PRIORITY) {
+      bool ok;
+      const int newPriority = value.toInt(&ok);
+      if (ok) {
+        int destination = newPriority;
+        if (newPriority > index.data(Qt::EditRole).toInt()) {
+          ++destination;
+        }
+        m_Plugins->moveToPriority({index.row()}, destination);
+        emit dataChanged(this->index(0, 0),
+                         this->index(rowCount() - 1, columnCount() - 1),
+                         {Qt::EditRole, GroupingRole});
+        emit pluginOrderChanged();
+        return true;
+      }
+    }
   }
 
   return false;
