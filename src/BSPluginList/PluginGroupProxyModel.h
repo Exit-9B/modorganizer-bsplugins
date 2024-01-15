@@ -55,9 +55,8 @@ private slots:
       QAbstractItemModel::LayoutChangeHint hint =
           QAbstractItemModel::NoLayoutChangeHint);
   void onSourceModelReset();
-  void onSourceRowsInserted(const QModelIndex& parent, int first, int last);
-  void onSourceRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last);
-  void onSourceRowsRemoved();
+  void onSourceRowsInserted(const QModelIndex& parent);
+  void onSourceRowsRemoved(const QModelIndex& parent);
 
 private:
   static constexpr std::size_t NO_ID = std::numeric_limits<std::size_t>::max();

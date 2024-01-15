@@ -27,8 +27,6 @@ void PluginGroupProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
             &PluginGroupProxyModel::onSourceLayoutChanged, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::rowsInserted, this,
             &PluginGroupProxyModel::onSourceRowsInserted, Qt::UniqueConnection);
-    connect(sourceModel, &QAbstractItemModel::rowsAboutToBeRemoved, this,
-            &PluginGroupProxyModel::onSourceRowsAboutToBeRemoved, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::rowsRemoved, this,
             &PluginGroupProxyModel::onSourceRowsRemoved, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::modelReset, this,
@@ -352,9 +350,7 @@ void PluginGroupProxyModel::onSourceModelReset()
   emit endResetModel();
 }
 
-void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent,
-                                                 [[maybe_unused]] int first,
-                                                 [[maybe_unused]] int last)
+void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent)
 {
   if (parent.isValid()) {
     return;
@@ -365,51 +361,15 @@ void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent,
   emit layoutChanged();
 }
 
-void PluginGroupProxyModel::onSourceRowsAboutToBeRemoved(const QModelIndex& parent,
-                                                         int first, int last)
+void PluginGroupProxyModel::onSourceRowsRemoved(const QModelIndex& parent)
 {
   if (parent.isValid()) {
     return;
   }
 
-  int lastClamped = last;
-  while (lastClamped >= first) {
-    const auto lastProxy = m_SourceMap.at(lastClamped);
-    const auto& lastItem = m_ProxyItems.at(lastProxy);
-    const int lastRow    = lastItem.row;
-    if (lastItem.parentId != NO_ID) {
-      const auto& parentItem = m_ProxyItems.at(lastItem.parentId);
-      const auto parentIndex = index(parentItem.row, 0);
-      const int distance     = std::min(lastClamped - first, lastRow);
-      const int firstRow     = lastRow - distance;
-      if (firstRow == 0) {
-        beginRemoveRows(QModelIndex(), parentItem.row, parentItem.row);
-      } else {
-        beginRemoveRows(parentIndex, firstRow, lastRow);
-      }
-      lastClamped -= distance + 1;
-    } else {
-      int firstClamped = lastClamped;
-      while (firstClamped > first) {
-        const auto id    = m_SourceMap.at(firstClamped - 1);
-        const auto& item = m_ProxyItems.at(id);
-        if (item.parentId != NO_ID) {
-          break;
-        }
-        --firstClamped;
-      }
-      const auto& firstItem = m_ProxyItems[firstClamped];
-      const int firstRow    = firstItem.row;
-      beginRemoveRows(QModelIndex(), firstRow, lastRow);
-      lastClamped = firstClamped - 1;
-    }
-  }
-}
-
-void PluginGroupProxyModel::onSourceRowsRemoved()
-{
+  emit layoutAboutToBeChanged();
   buildGroups();
-  endRemoveRows();
+  emit layoutChanged();
 }
 
 void PluginGroupProxyModel::buildGroups()
@@ -503,8 +463,10 @@ std::size_t PluginGroupProxyModel::createItem(const QString& name, int row,
     const auto it = m_ItemMap.find(name) + repeat;
     auto& item    = m_ProxyItems.at(it->second);
     if (row != item.row) {
-      changePersistentIndex(createIndex(item.row, 0, it->second),
-                            createIndex(row, 0, it->second));
+      for (int column = 0, count = columnCount(); column < count; ++column) {
+        changePersistentIndex(createIndex(item.row, column, it->second),
+                              createIndex(row, column, it->second));
+      }
     }
     item = ProxyItem{row, sourceRow, parent, std::move(group)};
     return it->second;
