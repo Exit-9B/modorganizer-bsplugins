@@ -35,6 +35,7 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   ui->pluginList->setModel(m_GroupProxy);
   ui->pluginList->setup();
   ui->pluginList->sortByColumn(PluginListModel::COL_PRIORITY, Qt::AscendingOrder);
+  ui->pluginList->expandAll();
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
