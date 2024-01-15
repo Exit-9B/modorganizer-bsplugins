@@ -56,14 +56,10 @@ private slots:
           QAbstractItemModel::NoLayoutChangeHint);
   void onSourceModelReset();
   void onSourceRowsInserted(const QModelIndex& parent, int first, int last);
-  void onSourceRowsRemoved(const QModelIndex& parent, int first, int last);
+  void onSourceRowsAboutToBeRemoved(const QModelIndex& parent, int first, int last);
+  void onSourceRowsRemoved();
 
 private:
-  [[nodiscard]] int mapLowerBoundToSourceRow(const QModelIndex& index) const;
-  [[nodiscard]] bool isAboveDivider(std::size_t id) const;
-  [[nodiscard]] bool isBelowDivider(std::size_t id) const;
-  void buildGroups();
-
   static constexpr std::size_t NO_ID = std::numeric_limits<std::size_t>::max();
 
   struct Group
@@ -71,7 +67,7 @@ private:
     QString name;
     std::vector<std::size_t> children;
 
-    Group(const QString& name) : name{name} {}
+    explicit Group(const QString& name) : name{name} {}
   };
 
   struct ProxyItem
@@ -89,9 +85,20 @@ private:
     }
   };
 
+  [[nodiscard]] int offsetFromSource(int sourceRow) const;
+  [[nodiscard]] int mapLowerBoundToSourceRow(const QModelIndex& index) const;
+  [[nodiscard]] bool isAboveDivider(std::size_t id) const;
+  [[nodiscard]] bool isBelowDivider(std::size_t id) const;
+
+  void buildGroups();
+  [[nodiscard]] std::size_t createItem(const QString& name, int row, int sourceRow,
+                                       std::size_t parent, std::shared_ptr<Group> group,
+                                       int repeat = 0);
+
   std::vector<ProxyItem> m_ProxyItems;
+  boost::container::flat_multimap<QString, std::size_t> m_ItemMap;
   std::vector<std::size_t> m_TopLevel;
-  boost::container::flat_map<int, std::size_t> m_SourceMap;
+  std::vector<std::size_t> m_SourceMap;
 
   MOBase::IOrganizer* m_Organizer;
 };

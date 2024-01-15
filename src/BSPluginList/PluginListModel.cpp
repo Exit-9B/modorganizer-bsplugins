@@ -541,8 +541,8 @@ bool PluginListModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
 
   PluginListDropInfo dropInfo{data, row, parent, m_Plugins};
   m_Plugins->moveToPriority(dropInfo.sourceRows(), dropInfo.destination());
-  emit dataChanged(index(0, COL_PRIORITY), index(rowCount() - 1, COL_MODINDEX),
-                   {Qt::DisplayRole});
+  emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1),
+                   {Qt::DisplayRole, GroupingRole});
   emit pluginOrderChanged();
 
   return true;
@@ -566,8 +566,8 @@ void PluginListModel::movePlugin(const QString& name, [[maybe_unused]] int oldPr
                                  int newPriority)
 {
   m_Plugins->setPriority(name, newPriority);
-  emit dataChanged(index(0, COL_PRIORITY), index(rowCount() - 1, COL_MODINDEX),
-                   {Qt::DisplayRole});
+  emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1),
+                   {Qt::DisplayRole, GroupingRole});
   emit pluginOrderChanged();
 }
 
@@ -601,6 +601,10 @@ void PluginListModel::setEnabledAll(bool enabled)
 
 void PluginListModel::setEnabled(const QModelIndexList& indices, bool enabled)
 {
+  if (indices.empty()) {
+    return;
+  }
+
   std::vector<int> ids;
   ids.reserve(indices.size());
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
@@ -612,6 +616,10 @@ void PluginListModel::setEnabled(const QModelIndexList& indices, bool enabled)
 
 void PluginListModel::sendToPriority(const QModelIndexList& indices, int priority)
 {
+  if (indices.empty()) {
+    return;
+  }
+
   std::vector<int> ids;
   ids.reserve(indices.size());
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
@@ -625,6 +633,10 @@ void PluginListModel::sendToPriority(const QModelIndexList& indices, int priorit
 
 void PluginListModel::shiftPluginsPriority(const QModelIndexList& indices, int offset)
 {
+  if (indices.empty()) {
+    return;
+  }
+
   std::vector<int> ids;
   ids.reserve(indices.size());
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
@@ -638,6 +650,10 @@ void PluginListModel::shiftPluginsPriority(const QModelIndexList& indices, int o
 
 void PluginListModel::toggleState(const QModelIndexList& indices)
 {
+  if (indices.empty()) {
+    return;
+  }
+
   std::vector<int> ids;
   ids.reserve(indices.size());
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
@@ -649,6 +665,10 @@ void PluginListModel::toggleState(const QModelIndexList& indices)
 
 void PluginListModel::setGroup(const QModelIndexList& indices, const QString& group)
 {
+  if (indices.empty()) {
+    return;
+  }
+
   std::vector<int> ids;
   ids.reserve(indices.size());
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {

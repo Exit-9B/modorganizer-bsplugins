@@ -132,6 +132,10 @@ private:
   void clearGroups();
   void readGroups(const QString& fileName);
   void writeGroups(const QString& fileName) const;
+  [[nodiscard]] QString destinationGroup(
+      int oldPriority, int newPriority, const QString& originalGroup,
+      const boost::container::flat_set<QString, MOBase::FileNameComparator>&
+          exclusions);
 
   void pluginStatesChanged(const QStringList& pluginNames, PluginStates state) const;
   void enforcePluginRelationships();

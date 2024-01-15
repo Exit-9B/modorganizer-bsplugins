@@ -332,6 +332,72 @@ bool PluginList::canMoveToPriority(const std::vector<int>& ids, int newPriority)
   return true;
 }
 
+QString PluginList::destinationGroup(
+    int oldPriority, int newPriority, const QString& originalGroup,
+    const boost::container::flat_set<QString, MOBase::FileNameComparator>& exclusions)
+{
+  const auto findPrevious = [&, this](int priority) -> FileInfo* {
+    for (int i = priority - 1; i >= 0; --i) {
+      const auto& plugin = m_Plugins.at(m_PluginsByPriority[i]);
+      if (!exclusions.contains(plugin->name())) {
+        return plugin.get();
+      }
+    }
+    return nullptr;
+  };
+
+  const auto findNext = [&, this](int priority) -> FileInfo* {
+    for (int i = priority + 1; i < m_PluginsByPriority.size(); ++i) {
+      const auto& plugin = m_Plugins.at(m_PluginsByPriority[i]);
+      if (!exclusions.contains(plugin->name())) {
+        return plugin.get();
+      }
+    }
+    return nullptr;
+  };
+
+  bool removedFromGroup = false;
+  if (!originalGroup.isEmpty()) {
+    if (const auto previous = findPrevious(oldPriority)) {
+      if (previous->group() == originalGroup) {
+        removedFromGroup = true;
+      }
+    }
+
+    if (const auto next = findNext(oldPriority)) {
+      if (next->group() == originalGroup) {
+        removedFromGroup = true;
+      }
+    }
+  }
+
+  QString displacedGroup;
+  if (const auto displaced = m_Plugins.at(m_PluginsByPriority[newPriority])) {
+    displacedGroup = displaced->group();
+  }
+
+  QString neighborGroup;
+  if (newPriority < oldPriority) {
+    if (const auto neighbor = findPrevious(newPriority)) {
+      neighborGroup = neighbor->group();
+    }
+  } else if (newPriority > oldPriority) {
+    if (const auto neighbor = findNext(newPriority)) {
+      neighborGroup = neighbor->group();
+    }
+  }
+
+  if (!displacedGroup.isEmpty() && neighborGroup == displacedGroup) {
+    return displacedGroup;
+  }
+
+  if (!removedFromGroup || displacedGroup == originalGroup) {
+    return originalGroup;
+  }
+
+  return QString();
+}
+
 void PluginList::moveToPriority(std::vector<int> ids, int destination)
 {
   if (ids.empty()) {
@@ -369,6 +435,8 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
       }
 
       const int newPriority = destination;
+      pluginToMove->setGroup(
+          destinationGroup(priority, newPriority, pluginToMove->group(), names));
       for (int i = priority; i > destination; --i) {
         m_PluginsByPriority[i] = m_PluginsByPriority[i - 1];
         m_Plugins[m_PluginsByPriority[i]]->setPriority(i);
@@ -386,6 +454,8 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
       }
 
       const int newPriority = --destination;
+      pluginToMove->setGroup(
+          destinationGroup(priority, newPriority, pluginToMove->group(), names));
       for (int i = priority; i < newPriority; ++i) {
         m_PluginsByPriority[i] = m_PluginsByPriority[i + 1];
         m_Plugins[m_PluginsByPriority[i]]->setPriority(i);

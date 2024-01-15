@@ -191,7 +191,7 @@ bool PluginListView::event(QEvent* event)
     }
 
     bool sorted = false;
-    if (const auto proxy = qobject_cast<const PluginSortFilterProxyModel*>(model())) {
+    if (const auto proxy = m_SortProxy) {
       sorted = proxy->sortColumn() == PluginListModel::COL_PRIORITY;
     }
 
@@ -269,7 +269,10 @@ QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& indices,
 {
   QModelIndexList result;
   for (const auto& idx : indices) {
-    result.append(indexViewToModel(idx, model));
+    const auto modelIdx = indexViewToModel(idx, model);
+    if (modelIdx.isValid()) {
+      result.append(modelIdx);
+    }
   }
   return result;
 }

@@ -29,11 +29,13 @@ PluginListDropInfo::PluginListDropInfo(const QMimeData* data, int insertId,
     insertId = parent.row();
   }
 
-  if (insertId < 0 || insertId >= plugins->pluginCount()) {
-    m_Destination = plugins->pluginCount();
-  } else {
-    const auto plugin = plugins->getPlugin(insertId);
-    m_Destination = plugin ? plugin->priority() : plugins->pluginCount();
+  if (plugins) {
+    if (insertId < 0 || insertId >= plugins->pluginCount()) {
+      m_Destination = plugins->pluginCount();
+    } else {
+      const auto plugin = plugins->getPlugin(insertId);
+      m_Destination     = plugin ? plugin->priority() : plugins->pluginCount();
+    }
   }
 }
 

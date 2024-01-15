@@ -27,6 +27,8 @@ void PluginGroupProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
             &PluginGroupProxyModel::onSourceLayoutChanged, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::rowsInserted, this,
             &PluginGroupProxyModel::onSourceRowsInserted, Qt::UniqueConnection);
+    connect(sourceModel, &QAbstractItemModel::rowsAboutToBeRemoved, this,
+            &PluginGroupProxyModel::onSourceRowsAboutToBeRemoved, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::rowsRemoved, this,
             &PluginGroupProxyModel::onSourceRowsRemoved, Qt::UniqueConnection);
     connect(sourceModel, &QAbstractItemModel::modelReset, this,
@@ -78,7 +80,7 @@ QModelIndex PluginGroupProxyModel::index(int row, int column,
     }
   } else {
     if (row < m_TopLevel.size()) {
-      const auto id = m_TopLevel.at(row);
+      const auto id = m_TopLevel[row];
       return createIndex(row, column, id);
     }
   }
@@ -103,17 +105,14 @@ QModelIndex PluginGroupProxyModel::mapFromSource(const QModelIndex& sourceIndex)
     return QModelIndex();
   }
 
-  const auto ub = m_SourceMap.upper_bound(sourceIndex.row());
-  if (ub == m_SourceMap.begin()) {
-    return index(sourceIndex.row(), sourceIndex.column());
+  const auto id    = m_SourceMap[sourceIndex.row()];
+  const auto& item = m_ProxyItems.at(id);
+  QModelIndex parentIndex;
+  if (item.parentId != NO_ID) {
+    const auto& parentItem = m_ProxyItems.at(item.parentId);
+    parentIndex            = index(parentItem.row, 0);
   }
-
-  const auto& [keyRow, valueId] = *std::prev(ub);
-  const auto offset             = valueId - keyRow;
-  const auto id                 = sourceIndex.row() + offset;
-  const auto& item              = m_ProxyItems.at(id);
-
-  return index(item.row, sourceIndex.column());
+  return index(item.row, sourceIndex.column(), parentIndex);
 }
 
 QModelIndex PluginGroupProxyModel::mapToSource(const QModelIndex& proxyIndex) const
@@ -289,25 +288,27 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
   const auto idx      = row != rowCount(parent) ? index(row, column, parent)
                                                 : index(parent.row() + 1, column);
   const int sourceRow = mapLowerBoundToSourceRow(idx);
+
+  QString groupName;
+  const auto baseModel = findBaseModel<PluginListModel>(sourceModel());
+  PluginListDropInfo dropInfo{data, row, parent,
+                              baseModel ? baseModel->m_Plugins : nullptr};
+  if (parent.isValid()) {
+    QModelIndex groupIdx = parent;
+    while (groupIdx.parent().isValid()) {
+      groupIdx = groupIdx.parent();
+    }
+
+    const auto& parentItem = m_ProxyItems.at(groupIdx.internalId());
+    const auto& groupInfo  = parentItem.groupInfo;
+    groupName              = groupInfo ? groupInfo->name : QString();
+  }
+
   if (!sourceModel()->dropMimeData(data, action, sourceRow, column, QModelIndex())) {
     return false;
   }
 
-  if (const auto baseModel = findBaseModel<PluginListModel>(sourceModel())) {
-    PluginListDropInfo dropInfo{data, row, parent, baseModel->m_Plugins};
-
-    QString&& groupName = QString();
-    if (parent.isValid()) {
-      QModelIndex groupIdx = parent;
-      while (groupIdx.parent().isValid()) {
-        groupIdx = groupIdx.parent();
-      }
-
-      const auto& parentItem = m_ProxyItems.at(groupIdx.internalId());
-      const auto& groupInfo  = parentItem.groupInfo;
-      groupName              = groupInfo ? groupInfo->name : QString();
-    }
-
+  if (baseModel) {
     baseModel->m_Plugins->setGroup(dropInfo.sourceRows(), groupName);
     emit layoutAboutToBeChanged();
     buildGroups();
@@ -364,22 +365,55 @@ void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent,
   emit layoutChanged();
 }
 
-void PluginGroupProxyModel::onSourceRowsRemoved(const QModelIndex& parent,
-                                                [[maybe_unused]] int first,
-                                                [[maybe_unused]] int last)
+void PluginGroupProxyModel::onSourceRowsAboutToBeRemoved(const QModelIndex& parent,
+                                                         int first, int last)
 {
   if (parent.isValid()) {
     return;
   }
 
-  emit layoutAboutToBeChanged();
+  int lastClamped = last;
+  while (lastClamped >= first) {
+    const auto lastProxy = m_SourceMap.at(lastClamped);
+    const auto& lastItem = m_ProxyItems.at(lastProxy);
+    const int lastRow    = lastItem.row;
+    if (lastItem.parentId != NO_ID) {
+      const auto& parentItem = m_ProxyItems.at(lastItem.parentId);
+      const auto parentIndex = index(parentItem.row, 0);
+      const int distance     = std::min(lastClamped - first, lastRow);
+      const int firstRow     = lastRow - distance;
+      if (firstRow == 0) {
+        beginRemoveRows(QModelIndex(), parentItem.row, parentItem.row);
+      } else {
+        beginRemoveRows(parentIndex, firstRow, lastRow);
+      }
+      lastClamped -= distance + 1;
+    } else {
+      int firstClamped = lastClamped;
+      while (firstClamped > first) {
+        const auto id    = m_SourceMap.at(firstClamped - 1);
+        const auto& item = m_ProxyItems.at(id);
+        if (item.parentId != NO_ID) {
+          break;
+        }
+        --firstClamped;
+      }
+      const auto& firstItem = m_ProxyItems[firstClamped];
+      const int firstRow    = firstItem.row;
+      beginRemoveRows(QModelIndex(), firstRow, lastRow);
+      lastClamped = firstClamped - 1;
+    }
+  }
+}
+
+void PluginGroupProxyModel::onSourceRowsRemoved()
+{
   buildGroups();
-  emit layoutChanged();
+  endRemoveRows();
 }
 
 void PluginGroupProxyModel::buildGroups()
 {
-  m_ProxyItems.clear();
   m_TopLevel.clear();
   m_SourceMap.clear();
 
@@ -394,7 +428,7 @@ void PluginGroupProxyModel::buildGroups()
     const auto plugin =
         idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
 
-    if (plugin) {
+    if (sorted && plugin) {
       if (sortProxy->sortOrder() == Qt::AscendingOrder) {
         if (plugin->forceLoaded()) {
           primaryDivider = i;
@@ -412,10 +446,13 @@ void PluginGroupProxyModel::buildGroups()
     }
   }
 
+  boost::container::flat_map<QString, int> groupRepeats;
+
   QString lastGroup;
   std::size_t groupId = NO_ID;
   for (int i = 0; i < sourceModel()->rowCount(); ++i) {
     const auto idx      = sourceModel()->index(i, 0);
+    const QString name  = idx.data().toString();
     const QString group = idx.data(PluginListModel::GroupingRole).toString();
 
     if (sorted && group != lastGroup) {
@@ -424,13 +461,10 @@ void PluginGroupProxyModel::buildGroups()
       if (group.isNull()) {
         groupId = NO_ID;
       } else {
-        groupId = m_ProxyItems.size();
-
-        const int row        = static_cast<int>(m_TopLevel.size());
-        const std::size_t id = m_ProxyItems.size();
-        m_TopLevel.push_back(id);
-        m_ProxyItems.emplace_back(row, -1, NO_ID, std::make_shared<Group>(group));
-        m_SourceMap[i] = m_ProxyItems.size();
+        const int row = static_cast<int>(m_TopLevel.size());
+        groupId = createItem(group, row, -1, NO_ID, std::make_shared<Group>(group),
+                             groupRepeats[group]++);
+        m_TopLevel.push_back(groupId);
       }
     }
 
@@ -438,22 +472,42 @@ void PluginGroupProxyModel::buildGroups()
       auto& siblings =
           groupId == NO_ID ? m_TopLevel : m_ProxyItems[groupId].groupInfo->children;
 
-      const int row        = static_cast<int>(siblings.size());
-      const std::size_t id = m_ProxyItems.size();
+      const int row = static_cast<int>(siblings.size());
+      const auto id = createItem(name, row, i, groupId, nullptr);
       siblings.push_back(id);
-      m_ProxyItems.emplace_back(row, i, groupId, nullptr);
+      m_SourceMap.push_back(id);
     }
 
     if (sorted && (i == primaryDivider || i == masterDivider)) {
       lastGroup = QString();
       groupId   = NO_ID;
 
-      const int row        = static_cast<int>(m_TopLevel.size());
-      const std::size_t id = m_ProxyItems.size();
+      const QString key = QString();
+      const int row     = static_cast<int>(m_TopLevel.size());
+      const auto id     = createItem(key, row, -1, NO_ID, nullptr, groupRepeats[key]++);
       m_TopLevel.push_back(id);
-      m_ProxyItems.emplace_back(row, -1, NO_ID, nullptr);
-      m_SourceMap[i + 1] = m_ProxyItems.size();
     }
+  }
+}
+
+std::size_t PluginGroupProxyModel::createItem(const QString& name, int row,
+                                              int sourceRow, std::size_t parent,
+                                              std::shared_ptr<Group> group, int repeat)
+{
+  if (m_ItemMap.count(name) <= repeat) {
+    const auto id = m_ProxyItems.size();
+    m_ItemMap.emplace(name, id);
+    m_ProxyItems.emplace_back(row, sourceRow, parent, std::move(group));
+    return id;
+  } else {
+    const auto it = m_ItemMap.find(name) + repeat;
+    auto& item    = m_ProxyItems.at(it->second);
+    if (row != item.row) {
+      changePersistentIndex(createIndex(item.row, 0, it->second),
+                            createIndex(row, 0, it->second));
+    }
+    item = ProxyItem{row, sourceRow, parent, std::move(group)};
+    return it->second;
   }
 }
 
