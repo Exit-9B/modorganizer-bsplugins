@@ -99,3 +99,23 @@ void Settings::restoreState(QHeaderView* header) const
     header->restoreState(state);
   }
 }
+
+static QString geometrySettingName(const QDialog* dialog)
+{
+  return dialog->objectName() + "_geometry";
+}
+
+void Settings::saveGeometry(const QDialog* dialog)
+{
+  Organizer->setPersistent(BSPlugins::NAME, geometrySettingName(dialog),
+                           dialog->saveGeometry());
+}
+
+void Settings::restoreGeometry(QDialog* dialog)
+{
+  const auto geometry =
+      Organizer->persistent(BSPlugins::NAME, geometrySettingName(dialog)).toByteArray();
+  if (!geometry.isEmpty()) {
+    dialog->restoreGeometry(geometry);
+  }
+}

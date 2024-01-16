@@ -5,6 +5,8 @@
 
 #include <QAbstractItemModel>
 
+#include <functional>
+
 namespace BSPluginList
 {
 
@@ -63,6 +65,11 @@ public:
   bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
                     const QModelIndex& parent) override;
 
+  [[nodiscard]] QStringList
+  groups(std::function<bool(const TESData::FileInfo*)> pred = {}) const;
+  [[nodiscard]] QStringList masterGroups() const;
+  [[nodiscard]] QStringList regularGroups() const;
+
 public slots:
   void refresh();
 
@@ -96,6 +103,10 @@ public slots:
   // assign plugins to a group
   //
   void setGroup(const QModelIndexList& indices, const QString& group);
+
+  // send plugins to the bottom of a group
+  //
+  void sendToGroup(const QModelIndexList& indices, const QString& group, bool isESM);
 
 signals:
   void pluginStatesChanged(const QModelIndexList& indices) const;

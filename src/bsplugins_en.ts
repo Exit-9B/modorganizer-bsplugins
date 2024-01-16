@@ -99,6 +99,14 @@
         <source>Collapse others</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Group...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a group...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginListModel</name>
@@ -262,6 +270,17 @@
     </message>
     <message>
         <source>Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ListDialog</name>
+    <message>
+        <source>Select an item...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

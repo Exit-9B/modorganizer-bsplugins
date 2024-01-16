@@ -30,7 +30,10 @@ private:
   void addSelectedFilesActions();
   void addSelectedGroupActions();
   void addSelectionActions();
+  void addSendToMenu();
   void addOriginActions(MOBase::IModList* modList, MOBase::IPluginList* pluginList);
+
+  void sendSelectedToGroup();
 
   QModelIndex m_Index;
   PluginListModel* m_Model;
@@ -39,6 +42,10 @@ private:
   QModelIndexList m_ModelSelected;
   bool m_FilesSelected  = false;
   bool m_GroupsSelected = false;
+  bool m_FilesTogglable = false;
+  bool m_FilesESM = false;
+  bool m_FilesESP = false;
+  bool m_FilesMovable = false;
 };
 
 }  // namespace BSPluginList

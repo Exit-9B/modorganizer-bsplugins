@@ -565,6 +565,50 @@ bool PluginListModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
   return true;
 }
 
+QStringList
+PluginListModel::groups(std::function<bool(const TESData::FileInfo*)> pred) const
+{
+  boost::container::flat_set<QString> groupSet;
+  QStringList groups;
+  QString lastGroup;
+
+  for (int priority = 0, count = m_Plugins->pluginCount(); priority < count;
+       ++priority) {
+    const auto plugin = m_Plugins->getPluginByPriority(priority);
+
+    if (pred && !pred(plugin)) {
+      continue;
+    }
+
+    const auto& group = plugin ? plugin->group() : QString();
+    if (group.isEmpty() || group == lastGroup) {
+      continue;
+    }
+
+    auto [it, inserted] = groupSet.insert(group);
+    if (inserted) {
+      groups.append(group);
+    }
+    lastGroup = group;
+  }
+
+  return groups;
+}
+
+QStringList PluginListModel::masterGroups() const
+{
+  return groups([](auto&& plugin) {
+    return !plugin->forceLoaded() && plugin->isMasterFile();
+  });
+}
+
+QStringList PluginListModel::regularGroups() const
+{
+  return groups([](auto&& plugin) {
+    return !plugin->forceLoaded() && !plugin->isMasterFile();
+  });
+}
+
 void PluginListModel::refresh()
 {
   emit beginResetModel();
@@ -694,6 +738,33 @@ void PluginListModel::setGroup(const QModelIndexList& indices, const QString& gr
   m_Plugins->setGroup(std::move(ids), group);
   emit dataChanged(this->index(0, 0), this->index(rowCount() - 1, COL_MODINDEX),
                    {GroupingRole});
+}
+
+void PluginListModel::sendToGroup(const QModelIndexList& indices, const QString& group,
+                                  bool isESM)
+{
+  int destination = -1;
+  for (int priority = 0, count = m_Plugins->pluginCount(); priority < count;
+       ++priority) {
+    const auto plugin = m_Plugins->getPluginByPriority(priority);
+    if (plugin && plugin->isMasterFile() == isESM && plugin->group() == group) {
+      destination = priority + 1;
+    }
+  }
+
+  if (destination == -1)
+    return;
+
+  std::vector<int> ids;
+  ids.reserve(indices.size());
+  std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
+    return idx.row();
+  });
+  m_Plugins->setGroup(ids, group);
+  m_Plugins->moveToPriority(std::move(ids), destination);
+  emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1),
+                   {Qt::DisplayRole, GroupingRole});
+  emit pluginOrderChanged();
 }
 
 }  // namespace BSPluginList

@@ -1,4 +1,6 @@
 #include "PluginListContextMenu.h"
+#include "GUI/ListDialog.h"
+#include "MOPlugin/Settings.h"
 #include "PluginListModel.h"
 #include "PluginListView.h"
 
@@ -29,14 +31,37 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
   }
 
   m_FilesSelected =
-      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [=](auto&& idx) {
+      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [](auto&& idx) {
         return !idx.model()->hasChildren(idx);
       });
 
   m_GroupsSelected =
-      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [=](auto&& idx) {
+      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [](auto&& idx) {
         return idx.model()->hasChildren(idx);
       });
+
+  m_FilesTogglable =
+      m_FilesSelected && std::ranges::all_of(m_ViewSelected, [](auto&& idx) {
+        const auto plugin =
+            idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+        return plugin && plugin->canBeToggled();
+      });
+
+  m_FilesESM =
+      m_FilesSelected && std::ranges::all_of(m_ViewSelected, [](auto&& idx) {
+        const auto plugin =
+            idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+        return plugin && !plugin->forceLoaded() && plugin->isMasterFile();
+      });
+
+  m_FilesESP =
+      m_FilesSelected && std::ranges::all_of(m_ViewSelected, [](auto&& idx) {
+        const auto plugin =
+            idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+        return plugin && !plugin->forceLoaded() && !plugin->isMasterFile();
+      });
+
+  m_FilesMovable = m_FilesESM | m_FilesESP;
 
   addAllItemsMenu();
   addSelectedFilesActions();
@@ -113,34 +138,8 @@ void PluginListContextMenu::addSelectionActions()
     return;
 
   addSeparator();
-  QMenu* const sendToMenu = addMenu(tr("Send to... "));
-  sendToMenu->addAction(tr("Top"), [this]() {
-    const auto selectedIndex   = m_ViewSelected.first();
-    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-    m_Model->sendToPriority(m_ModelSelected, 0);
-    m_View->scrollTo(persistentIndex);
-  });
-  sendToMenu->addAction(tr("Bottom"), [this]() {
-    const auto selectedIndex   = m_ViewSelected.first();
-    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-    m_Model->sendToPriority(m_ModelSelected, std::numeric_limits<int>::max());
-    m_View->scrollTo(persistentIndex);
-  });
-  sendToMenu->addAction(tr("Priority..."), [this]() {
-    const auto selectedIndex = m_ViewSelected.first();
 
-    bool ok;
-    const int newPriority =
-        QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
-                             tr("Set the priority of the selected plugins"), 0, 0,
-                             std::numeric_limits<int>::max(), 1, &ok);
-    if (!ok)
-      return;
-
-    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-    m_Model->sendToPriority(m_ModelSelected, newPriority);
-    m_View->scrollTo(persistentIndex);
-  });
+  addSendToMenu();
 
   if (m_FilesSelected) {
     addAction(tr("Create Group..."), [this]() {
@@ -226,6 +225,45 @@ void PluginListContextMenu::addSelectionActions()
   }
 }
 
+void PluginListContextMenu::addSendToMenu()
+{
+  if (!m_FilesMovable) {
+    return;
+  }
+
+  QMenu* const sendToMenu = addMenu(tr("Send to... "));
+  sendToMenu->addAction(tr("Top"), [this]() {
+    const auto selectedIndex   = m_ViewSelected.first();
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, 0);
+    m_View->scrollTo(persistentIndex);
+  });
+  sendToMenu->addAction(tr("Bottom"), [this]() {
+    const auto selectedIndex   = m_ViewSelected.first();
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, std::numeric_limits<int>::max());
+    m_View->scrollTo(persistentIndex);
+  });
+  sendToMenu->addAction(tr("Priority..."), [this]() {
+    const auto selectedIndex = m_ViewSelected.first();
+
+    bool ok;
+    const int newPriority =
+        QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
+                             tr("Set the priority of the selected plugins"), 0, 0,
+                             std::numeric_limits<int>::max(), 1, &ok);
+    if (!ok)
+      return;
+
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, newPriority);
+    m_View->scrollTo(persistentIndex);
+  });
+  sendToMenu->addAction(tr("Group..."), [this]() {
+    sendSelectedToGroup();
+  });
+}
+
 static void openOriginExplorer(const QModelIndexList& indices,
                                MOBase::IModList* modList,
                                MOBase::IPluginList* pluginList)
@@ -269,6 +307,28 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
       setDefaultAction(infoAction);
     }
   }
+}
+
+void PluginListContextMenu::sendSelectedToGroup()
+{
+  GUI::ListDialog dialog{*Settings::instance(), m_View->topLevelWidget()};
+  dialog.setWindowTitle(tr("Select a group..."));
+  if (m_FilesESM) {
+    dialog.setChoices(m_Model->masterGroups());
+  } else if (m_FilesESP) {
+    dialog.setChoices(m_Model->regularGroups());
+  }
+
+  if (dialog.exec() != QDialog::Accepted) {
+    return;
+  }
+
+  const QString result = dialog.getChoice();
+  if (result.isEmpty()) {
+    return;
+  }
+
+  m_Model->sendToGroup(m_ModelSelected, result, m_FilesESM);
 }
 
 }  // namespace BSPluginList

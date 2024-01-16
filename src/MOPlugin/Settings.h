@@ -1,14 +1,17 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include "GUI/IGeometrySettings.h"
+
 #include <imoinfo.h>
 #include <lootcli/lootcli.h>
 
 #include <QColor>
+#include <QDialog>
 #include <QHeaderView>
 #include <QSettings>
 
-class Settings final
+class Settings final : public GUI::IGeometrySettings<QDialog>
 {
 public:
   static void init(MOBase::IOrganizer* organizer);
@@ -35,6 +38,11 @@ public:
 
   void saveState(const QHeaderView* header);
   void restoreState(QHeaderView* header) const;
+
+  // IGeometrySettings<QDialog>
+
+  void saveGeometry(const QDialog* dialog) override;
+  void restoreGeometry(QDialog* dialog) override;
 
 private:
   explicit Settings(MOBase::IOrganizer* organizer);
