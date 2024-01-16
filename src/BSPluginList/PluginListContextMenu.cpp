@@ -145,7 +145,23 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
         if (!ok || group.isEmpty())
           return;
 
+        const auto selectedRows = m_View->selectionModel()->selectedRows();
+        QList<QPersistentModelIndex> persistent;
+        persistent.reserve(selectedRows.length());
+        std::ranges::transform(selectedRows, std::back_inserter(persistent),
+                               [](auto&& idx) {
+                                 return QPersistentModelIndex(idx);
+                               });
+
+        const int priority = m_Selected.first()
+                                 .siblingAtColumn(PluginListModel::COL_PRIORITY)
+                                 .data()
+                                 .toInt();
+        m_Model->sendToPriority(m_Selected, priority);
         m_Model->setGroup(m_Selected, group);
+        for (const auto& index : persistent) {
+          m_View->setExpanded(index.parent(), true);
+        }
       });
     } else if (groupsSelected) {
       if (selectedRows.length() == 1) {
