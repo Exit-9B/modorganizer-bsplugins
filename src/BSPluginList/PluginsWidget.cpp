@@ -69,6 +69,13 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
     this->onSelectedOriginsChanged(origins);
   });
 
+  // HACK: the virtual file tree won't update unless we tell it to refresh
+  organizer->modList()->onModStateChanged(
+      [this](
+          [[maybe_unused]] const std::map<QString, MOBase::IModList::ModStates>& mods) {
+        m_Organizer->refresh();
+      });
+
   synchronizePluginLists(organizer);
   updatePluginCount();
 }
@@ -106,8 +113,9 @@ void PluginsWidget::updatePluginCount()
 
   for (int i = 0, count = m_PluginListModel->rowCount(); i < count; ++i) {
     const auto index = m_PluginListModel->index(i, 0);
-    const auto info =
-        index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+    const auto id    = index.data(PluginListModel::IndexRole).toInt();
+    const auto info  = m_PluginList->getPlugin(id);
+
     if (!info)
       continue;
 

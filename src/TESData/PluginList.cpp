@@ -214,6 +214,8 @@ void PluginList::refresh(bool invalidate)
     readGroups(groupsFile);
   }
 
+  computeCompileIndices();
+  refreshLoadOrder();
   testMasters();
 
   m_Refreshing = false;
@@ -561,24 +563,31 @@ MOBase::IPluginList::PluginStates PluginList::state(const QString& name) const
 
 void PluginList::setState(const QString& name, PluginStates state)
 {
-  const auto plugin = findPlugin(name);
-  if (!plugin) {
+  const auto it = m_PluginsByName.find(name);
+  if (it == m_PluginsByName.end()) {
+    MOBase::log::warn("Plugin not found: \"{}\"", name);
     return;
   }
 
-  const bool enabled = plugin->enabled();
-  const bool shouldEnable =
-      (state == STATE_ACTIVE && !plugin->forceDisabled()) || plugin->isAlwaysEnabled();
+  const auto plugin = m_Plugins.at(it->second).get();
 
-  if (shouldEnable != enabled) {
-    plugin->setEnabled(shouldEnable);
-    if (!isRefreshing()) {
-      computeCompileIndices();
-      refreshLoadOrder();
-      pluginStatesChanged({plugin->name()},
-                          shouldEnable ? STATE_ACTIVE : STATE_INACTIVE);
-      testMasters();
+  if (state == STATE_MISSING) {
+    m_Plugins.erase(m_Plugins.begin() + it->second);
+  } else {
+    const bool enabled      = plugin->enabled();
+    const bool shouldEnable = (state == STATE_ACTIVE && !plugin->forceDisabled()) ||
+                              plugin->isAlwaysEnabled();
+    if (shouldEnable == enabled) {
+      return;
     }
+    plugin->setEnabled(shouldEnable);
+  }
+
+  if (!isRefreshing()) {
+    computeCompileIndices();
+    refreshLoadOrder();
+    pluginStatesChanged({plugin->name()}, state);
+    testMasters();
   }
 }
 
@@ -841,6 +850,7 @@ void PluginList::scanDataFiles(bool invalidate)
   }
 
   const auto managedGame = m_Organizer->managedGame();
+  const auto modList     = m_Organizer->modList();
 
   const QStringList primaryPlugins =
       managedGame ? managedGame->primaryPlugins() : QStringList();
@@ -868,6 +878,14 @@ void PluginList::scanDataFiles(bool invalidate)
     const QString filename = entry->name();
 
     if (!isPluginFile(filename)) {
+      continue;
+    }
+
+    const auto origins = m_Organizer->getFileOrigins(filename);
+    if (std::ranges::all_of(origins, [modList](auto&& origin) {
+          return origin.compare("DATA", Qt::CaseInsensitive) != 0 &&
+                 !(modList->state(origin) & MOBase::IModList::STATE_ACTIVE);
+        })) {
       continue;
     }
 
@@ -900,6 +918,12 @@ void PluginList::scanDataFiles(bool invalidate)
     } catch (std::exception& e) {
       MOBase::log::error("Error parsing \"{}\": {}", fullPath, e.what());
     }
+  }
+
+  if (!invalidate) {
+    std::erase_if(m_Plugins, [&](auto&& plugin) {
+      return !plugin || !availablePlugins.contains(plugin->name(), Qt::CaseInsensitive);
+    });
   }
 
   assignConsecutivePriorities(m_Plugins);
@@ -1118,6 +1142,7 @@ void PluginList::refreshLoadOrder()
       plugin->setLoadOrder(-1);
     }
   }
+  emit pluginsListChanged();
 }
 
 #pragma endregion Helpers
