@@ -1,6 +1,8 @@
 #ifndef GUI_IGEOMETRYSETTINGS_H
 #define GUI_IGEOMETRYSETTINGS_H
 
+#include <concepts>
+
 namespace GUI
 {
 
@@ -33,6 +35,9 @@ private:
   IGeometrySettings<W>& m_Settings;
   W* m_Widget;
 };
+
+template <class W, std::derived_from<W> Derived>
+GeometrySaver(IGeometrySettings<W>&, Derived*) -> GeometrySaver<W>;
 
 }  // namespace GUI
 

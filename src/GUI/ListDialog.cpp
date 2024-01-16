@@ -19,7 +19,7 @@ ListDialog::~ListDialog() noexcept
 
 int ListDialog::exec()
 {
-  GeometrySaver<QDialog> gs{m_Settings, this};
+  GeometrySaver gs{m_Settings, this};
   return QDialog::exec();
 }
 
