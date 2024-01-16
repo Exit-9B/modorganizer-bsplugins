@@ -3,6 +3,7 @@
 #include "GUI/CopyEventFilter.h"
 #include "GUI/GenericIconDelegate.h"
 #include "MOPlugin/Settings.h"
+#include "PluginGroupProxyModel.h"
 #include "PluginListModel.h"
 #include "PluginListStyledItemDelegate.h"
 #include "PluginListViewMarkingScrollBar.h"
@@ -53,8 +54,11 @@ void PluginListView::setModel(QAbstractItemModel* model)
   for (auto nextModel = model; nextModel;) {
     const auto proxyModel = qobject_cast<QAbstractProxyModel*>(nextModel);
     if (proxyModel) {
-      if (const auto sortProxy =
-              qobject_cast<PluginSortFilterProxyModel*>(proxyModel)) {
+      if (const auto groupProxy = qobject_cast<PluginGroupProxyModel*>(proxyModel)) {
+        connect(groupProxy, &PluginGroupProxyModel::groupRenameRequested, this,
+                &PluginListView::onGroupRenameRequested);
+      } else if (const auto sortProxy =
+                     qobject_cast<PluginSortFilterProxyModel*>(proxyModel)) {
         m_SortProxy = sortProxy;
       }
       nextModel = proxyModel->sourceModel();
@@ -271,7 +275,7 @@ QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& indices,
 
     if (includeChildren) {
       for (int row = 0, count = idx.model()->rowCount(idx); row < count; ++row) {
-        const auto childIdx = idx.model()->index(row, 0, idx);
+        const auto childIdx      = idx.model()->index(row, 0, idx);
         const auto modelChildIdx = indexViewToModel(childIdx, model);
         if (modelChildIdx.isValid()) {
           result.append(modelChildIdx);
@@ -281,6 +285,32 @@ QModelIndexList PluginListView::indexViewToModel(const QModelIndexList& indices,
   }
 
   return result;
+}
+
+void PluginListView::onGroupRenameRequested(const QModelIndex& index,
+                                            const QString& name)
+{
+  if (!index.model()->hasChildren(index)) {
+    return;
+  }
+
+  QModelIndexList sourceRows;
+  for (int row = 0, count = index.model()->rowCount(index); row < count; ++row) {
+    const auto childIndex = index.model()->index(row, 0, index);
+    sourceRows.append(indexViewToModel(childIndex, m_PluginModel));
+  }
+
+  const auto persistentIndex = QPersistentModelIndex(index.model()->index(0, 0, index));
+  const bool expanded        = isExpanded(index);
+
+  m_PluginModel->setGroup(sourceRows, name);
+
+  const auto newIndex = persistentIndex.parent();
+  const auto newRight = newIndex.siblingAtColumn(index.model()->columnCount() - 1);
+  setExpanded(newIndex, expanded);
+  selectionModel()->select(QItemSelection(newIndex, newRight),
+                           QItemSelectionModel::ClearAndSelect);
+  selectionModel()->setCurrentIndex(newIndex, QItemSelectionModel::Current);
 }
 
 }  // namespace BSPluginList

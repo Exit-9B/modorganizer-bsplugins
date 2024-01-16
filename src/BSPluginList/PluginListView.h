@@ -58,6 +58,9 @@ private:
                                    const QAbstractItemModel* model,
                                    bool includeChildren = true) const;
 
+private slots:
+  void onGroupRenameRequested(const QModelIndex& index, const QString& name);
+
 private:
   bool m_FirstPaint = true;
   MarkerInfos m_Markers;

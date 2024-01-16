@@ -184,7 +184,20 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
           if (!ok || group.isEmpty())
             return;
 
+          const auto persistentIndex =
+              QPersistentModelIndex(selected.model()->index(0, 0, selected));
+          const bool expanded = m_View->isExpanded(selected);
+
           m_Model->setGroup(indices, group);
+
+          const auto groupIndex = persistentIndex.parent();
+          const auto groupRight =
+              groupIndex.siblingAtColumn(selected.model()->columnCount() - 1);
+          m_View->setExpanded(groupIndex, expanded);
+          m_View->selectionModel()->select(QItemSelection(groupIndex, groupRight),
+                                           QItemSelectionModel::ClearAndSelect);
+          m_View->selectionModel()->setCurrentIndex(groupIndex,
+                                                    QItemSelectionModel::Current);
         });
       }
 

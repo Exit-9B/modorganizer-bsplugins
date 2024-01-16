@@ -184,6 +184,39 @@ QVariant PluginGroupProxyModel::data(const QModelIndex& index, int role) const
   return QVariant();
 }
 
+bool PluginGroupProxyModel::setData(const QModelIndex& index, const QVariant& value,
+                                    int role)
+{
+  const auto& item = m_ProxyItems.at(index.internalId());
+  if (item.isSourceItem()) {
+    return sourceModel()->setData(mapToSource(index), value, role);
+  }
+
+  if (const auto& group = item.groupInfo) {
+    if (role == Qt::EditRole) {
+      if (index.column() == 0) {
+        const QString valueString = value.toString();
+        if (valueString.isEmpty())
+          return false;
+
+        emit groupRenameRequested(index, valueString);
+      }
+    }
+  }
+
+  return false;
+}
+
+QModelIndex PluginGroupProxyModel::buddy(const QModelIndex& index) const
+{
+  const auto& item = m_ProxyItems.at(index.internalId());
+  if (item.isSourceItem()) {
+    return mapFromSource(sourceModel()->buddy(mapToSource(index)));
+  }
+
+  return index;
+}
+
 QVariant PluginGroupProxyModel::headerData(int section, Qt::Orientation orientation,
                                            int role) const
 {

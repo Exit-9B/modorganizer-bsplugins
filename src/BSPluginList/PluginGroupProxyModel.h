@@ -39,6 +39,9 @@ public:
 
   Qt::ItemFlags flags(const QModelIndex& index) const override;
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+  bool setData(const QModelIndex& index, const QVariant& value,
+               int role = Qt::EditRole) override;
+  QModelIndex buddy(const QModelIndex& index) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const override;
 
@@ -47,6 +50,9 @@ public:
                        int column, const QModelIndex& parent) const override;
   bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
                     const QModelIndex& parent) override;
+
+signals:
+  void groupRenameRequested(const QModelIndex& index, const QString& name);
 
 private slots:
   void onSourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight,
