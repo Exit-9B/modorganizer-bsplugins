@@ -26,10 +26,19 @@ signals:
   void openModInformation(const QModelIndex& index);
 
 private:
+  void addAllItemsMenu();
+  void addSelectedFilesActions();
+  void addSelectedGroupActions();
+  void addSelectionActions();
+  void addOriginActions(MOBase::IModList* modList, MOBase::IPluginList* pluginList);
+
   QModelIndex m_Index;
   PluginListModel* m_Model;
   PluginListView* m_View;
-  QModelIndexList m_Selected;
+  QModelIndexList m_ViewSelected;
+  QModelIndexList m_ModelSelected;
+  bool m_FilesSelected  = false;
+  bool m_GroupsSelected = false;
 };
 
 }  // namespace BSPluginList

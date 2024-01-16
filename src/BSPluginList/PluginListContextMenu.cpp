@@ -2,8 +2,6 @@
 #include "PluginListModel.h"
 #include "PluginListView.h"
 
-#include <imodlist.h>
-#include <ipluginlist.h>
 #include <utility.h>
 
 #include <QInputDialog>
@@ -16,20 +14,6 @@
 namespace BSPluginList
 {
 
-static void openOriginExplorer(const QModelIndexList& indices,
-                               MOBase::IModList* modList,
-                               MOBase::IPluginList* pluginList)
-{
-  for (const auto& idx : indices) {
-    QString fileName   = idx.data().toString();
-    const auto modInfo = modList->getMod(pluginList->origin(fileName));
-    if (modInfo == nullptr) {
-      continue;
-    }
-    MOBase::shell::Explore(modInfo->absolutePath());
-  }
-}
-
 PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
                                              PluginListModel* model,
                                              PluginListView* view,
@@ -37,23 +21,32 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
                                              MOBase::IPluginList* pluginList)
     : QMenu(view), m_Index{index}, m_Model{model}, m_View{view}
 {
-  const auto selectedRows = view->selectionModel()->selectedRows();
-  if (!selectedRows.isEmpty()) {
-    m_Selected = view->indexViewToModel(selectedRows, model);
+  m_ViewSelected = view->selectionModel()->selectedRows();
+  if (!m_ViewSelected.isEmpty()) {
+    m_ModelSelected = view->indexViewToModel(m_ViewSelected, model);
   } else if (index.isValid()) {
-    m_Selected = {index};
+    m_ModelSelected = {index};
   }
 
-  const bool filesSelected =
-      !selectedRows.isEmpty() && std::ranges::all_of(selectedRows, [=](auto&& idx) {
+  m_FilesSelected =
+      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [=](auto&& idx) {
         return !idx.model()->hasChildren(idx);
       });
 
-  const bool groupsSelected =
-      !selectedRows.isEmpty() && std::ranges::all_of(selectedRows, [=](auto&& idx) {
+  m_GroupsSelected =
+      !m_ViewSelected.isEmpty() && std::ranges::all_of(m_ViewSelected, [=](auto&& idx) {
         return idx.model()->hasChildren(idx);
       });
 
+  addAllItemsMenu();
+  addSelectedFilesActions();
+  addSelectedGroupActions();
+  addSelectionActions();
+  addOriginActions(modList, pluginList);
+}
+
+void PluginListContextMenu::addAllItemsMenu()
+{
   QMenu* const allItemsMenu = addMenu(tr("All Items"));
 
   allItemsMenu->addAction(tr("Collapse all"), [this]() {
@@ -81,171 +74,199 @@ PluginListContextMenu::PluginListContextMenu(const QModelIndex& index,
       m_Model->setEnabledAll(false);
     }
   });
+}
+
+void PluginListContextMenu::addSelectedFilesActions()
+{
+  if (!m_FilesSelected)
+    return;
 
   addSeparator();
 
-  if (filesSelected) {
-    addAction(tr("Enable selected"), [this]() {
-      m_Model->setEnabled(m_Selected, true);
+  addAction(tr("Enable selected"), [this]() {
+    m_Model->setEnabled(m_ModelSelected, true);
+  });
+  addAction(tr("Disable selected"), [this]() {
+    m_Model->setEnabled(m_ModelSelected, false);
+  });
+}
+
+void PluginListContextMenu::addSelectedGroupActions()
+{
+  if (!m_GroupsSelected || m_ViewSelected.length() != 1)
+    return;
+
+  addSeparator();
+
+  const auto selectedIndex = m_ViewSelected.first();
+  const bool expanded      = m_View->isExpanded(selectedIndex);
+  addAction(tr("Collapse others"), [=, this]() {
+    m_View->collapseAll();
+    m_View->setExpanded(selectedIndex, expanded);
+    m_View->scrollTo(selectedIndex);
+  });
+}
+
+void PluginListContextMenu::addSelectionActions()
+{
+  if (m_ModelSelected.isEmpty())
+    return;
+
+  addSeparator();
+  QMenu* const sendToMenu = addMenu(tr("Send to... "));
+  sendToMenu->addAction(tr("Top"), [this]() {
+    const auto selectedIndex   = m_ViewSelected.first();
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, 0);
+    m_View->scrollTo(persistentIndex);
+  });
+  sendToMenu->addAction(tr("Bottom"), [this]() {
+    const auto selectedIndex   = m_ViewSelected.first();
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, std::numeric_limits<int>::max());
+    m_View->scrollTo(persistentIndex);
+  });
+  sendToMenu->addAction(tr("Priority..."), [this]() {
+    const auto selectedIndex = m_ViewSelected.first();
+
+    bool ok;
+    const int newPriority =
+        QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
+                             tr("Set the priority of the selected plugins"), 0, 0,
+                             std::numeric_limits<int>::max(), 1, &ok);
+    if (!ok)
+      return;
+
+    const auto persistentIndex = QPersistentModelIndex(selectedIndex);
+    m_Model->sendToPriority(m_ModelSelected, newPriority);
+    m_View->scrollTo(persistentIndex);
+  });
+
+  if (m_FilesSelected) {
+    addAction(tr("Create Group..."), [this]() {
+      bool ok;
+      const QString group =
+          QInputDialog::getText(m_View->topLevelWidget(), tr("Create Group..."),
+                                tr("Please enter a name:"), QLineEdit::Normal, "", &ok);
+
+      if (!ok || group.isEmpty())
+        return;
+
+      QList<QPersistentModelIndex> persistent;
+      persistent.reserve(m_ViewSelected.length());
+      std::ranges::transform(m_ViewSelected, std::back_inserter(persistent),
+                             [](auto&& idx) {
+                               return QPersistentModelIndex(idx);
+                             });
+
+      const int priority = m_ModelSelected.first()
+                               .siblingAtColumn(PluginListModel::COL_PRIORITY)
+                               .data()
+                               .toInt();
+      m_Model->sendToPriority(m_ModelSelected, priority);
+      m_Model->setGroup(m_ModelSelected, group);
+      for (const auto& index : persistent) {
+        m_View->setExpanded(index.parent(), true);
+      }
     });
-    addAction(tr("Disable selected"), [this]() {
-      m_Model->setEnabled(m_Selected, false);
-    });
+  } else if (m_GroupsSelected) {
+    if (m_ViewSelected.length() == 1) {
+      addAction(tr("Rename Group..."), [this]() {
+        const auto& selected = m_ViewSelected.first();
+        QModelIndexList indices;
+        for (int i = 0, count = selected.model()->rowCount(selected); i < count; ++i) {
+          const auto child = selected.model()->index(i, 0, selected);
+          auto&& index     = m_View->indexViewToModel(child, m_Model);
+          indices.append(std::move(index));
+        }
 
-    addSeparator();
-  }
-
-  if (groupsSelected && selectedRows.length() == 1) {
-    const auto selectedIndex = selectedRows.first();
-    const bool expanded      = view->isExpanded(selectedIndex);
-    addAction(tr("Collapse others"), [=, this]() {
-      m_View->collapseAll();
-      m_View->setExpanded(selectedIndex, expanded);
-      m_View->scrollTo(selectedIndex);
-    });
-
-    addSeparator();
-  }
-
-  if (!m_Selected.isEmpty()) {
-    addSeparator();
-    QMenu* const sendToMenu = addMenu(tr("Send to... "));
-    sendToMenu->addAction(tr("Top"), [this, selectedIndex = selectedRows.first()]() {
-      const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-      m_Model->sendToPriority(m_Selected, 0);
-      m_View->scrollTo(persistentIndex);
-    });
-    sendToMenu->addAction(tr("Bottom"), [this, selectedIndex = selectedRows.first()]() {
-      const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-      m_Model->sendToPriority(m_Selected, std::numeric_limits<int>::max());
-      m_View->scrollTo(persistentIndex);
-    });
-    sendToMenu->addAction(
-        tr("Priority..."), [this, selectedIndex = selectedRows.first()]() {
-          bool ok;
-          const int newPriority =
-              QInputDialog::getInt(m_View->topLevelWidget(), tr("Set Priority"),
-                                   tr("Set the priority of the selected plugins"), 0, 0,
-                                   std::numeric_limits<int>::max(), 1, &ok);
-          if (!ok)
-            return;
-
-          const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-          m_Model->sendToPriority(m_Selected, newPriority);
-          m_View->scrollTo(persistentIndex);
-        });
-
-    if (filesSelected) {
-      addAction(tr("Create Group..."), [this]() {
         bool ok;
         const QString group = QInputDialog::getText(
-            m_View->topLevelWidget(), tr("Create Group..."), tr("Please enter a name:"),
+            m_View->topLevelWidget(), tr("Rename Group..."), tr("Please enter a name:"),
             QLineEdit::Normal, "", &ok);
 
         if (!ok || group.isEmpty())
           return;
 
-        const auto selectedRows = m_View->selectionModel()->selectedRows();
-        QList<QPersistentModelIndex> persistent;
-        persistent.reserve(selectedRows.length());
-        std::ranges::transform(selectedRows, std::back_inserter(persistent),
-                               [](auto&& idx) {
-                                 return QPersistentModelIndex(idx);
-                               });
+        const auto persistentIndex =
+            QPersistentModelIndex(selected.model()->index(0, 0, selected));
+        const bool expanded = m_View->isExpanded(selected);
 
-        const int priority = m_Selected.first()
-                                 .siblingAtColumn(PluginListModel::COL_PRIORITY)
-                                 .data()
-                                 .toInt();
-        m_Model->sendToPriority(m_Selected, priority);
-        m_Model->setGroup(m_Selected, group);
-        for (const auto& index : persistent) {
-          m_View->setExpanded(index.parent(), true);
-        }
-      });
-    } else if (groupsSelected) {
-      if (selectedRows.length() == 1) {
-        addAction(tr("Rename Group..."), [this]() {
-          const auto selectedRows = m_View->selectionModel()->selectedRows();
-          const auto& selected    = selectedRows.first();
-          QModelIndexList indices;
-          for (int i = 0, count = selected.model()->rowCount(selected); i < count;
-               ++i) {
-            const auto child = selected.model()->index(i, 0, selected);
-            auto&& index     = m_View->indexViewToModel(child, m_Model);
-            indices.append(std::move(index));
-          }
+        m_Model->setGroup(indices, group);
 
-          bool ok;
-          const QString group = QInputDialog::getText(
-              m_View->topLevelWidget(), tr("Rename Group..."),
-              tr("Please enter a name:"), QLineEdit::Normal, "", &ok);
-
-          if (!ok || group.isEmpty())
-            return;
-
-          const auto persistentIndex =
-              QPersistentModelIndex(selected.model()->index(0, 0, selected));
-          const bool expanded = m_View->isExpanded(selected);
-
-          m_Model->setGroup(indices, group);
-
-          const auto groupIndex = persistentIndex.parent();
-          const auto groupRight =
-              groupIndex.siblingAtColumn(selected.model()->columnCount() - 1);
-          m_View->setExpanded(groupIndex, expanded);
-          m_View->selectionModel()->select(QItemSelection(groupIndex, groupRight),
-                                           QItemSelectionModel::ClearAndSelect);
-          m_View->selectionModel()->setCurrentIndex(groupIndex,
-                                                    QItemSelectionModel::Current);
-        });
-      }
-
-      addAction(tr("Remove Group..."), [this]() {
-        const auto selectedRows = m_View->selectionModel()->selectedRows();
-        QModelIndexList indices;
-        for (const auto& selected : selectedRows) {
-          for (int i = 0, count = selected.model()->rowCount(selected); i < count;
-               ++i) {
-            const auto child = selected.model()->index(i, 0, selected);
-            auto&& index     = m_View->indexViewToModel(child, m_Model);
-            indices.append(std::move(index));
-          }
-        }
-
-        if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
-                                  tr("Are you sure you want to remove \"%1\"?")
-                                      .arg(selectedRows.first().data().toString()),
-                                  QMessageBox::Yes | QMessageBox::No) ==
-            QMessageBox::Yes) {
-          m_Model->setGroup(indices, QString());
-        }
+        const auto groupIndex = persistentIndex.parent();
+        const auto groupRight =
+            groupIndex.siblingAtColumn(selected.model()->columnCount() - 1);
+        m_View->setExpanded(groupIndex, expanded);
+        m_View->selectionModel()->select(QItemSelection(groupIndex, groupRight),
+                                         QItemSelectionModel::ClearAndSelect);
+        m_View->selectionModel()->setCurrentIndex(groupIndex,
+                                                  QItemSelectionModel::Current);
       });
     }
-  }
 
-  if (m_Index.isValid()) {
-    addSeparator();
-
-    if (std::ranges::any_of(m_Selected, [=](auto&& idx) {
-          QString fileName   = idx.data().toString();
-          const auto modInfo = modList->getMod(pluginList->origin(fileName));
-          return modInfo != nullptr;
-        })) {
-      addAction(tr("Open Origin in Explorer"), [=, this]() {
-        openOriginExplorer(m_Selected, modList, pluginList);
-      });
-
-      const auto selectedIdx = m_Selected.length() == 1 ? m_Selected.first() : m_Index;
-      const auto nameIdx     = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
-      const auto fileName    = nameIdx.data().toString();
-      const auto modInfo     = modList->getMod(pluginList->origin(fileName));
-      if (modInfo && !modInfo->isForeign()) {
-        const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
-          emit openModInformation(nameIdx);
-        });
-        setDefaultAction(infoAction);
+    addAction(tr("Remove Group..."), [this]() {
+      QModelIndexList indices;
+      for (const auto& selected : m_ViewSelected) {
+        for (int i = 0, count = selected.model()->rowCount(selected); i < count; ++i) {
+          const auto child = selected.model()->index(i, 0, selected);
+          auto&& index     = m_View->indexViewToModel(child, m_Model);
+          indices.append(std::move(index));
+        }
       }
+
+      if (QMessageBox::question(m_View->topLevelWidget(), tr("Confirm"),
+                                tr("Are you sure you want to remove \"%1\"?")
+                                    .arg(m_ViewSelected.first().data().toString()),
+                                QMessageBox::Yes | QMessageBox::No) ==
+          QMessageBox::Yes) {
+        m_Model->setGroup(indices, QString());
+      }
+    });
+  }
+}
+
+static void openOriginExplorer(const QModelIndexList& indices,
+                               MOBase::IModList* modList,
+                               MOBase::IPluginList* pluginList)
+{
+  for (const auto& idx : indices) {
+    QString fileName   = idx.data().toString();
+    const auto modInfo = modList->getMod(pluginList->origin(fileName));
+    if (modInfo == nullptr) {
+      continue;
+    }
+    MOBase::shell::Explore(modInfo->absolutePath());
+  }
+}
+
+void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
+                                             MOBase::IPluginList* pluginList)
+{
+  if (!m_Index.isValid())
+    return;
+
+  addSeparator();
+
+  if (std::ranges::any_of(m_ModelSelected, [=](auto&& idx) {
+        QString fileName   = idx.data().toString();
+        const auto modInfo = modList->getMod(pluginList->origin(fileName));
+        return modInfo != nullptr;
+      })) {
+    addAction(tr("Open Origin in Explorer"), [=, this]() {
+      openOriginExplorer(m_ModelSelected, modList, pluginList);
+    });
+
+    const auto selectedIdx =
+        m_ModelSelected.length() == 1 ? m_ModelSelected.first() : m_Index;
+    const auto nameIdx  = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
+    const auto fileName = nameIdx.data().toString();
+    const auto modInfo  = modList->getMod(pluginList->origin(fileName));
+    if (modInfo && !modInfo->isForeign()) {
+      const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
+        emit openModInformation(nameIdx);
+      });
+      setDefaultAction(infoAction);
     }
   }
 }
