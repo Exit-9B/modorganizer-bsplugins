@@ -103,7 +103,7 @@ void PluginListContextMenu::addAllItemsMenu()
 
 void PluginListContextMenu::addSelectedFilesActions()
 {
-  if (!m_FilesSelected)
+  if (!m_FilesTogglable)
     return;
 
   addSeparator();
