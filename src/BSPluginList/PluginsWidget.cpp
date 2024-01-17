@@ -4,6 +4,7 @@
 #include "GUI/SelectionDialog.h"
 #include "MOPlugin/Settings.h"
 #include "MOTools/Loot.h"
+#include "MOTools/LootGroups.h"
 #include "PluginListContextMenu.h"
 #include "PluginSortFilterProxyModel.h"
 #include "ui_pluginswidget.h"
@@ -13,6 +14,7 @@
 #include <QApplication>
 #include <QMenu>
 #include <QMessageBox>
+#include <QStandardPaths>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -349,13 +351,28 @@ void PluginsWidget::on_sortButton_clicked()
   const bool didUpdateMasterList = offline ? true : m_DidUpdateMasterList;
 
   if (MOTools::runLoot(topLevelWidget(), m_Organizer, m_PluginList, logLevel,
-                       didUpdateMasterList)) {
+                       didUpdateMasterList, *Settings::instance())) {
     // don't assume the master list was updated in offline mode
     if (!offline) {
       m_DidUpdateMasterList = true;
     }
 
+    const auto profilePath = QDir(m_Organizer->profilePath());
+    const auto plugingroups =
+        QDir::cleanPath(profilePath.absoluteFilePath(u"plugingroups.txt"_s));
+
+    const auto* const managedGame = m_Organizer->managedGame();
+    const auto gameName           = managedGame->gameName();
+    const auto localAppData =
+        QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+    const auto masterlist =
+        localAppData.filePath(u"LOOT/games/%1/masterlist.yaml"_s.arg(gameName));
+    const auto userlist =
+        localAppData.filePath(u"LOOT/games/%1/userlist.yaml"_s.arg(gameName));
+    MOTools::importLootGroups(m_PluginList, plugingroups, masterlist, userlist);
+
     m_PluginListModel->invalidate();
+    ui->pluginList->expandAll();
   }
 }
 

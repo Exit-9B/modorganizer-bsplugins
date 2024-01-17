@@ -1,9 +1,21 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
+
+include(FetchContent)
+
+FetchContent_Declare(
+	ryml
+	EXCLUDE_FROM_ALL
+	GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
+	GIT_TAG master
+)
+
+FetchContent_MakeAvailable(ryml)
 
 add_library(bsplugins SHARED)
 
 set_property(TARGET bsplugins PROPERTY CXX_STANDARD 20)
 target_include_directories(bsplugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(bsplugins PRIVATE ryml)
 
 if(MSVC)
 	target_compile_options(

@@ -61,10 +61,11 @@ bool MarkdownPage::acceptNavigationRequest(const QUrl& url, NavigationType, bool
 }
 
 LootDialog::LootDialog(QWidget* parent, MOBase::IOrganizer* organizer, Loot& loot,
-                       ILootCache* lootCache, lootcli::LogLevels logLevel)
+                       ILootCache* lootCache, lootcli::LogLevels logLevel,
+                       GUI::IGeometrySettings<QDialog>& geomSettings)
     : QDialog(parent, Qt::WindowMaximizeButtonHint), ui(new Ui::LootDialog),
       m_Organizer{organizer}, m_Loot{loot}, m_LootCache{lootCache}, m_Finished{false},
-      m_Cancelling{false}, m_LogLevel{logLevel}
+      m_Cancelling{false}, m_LogLevel{logLevel}, m_GeomSettings{geomSettings}
 {
   createUI();
 
@@ -162,11 +163,9 @@ void LootDialog::openReport()
 
 int LootDialog::exec()
 {
-  // TODO: restore geometry
+  GUI::GeometrySaver{m_GeomSettings, this};
 
   const auto r = QDialog::exec();
-
-  // TODO: save geometry
 
   return r;
 }

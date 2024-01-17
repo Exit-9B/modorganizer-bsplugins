@@ -1,6 +1,8 @@
 #ifndef MODORGANIZER_LOOTDIALOG_H
 #define MODORGANIZER_LOOTDIALOG_H
 
+#include "GUI/IGeometrySettings.h"
+
 #include <expanderwidget.h>
 #include <imoinfo.h>
 #include <log.h>
@@ -54,7 +56,8 @@ class LootDialog : public QDialog
 
 public:
   LootDialog(QWidget* parent, MOBase::IOrganizer* organizer, Loot& loot,
-             ILootCache* lootCache, lootcli::LogLevels logLevel);
+             ILootCache* lootCache, lootcli::LogLevels logLevel,
+             GUI::IGeometrySettings<QDialog>& geomSettings);
 
   LootDialog(const LootDialog&) = delete;
   LootDialog(LootDialog&&)      = delete;
@@ -85,6 +88,8 @@ private:
   Loot& m_Loot;
   ILootCache* m_LootCache;
   lootcli::LogLevels m_LogLevel;
+  GUI::IGeometrySettings<QDialog>& m_GeomSettings;
+
   bool m_Finished;
   bool m_Cancelling;
   MarkdownDocument m_Report;

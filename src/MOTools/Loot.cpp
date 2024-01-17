@@ -908,11 +908,12 @@ std::vector<QString> Loot::reportStringArray(const QJsonArray& array) const
 }
 
 bool runLoot(QWidget* parent, MOBase::IOrganizer* organizer, ILootCache* lootCache,
-             lootcli::LogLevels logLevel, bool didUpdateMasterList)
+             lootcli::LogLevels logLevel, bool didUpdateMasterList,
+             GUI::IGeometrySettings<QDialog>& geomSettings)
 {
   try {
     Loot loot{organizer, logLevel};
-    LootDialog dialog{parent, organizer, loot, lootCache, logLevel};
+    LootDialog dialog{parent, organizer, loot, lootCache, logLevel, geomSettings};
 
     if (!loot.start(parent, didUpdateMasterList)) {
       return false;

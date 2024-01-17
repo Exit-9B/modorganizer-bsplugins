@@ -1,6 +1,8 @@
 #ifndef MOTOOLS_LOOT_H
 #define MOTOOLS_LOOT_H
 
+#include "GUI/IGeometrySettings.h"
+
 #include <imoinfo.h>
 #include <log.h>
 #include <lootcli/lootcli.h>
@@ -169,7 +171,8 @@ private:
 };
 
 bool runLoot(QWidget* parent, MOBase::IOrganizer* organizer, ILootCache* lootCache,
-             lootcli::LogLevels logLevel, bool didUpdateMasterList);
+             lootcli::LogLevels logLevel, bool didUpdateMasterList,
+             GUI::IGeometrySettings<QDialog>& geomSettings);
 
 }  // namespace MOTools
 
