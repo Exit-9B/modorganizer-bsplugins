@@ -850,7 +850,6 @@ void PluginList::scanDataFiles(bool invalidate)
   }
 
   const auto managedGame = m_Organizer->managedGame();
-  const auto modList     = m_Organizer->modList();
 
   const QStringList primaryPlugins =
       managedGame ? managedGame->primaryPlugins() : QStringList();
@@ -878,14 +877,6 @@ void PluginList::scanDataFiles(bool invalidate)
     const QString filename = entry->name();
 
     if (!isPluginFile(filename)) {
-      continue;
-    }
-
-    const auto origins = m_Organizer->getFileOrigins(filename);
-    if (std::ranges::all_of(origins, [modList](auto&& origin) {
-          return origin.compare("DATA", Qt::CaseInsensitive) != 0 &&
-                 !(modList->state(origin) & MOBase::IModList::STATE_ACTIVE);
-        })) {
       continue;
     }
 

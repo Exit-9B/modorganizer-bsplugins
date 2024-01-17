@@ -432,9 +432,9 @@ void PluginGroupProxyModel::onSourceLayoutChanged(
 
 void PluginGroupProxyModel::onSourceModelReset()
 {
-  emit layoutAboutToBeChanged();
+  emit beginResetModel();
   buildGroups();
-  emit layoutChanged();
+  emit endResetModel();
 }
 
 void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent)
