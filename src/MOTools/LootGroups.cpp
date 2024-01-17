@@ -108,7 +108,7 @@ void importLootGroups(const TESData::PluginList* pluginList,
   std::map<QString, QString> groups;
   for (int id = 0, count = pluginList->pluginCount(); id < count; ++id) {
     const auto plugin = pluginList->getPlugin(id);
-    groups.emplace(plugin->name(), QString());
+    groups.emplace(plugin->name(), "default");
   }
 
   importLootGroups(masterlist, groups);
