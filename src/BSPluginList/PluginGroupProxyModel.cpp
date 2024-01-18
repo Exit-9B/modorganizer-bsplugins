@@ -277,8 +277,15 @@ QMimeData* PluginGroupProxyModel::mimeData(const QModelIndexList& indexes) const
 
 bool PluginGroupProxyModel::canDropMimeData(const QMimeData* data,
                                             Qt::DropAction action, int row, int column,
-                                            const QModelIndex& parent) const
+                                            const QModelIndex& parent_) const
 {
+  // HACK: fix drop below expanded item
+  auto parent = parent_;
+  if (m_DroppingBelowExpandedItem) {
+    parent = index(row - 1, column, parent_);
+    row    = 0;
+  }
+
   const bool draggedOntoGroup = row == -1;
   const bool draggedToBottom  = row == rowCount(parent);
   const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
@@ -317,8 +324,16 @@ static T* findBaseModel(QAbstractItemModel* sourceModel)
 }
 
 bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction action,
-                                         int row, int column, const QModelIndex& parent)
+                                         int row, int column,
+                                         const QModelIndex& parent_)
 {
+  // HACK: fix drop below expanded item
+  auto parent = parent_;
+  if (m_DroppingBelowExpandedItem) {
+    parent = index(row - 1, column, parent_);
+    row    = 0;
+  }
+
   const bool draggedOntoGroup = row == -1;
   const bool draggedToBottom  = row == rowCount(parent);
   const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)

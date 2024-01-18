@@ -206,6 +206,19 @@ bool PluginListView::event(QEvent* event)
   return QTreeView::event(event);
 }
 
+void PluginListView::dragMoveEvent(QDragMoveEvent* event)
+{
+  // HACK: dropping below an expanded item sends the same event as dropping below its
+  // children, so set an additional flag to signal this
+  if (const auto m = qobject_cast<PluginGroupProxyModel*>(model())) {
+    m->setDroppingBelowExpandedItem(dropIndicatorPosition() ==
+                                        QAbstractItemView::BelowItem &&
+                                    isExpanded(indexAt(event->position().toPoint())));
+  }
+
+  QTreeView::dragMoveEvent(event);
+}
+
 void PluginListView::paintEvent(QPaintEvent* event)
 {
   if (m_FirstPaint) {

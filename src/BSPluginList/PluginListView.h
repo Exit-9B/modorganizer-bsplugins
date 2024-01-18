@@ -43,6 +43,7 @@ signals:
 
 protected:
   bool event(QEvent* event) override;
+  void dragMoveEvent(QDragMoveEvent* event) override;
   void paintEvent(QPaintEvent* event) override;
 
   bool moveSelection(int key);

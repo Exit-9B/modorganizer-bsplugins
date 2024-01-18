@@ -51,6 +51,8 @@ public:
   bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
                     const QModelIndex& parent) override;
 
+  void setDroppingBelowExpandedItem(bool value) { m_DroppingBelowExpandedItem = value; }
+
 signals:
   void groupRenameRequested(const QModelIndex& index, const QString& name);
 
@@ -106,6 +108,7 @@ private:
   std::vector<std::size_t> m_TopLevel;
   std::vector<std::size_t> m_SourceMap;
 
+  bool m_DroppingBelowExpandedItem;
   mutable std::vector<std::size_t> m_DraggingGroups;
 
   MOBase::IOrganizer* m_Organizer;
