@@ -61,6 +61,7 @@ private:
   [[nodiscard]] QMenu* listOptionsMenu();
   void restoreState();
 
+  void onModStateChanged(const std::map<QString, MOBase::IModList::ModStates>& mods);
   bool onAboutToRun(const QString& binary);
   bool onFinishedRun(const QString& binary, unsigned int exitCode);
   void importLootGroups();

@@ -76,12 +76,8 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   organizer->onAboutToRun(std::bind_front(&PluginsWidget::onAboutToRun, this));
   organizer->onFinishedRun(std::bind_front(&PluginsWidget::onFinishedRun, this));
 
-  // HACK: the virtual file tree won't update unless we tell it to refresh
   organizer->modList()->onModStateChanged(
-      [this](
-          [[maybe_unused]] const std::map<QString, MOBase::IModList::ModStates>& mods) {
-        m_Organizer->refresh();
-      });
+      std::bind_front(&PluginsWidget::onModStateChanged, this));
 
   synchronizePluginLists(organizer);
   updatePluginCount();
@@ -464,6 +460,34 @@ void PluginsWidget::restoreState()
   const bool doHide = Settings::instance()->get<bool>("hide_force_enabled", false);
   toggleForceEnabled->setChecked(doHide);
   toggleHideForceEnabled();
+}
+
+static bool containsPlugin(const MOBase::IModInterface* mod)
+{
+  const auto fileTree = mod ? mod->fileTree() : nullptr;
+  if (!fileTree)
+    return false;
+
+  return std::ranges::any_of(*fileTree, [&](auto&& entry) {
+    if (!entry)
+      return false;
+    const QString filename = entry->name();
+    return filename.endsWith(u".esp"_s, Qt::CaseInsensitive) ||
+           filename.endsWith(u".esm"_s, Qt::CaseInsensitive) ||
+           filename.endsWith(u".esl"_s, Qt::CaseInsensitive);
+  });
+}
+
+void PluginsWidget::onModStateChanged(
+    const std::map<QString, MOBase::IModList::ModStates>& mods)
+{
+  // HACK: the virtual file tree won't update unless we tell it to refresh
+  if (std::ranges::any_of(mods, &containsPlugin,
+                          [modList = m_Organizer->modList()](auto&& modState) {
+                            return modList->getMod(modState.first);
+                          })) {
+    m_Organizer->refresh();
+  }
 }
 
 bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
