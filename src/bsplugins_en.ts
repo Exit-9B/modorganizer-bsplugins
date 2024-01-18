@@ -261,6 +261,14 @@
         <source>Hide force-enabled files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Load order changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load order was changed while running %1. Keep changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>

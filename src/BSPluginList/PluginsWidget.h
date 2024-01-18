@@ -61,6 +61,10 @@ private:
   [[nodiscard]] QMenu* listOptionsMenu();
   void restoreState();
 
+  bool onAboutToRun(const QString& binary);
+  bool onFinishedRun(const QString& binary, unsigned int exitCode);
+  void importLootGroups();
+
   // HACK: Attempt to keep our custom plugin list synchronized with the built-in panel
   void synchronizePluginLists(MOBase::IOrganizer* organizer);
 

@@ -56,6 +56,11 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   connect(m_PluginListModel, &PluginListModel::pluginStatesChanged, this,
           &PluginsWidget::updatePluginCount);
 
+  connect(m_GroupProxy, &QAbstractItemModel::modelReset, [this]() {
+    ui->pluginList->expandAll();
+    ui->pluginList->scrollToTop();
+  });
+
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
           this, &PluginsWidget::onSelectionChanged);
 
@@ -63,13 +68,13 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
     Settings::instance()->saveState(ui->pluginList->header());
   });
 
-  panelInterface->onPanelActivated([this]() {
-    this->onPanelActivated();
-  });
+  panelInterface->onPanelActivated(
+      std::bind_front(&PluginsWidget::onPanelActivated, this));
+  panelInterface->onSelectedOriginsChanged(
+      std::bind_front(&PluginsWidget::onSelectedOriginsChanged, this));
 
-  panelInterface->onSelectedOriginsChanged([this](const QList<QString>& origins) {
-    this->onSelectedOriginsChanged(origins);
-  });
+  organizer->onAboutToRun(std::bind_front(&PluginsWidget::onAboutToRun, this));
+  organizer->onFinishedRun(std::bind_front(&PluginsWidget::onFinishedRun, this));
 
   // HACK: the virtual file tree won't update unless we tell it to refresh
   organizer->modList()->onModStateChanged(
@@ -357,22 +362,19 @@ void PluginsWidget::on_sortButton_clicked()
       m_DidUpdateMasterList = true;
     }
 
-    const auto profilePath = QDir(m_Organizer->profilePath());
-    const auto plugingroups =
-        QDir::cleanPath(profilePath.absoluteFilePath(u"plugingroups.txt"_s));
-
-    const auto* const managedGame = m_Organizer->managedGame();
-    const auto gameName           = managedGame->gameName();
-    const auto localAppData =
-        QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
-    const auto masterlist =
-        localAppData.filePath(u"LOOT/games/%1/masterlist.yaml"_s.arg(gameName));
-    const auto userlist =
-        localAppData.filePath(u"LOOT/games/%1/userlist.yaml"_s.arg(gameName));
-    MOTools::importLootGroups(m_PluginList, plugingroups, masterlist, userlist);
-
+    importLootGroups();
     m_PluginListModel->invalidate();
-    ui->pluginList->expandAll();
+  }
+}
+
+static bool tryRestore(const QString& filePath, const QString& identifier,
+                       bool required, QWidget* parent = nullptr)
+{
+  const auto backupName = filePath + "." + identifier;
+  if (required || QFileInfo::exists(backupName)) {
+    return MOBase::shellCopy(backupName, filePath, true, parent);
+  } else {
+    return !QFileInfo::exists(filePath) || MOBase::shellDeleteQuiet(filePath, parent);
   }
 }
 
@@ -389,18 +391,9 @@ void PluginsWidget::on_restoreButton_clicked()
     const auto loadOrderName =
         QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
 
-    const auto tryRestore = [&choice, app](const QString& fileName,
-                                           bool required) -> bool {
-      const auto backupName = fileName + "." + choice;
-      if (required || QFileInfo::exists(backupName)) {
-        return MOBase::shellCopy(backupName, fileName, true, app);
-      } else {
-        return !QFileInfo::exists(fileName) || MOBase::shellDeleteQuiet(fileName, app);
-      }
-    };
-
-    if (!tryRestore(pluginsName, true) || !tryRestore(loadOrderName, true) ||
-        !tryRestore(groupsName, false)) {
+    if (!tryRestore(pluginsName, choice, true, app) ||
+        !tryRestore(loadOrderName, choice, true, app) ||
+        !tryRestore(groupsName, choice, false, app)) {
       const auto e = ::GetLastError();
 
       QMessageBox::critical(
@@ -412,10 +405,10 @@ void PluginsWidget::on_restoreButton_clicked()
   }
 }
 
-static bool createBackup(const QString& filePath, const QDateTime& time,
+static bool createBackup(const QString& filePath, const QString& identifier,
                          QWidget* parent = nullptr)
 {
-  QString outPath = filePath + "." + time.toString(PATTERN_BACKUP_DATE);
+  QString outPath = filePath + "." + identifier;
   if (MOBase::shellCopy(QStringList(filePath), QStringList(outPath), parent)) {
     QFileInfo fileInfo(filePath);
     MOBase::removeOldFiles(fileInfo.absolutePath(),
@@ -424,6 +417,12 @@ static bool createBackup(const QString& filePath, const QDateTime& time,
   } else {
     return false;
   }
+}
+
+static bool createBackup(const QString& filePath, const QDateTime& time,
+                         QWidget* parent = nullptr)
+{
+  return createBackup(filePath, time.toString(PATTERN_BACKUP_DATE), parent);
 }
 
 void PluginsWidget::on_saveButton_clicked()
@@ -465,6 +464,101 @@ void PluginsWidget::restoreState()
   const bool doHide = Settings::instance()->get<bool>("hide_force_enabled", false);
   toggleForceEnabled->setChecked(doHide);
   toggleHideForceEnabled();
+}
+
+bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
+{
+  m_PluginList->writePluginLists();
+
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
+  const auto loadOrderName =
+      QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
+  const auto parent = this->topLevelWidget();
+
+  if (QFileInfo::exists(pluginsName + ".snapshot")) {
+    MOBase::shellDeleteQuiet(pluginsName + ".snapshot", parent);
+  }
+
+  if (QFileInfo::exists(loadOrderName + ".snapshot")) {
+    MOBase::shellDeleteQuiet(loadOrderName + ".snapshot", parent);
+  }
+
+  if (QFileInfo(binary).fileName().compare("lootcli.exe") != 0) {
+    createBackup(pluginsName, "snapshot", parent);
+    createBackup(loadOrderName, "snapshot", parent);
+  }
+
+  return true;
+}
+
+bool PluginsWidget::onFinishedRun(const QString& binary,
+                                  [[maybe_unused]] unsigned int exitCode)
+{
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
+  const auto loadOrderName =
+      QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
+  const auto parent = this->topLevelWidget();
+
+  const auto binaryName        = QFileInfo(binary).fileName();
+  const auto pluginsFile       = QFileInfo(pluginsName);
+  const auto pluginsSnapshot   = QFileInfo(pluginsName + ".snapshot");
+  const auto loadOrderFile     = QFileInfo(loadOrderName);
+  const auto loadOrderSnapshot = QFileInfo(loadOrderName + ".snapshot");
+
+  if (binaryName.compare("lootcli.exe", Qt::CaseInsensitive) == 0 ||
+      !pluginsSnapshot.exists())
+    return true;
+
+  if (!pluginsFile.exists() ||
+      pluginsFile.lastModified() > pluginsSnapshot.lastModified()) {
+
+    if (binaryName.compare("Loot.exe", Qt::CaseInsensitive) == 0) {
+      importLootGroups();
+    } else {
+      const auto response = QMessageBox::warning(
+          parent, tr("Load order changed"),
+          tr("Load order was changed while running %1. Keep changes?").arg(binaryName),
+          QMessageBox::Yes | QMessageBox::No);
+
+      if (response == QMessageBox::No) {
+        if (!tryRestore(pluginsName, "snapshot", true, parent) ||
+            !tryRestore(loadOrderName, "snapshot", true, parent)) {
+          const auto e = ::GetLastError();
+
+          QMessageBox::critical(
+              this, tr("Restore failed"),
+              tr("Failed to restore the backup. Errorcode: %1")
+                  .arg(QString::fromStdWString(MOBase::formatSystemMessage(e))));
+
+          return true;
+        }
+      }
+    }
+  }
+
+  MOBase::shellDeleteQuiet(pluginsName + ".snapshot", parent);
+  m_PluginListModel->invalidate();
+  return true;
+}
+
+void PluginsWidget::importLootGroups()
+{
+  const auto profilePath = QDir(m_Organizer->profilePath());
+  const auto plugingroups =
+      QDir::cleanPath(profilePath.absoluteFilePath(u"plugingroups.txt"_s));
+
+  const auto* const managedGame = m_Organizer->managedGame();
+  const auto gameName           = managedGame->gameName();
+  const auto localAppData =
+      QDir(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+  const auto masterlist =
+      localAppData.filePath(u"LOOT/games/%1/masterlist.yaml"_s.arg(gameName));
+  const auto userlist =
+      localAppData.filePath(u"LOOT/games/%1/userlist.yaml"_s.arg(gameName));
+
+  MOTools::importLootGroups(m_PluginList, plugingroups, masterlist, userlist);
 }
 
 void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
