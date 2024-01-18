@@ -429,9 +429,9 @@ void PluginGroupProxyModel::onSourceLayoutChanged(
 
 void PluginGroupProxyModel::onSourceModelReset()
 {
-  emit beginResetModel();
+  emit layoutAboutToBeChanged();
   buildGroups();
-  emit endResetModel();
+  emit layoutChanged();
 }
 
 void PluginGroupProxyModel::onSourceRowsInserted(const QModelIndex& parent)
@@ -494,7 +494,7 @@ void PluginGroupProxyModel::buildGroups()
 
   QString lastGroup;
   std::size_t groupId = NO_ID;
-  for (int i = 0; i < sourceModel()->rowCount(); ++i) {
+  for (int i = 0, count = sourceModel()->rowCount(); i < count; ++i) {
     const auto idx      = sourceModel()->index(i, 0);
     const QString name  = idx.data().toString();
     const QString group = idx.data(PluginListModel::GroupingRole).toString();
@@ -530,6 +530,18 @@ void PluginGroupProxyModel::buildGroups()
       const int row     = static_cast<int>(m_TopLevel.size());
       const auto id     = createItem(key, row, -1, NO_ID, nullptr, groupRepeats[key]++);
       m_TopLevel.push_back(id);
+    }
+  }
+
+  for (std::size_t id = 0; id < m_ProxyItems.size(); ++id) {
+    const auto& item     = m_ProxyItems[id];
+    const auto& siblings = item.parentId == NO_ID
+                               ? m_TopLevel
+                               : m_ProxyItems.at(item.parentId).groupInfo->children;
+    if (item.row >= siblings.size() || siblings[item.row] != id) {
+      for (int column = 0, count = columnCount(); column < count; ++column) {
+        changePersistentIndex(createIndex(item.row, column, id), QModelIndex());
+      }
     }
   }
 }
