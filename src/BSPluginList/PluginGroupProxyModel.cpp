@@ -534,14 +534,29 @@ void PluginGroupProxyModel::buildGroups()
   }
 
   for (std::size_t id = 0; id < m_ProxyItems.size(); ++id) {
-    const auto& item     = m_ProxyItems[id];
-    const auto& siblings = item.parentId == NO_ID
-                               ? m_TopLevel
-                               : m_ProxyItems.at(item.parentId).groupInfo->children;
-    if (item.row >= siblings.size() || siblings[item.row] != id) {
+    auto& item = m_ProxyItems[id];
+    if (item.row < 0 || item.groupInfo != nullptr)
+      continue;
+
+    bool invalidate = false;
+    if (item.parentId == NO_ID) {
+      if (item.row >= m_TopLevel.size() || m_TopLevel[item.row] != id) {
+        invalidate = true;
+      }
+    } else {
+      const auto& parentItem = m_ProxyItems.at(item.parentId);
+      if (const auto group = parentItem.groupInfo) {
+        if (item.row >= group->children.size() || group->children[item.row] != id) {
+          invalidate = true;
+        }
+      }
+    }
+
+    if (invalidate) {
       for (int column = 0, count = columnCount(); column < count; ++column) {
         changePersistentIndex(createIndex(item.row, column, id), QModelIndex());
       }
+      item = ProxyItem{-1, -1, NO_ID, nullptr};
     }
   }
 }
