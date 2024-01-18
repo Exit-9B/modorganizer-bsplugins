@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/bsplugins">
+        <file alias="feather">resources/feather.png</file>
+    </qresource>
+</RCC>

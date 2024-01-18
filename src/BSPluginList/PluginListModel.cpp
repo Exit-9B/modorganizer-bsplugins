@@ -452,7 +452,7 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
   }
 
   if (plugin->isLightFlagged() || plugin->hasLightExtension()) {
-    result.append(":/MO/gui/awaiting");
+    result.append(":/bsplugins/feather");
   }
 
   return result;
