@@ -37,7 +37,7 @@ bool PluginSortFilterProxyModel::canDropMimeData(const QMimeData* data,
                                                  int column,
                                                  const QModelIndex& parent) const
 {
-  if ((sortColumn() != PluginListModel::COL_PRIORITY)) {
+  if (sortColumn() != PluginListModel::COL_PRIORITY) {
     return false;
   }
 
@@ -49,6 +49,24 @@ bool PluginSortFilterProxyModel::canDropMimeData(const QMimeData* data,
   const QModelIndex sourceIndex = mapToSource(proxyIndex);
   return sourceModel()->canDropMimeData(data, action, sourceIndex.row(),
                                         sourceIndex.column(), sourceIndex.parent());
+}
+
+bool PluginSortFilterProxyModel::dropMimeData(const QMimeData* data,
+                                              Qt::DropAction action, int row,
+                                              int column, const QModelIndex& parent)
+{
+  if (sortColumn() != PluginListModel::COL_PRIORITY) {
+    return false;
+  }
+
+  if (sortOrder() == Qt::DescendingOrder) {
+    --row;
+  }
+
+  const QModelIndex proxyIndex  = index(row, column, parent);
+  const QModelIndex sourceIndex = mapToSource(proxyIndex);
+  return sourceModel()->dropMimeData(data, action, sourceIndex.row(),
+                                     sourceIndex.column(), sourceIndex.parent());
 }
 
 void PluginSortFilterProxyModel::updateFilter(const QString& filter)
