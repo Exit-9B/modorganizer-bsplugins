@@ -92,7 +92,7 @@ private:
   };
 
   [[nodiscard]] int offsetFromSource(int sourceRow) const;
-  [[nodiscard]] int mapLowerBoundToSourceRow(const QModelIndex& index) const;
+  [[nodiscard]] int mapLowerBoundToSourceRow(std::size_t id) const;
   [[nodiscard]] bool isAboveDivider(std::size_t id) const;
   [[nodiscard]] bool isBelowDivider(std::size_t id) const;
 

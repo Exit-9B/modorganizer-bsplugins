@@ -223,55 +223,35 @@ QVariant PluginGroupProxyModel::headerData(int section, Qt::Orientation orientat
   return sourceModel()->headerData(section, orientation, role);
 }
 
-int PluginGroupProxyModel::mapLowerBoundToSourceRow(const QModelIndex& index) const
+int PluginGroupProxyModel::mapLowerBoundToSourceRow(std::size_t id) const
 {
-  if (!index.isValid()) {
-    return -1;
+  const auto& item = m_ProxyItems.at(id);
+  if (item.isSourceItem()) {
+    return item.sourceRow;
+  } else if (item.isGroup()) {
+    const auto child      = item.groupInfo->children.front();
+    const auto& childItem = m_ProxyItems.at(child);
+    return childItem.sourceRow;
+  } else {
+    const auto next = m_TopLevel.at(item.row + 1);
+    return mapLowerBoundToSourceRow(next);
   }
-
-  for (std::size_t id = index.internalId(); id < m_ProxyItems.size(); ++id) {
-    const auto& item = m_ProxyItems[id];
-    if (item.sourceRow != -1) {
-      return item.sourceRow;
-    }
-
-    if (const auto group = item.groupInfo) {
-      for (const std::size_t childId : group->children) {
-        const auto& childItem = m_ProxyItems.at(childId);
-        if (childItem.sourceRow != -1) {
-          return childItem.sourceRow;
-        }
-      }
-    }
-  }
-
-  return -1;
 }
 
 bool PluginGroupProxyModel::isAboveDivider(std::size_t id) const
 {
-  for (auto i = id; i < m_ProxyItems.size(); ++i) {
-    const auto& item = m_ProxyItems[i];
-    if (item.isSourceItem()) {
-      return false;
-    } else if (item.isDivider()) {
-      return true;
-    }
-  }
-  return false;
+  const auto& item = m_ProxyItems.at(id);
+  return item.isDivider();
 }
 
 bool PluginGroupProxyModel::isBelowDivider(std::size_t id) const
 {
-  for (auto i = id - 1; i <= id; --i) {
-    const auto& item = m_ProxyItems.at(i);
-    if (item.isSourceItem()) {
-      return false;
-    } else if (item.isDivider()) {
-      return true;
-    }
+  const auto& item = m_ProxyItems.at(id);
+  if (item.parentId != NO_ID) {
+    return item.row == 0 && isBelowDivider(item.parentId);
+  } else {
+    return item.row > 0 && m_ProxyItems.at(m_TopLevel.at(item.row - 1)).isDivider();
   }
-  return false;
 }
 
 QMimeData* PluginGroupProxyModel::mimeData(const QModelIndexList& indexes) const
@@ -299,22 +279,24 @@ bool PluginGroupProxyModel::canDropMimeData(const QMimeData* data,
                                             Qt::DropAction action, int row, int column,
                                             const QModelIndex& parent) const
 {
-  const auto idx      = row != rowCount(parent) ? index(row, column, parent)
-                                                : index(parent.row() + 1, column);
-  const int sourceRow = mapLowerBoundToSourceRow(idx);
+  const bool draggedOntoGroup = row == -1;
+  const bool draggedToBottom  = row == rowCount(parent);
+  const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
+                                                            : index(row, column, parent);
+  const int sourceRow = idx.isValid() ? mapLowerBoundToSourceRow(idx.internalId()) : -1;
 
   bool canDrop = true;
   if (isBelowDivider(idx.internalId())) {
-    canDrop = canDrop && sourceModel()->canDropMimeData(data, action, sourceRow + 1,
-                                                        column, QModelIndex());
+    canDrop = canDrop && sourceModel()->canDropMimeData(data, action, sourceRow + 1, 0,
+                                                        QModelIndex());
   }
   if (isAboveDivider(idx.internalId())) {
-    canDrop = canDrop && sourceModel()->canDropMimeData(data, action, sourceRow - 1,
-                                                        column, QModelIndex());
+    canDrop = canDrop && sourceModel()->canDropMimeData(data, action, sourceRow - 1, 0,
+                                                        QModelIndex());
   }
 
   return canDrop &&
-         sourceModel()->canDropMimeData(data, action, sourceRow, column, QModelIndex());
+         sourceModel()->canDropMimeData(data, action, sourceRow, 0, QModelIndex());
 }
 
 template <typename T>
@@ -341,7 +323,7 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
   const bool draggedToBottom  = row == rowCount(parent);
   const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
                                                             : index(row, column, parent);
-  const int sourceRow = mapLowerBoundToSourceRow(idx);
+  const int sourceRow = idx.isValid() ? mapLowerBoundToSourceRow(idx.internalId()) : -1;
 
   QString groupName;
   const auto baseModel = findBaseModel<PluginListModel>(sourceModel());
