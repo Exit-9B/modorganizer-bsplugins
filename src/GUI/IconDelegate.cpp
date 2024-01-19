@@ -13,6 +13,9 @@ namespace GUI
 
 using namespace MOBase;
 
+constexpr int MAX_WIDTH = 16;
+constexpr int MARGIN_X  = 4;
+
 IconDelegate::IconDelegate(QTreeView* view, int column, int compactSize)
     : QStyledItemDelegate(view), m_Column{column}, m_CompactSize{compactSize},
       m_Compact{false}
@@ -31,18 +34,19 @@ void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& opt
                               [[maybe_unused]] const QModelIndex& index,
                               const QList<QString>& icons)
 {
-  int x = 4;
+  int x = MARGIN_X;
   painter->save();
 
-  int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
-  iconWidth     = std::min(16, iconWidth);
+  int iconWidth =
+      icons.size() > 0 ? ((option.rect.width() / icons.size()) - MARGIN_X) : MAX_WIDTH;
+  iconWidth = std::min(MAX_WIDTH, iconWidth);
 
   const int margin = (option.rect.height() - iconWidth) / 2;
 
   painter->translate(option.rect.topLeft());
   for (const QString& iconId : icons) {
     if (iconId.isEmpty()) {
-      x += iconWidth + 4;
+      x += iconWidth + MARGIN_X;
       continue;
     }
     QPixmap icon;
@@ -55,7 +59,7 @@ void IconDelegate::paintIcons(QPainter* painter, const QStyleOptionViewItem& opt
       QPixmapCache::insert(fullIconId, icon);
     }
     painter->drawPixmap(x, margin, iconWidth, iconWidth, icon);
-    x += iconWidth + 4;
+    x += iconWidth + MARGIN_X;
   }
 
   painter->restore();
@@ -71,6 +75,13 @@ void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
   }
 
   paintIcons(painter, option, index, getIcons(index));
+}
+
+QSize IconDelegate::sizeHint(const QStyleOptionViewItem& option,
+                             const QModelIndex& index) const
+{
+  return QSize(static_cast<int>(getNumIcons(index)) * (MAX_WIDTH + MARGIN_X),
+               option.rect.height());
 }
 
 }  // namespace GUI
