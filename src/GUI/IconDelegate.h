@@ -31,7 +31,7 @@ protected:
                          const QModelIndex& index, const QList<QString>& icons);
 
   [[nodiscard]] virtual QList<QString> getIcons(const QModelIndex& index) const = 0;
-  [[nodiscard]] virtual size_t getNumIcons(const QModelIndex& index) const      = 0;
+  [[nodiscard]] virtual int getNumIcons(const QModelIndex& index) const         = 0;
 
 private:
   int m_Column;

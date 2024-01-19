@@ -30,8 +30,8 @@ public:
                       int compactSize = 150);
 
 private:
-  [[nodiscard]] virtual QList<QString> getIcons(const QModelIndex& index) const;
-  [[nodiscard]] virtual size_t getNumIcons(const QModelIndex& index) const;
+  [[nodiscard]] QList<QString> getIcons(const QModelIndex& index) const override;
+  [[nodiscard]] int getNumIcons(const QModelIndex& index) const override;
 
 private:
   int m_Role;

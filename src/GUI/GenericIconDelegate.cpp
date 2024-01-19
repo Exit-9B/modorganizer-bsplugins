@@ -21,7 +21,7 @@ QList<QString> GenericIconDelegate::getIcons(const QModelIndex& index) const
   return result;
 }
 
-size_t GenericIconDelegate::getNumIcons(const QModelIndex& index) const
+int GenericIconDelegate::getNumIcons(const QModelIndex& index) const
 {
   return index.data(m_Role).toList().count();
 }

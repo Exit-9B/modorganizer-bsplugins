@@ -80,8 +80,7 @@ void IconDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option,
 QSize IconDelegate::sizeHint(const QStyleOptionViewItem& option,
                              const QModelIndex& index) const
 {
-  return QSize(static_cast<int>(getNumIcons(index)) * (MAX_WIDTH + MARGIN_X),
-               option.rect.height());
+  return QSize(getNumIcons(index) * (MAX_WIDTH + MARGIN_X), option.rect.height());
 }
 
 }  // namespace GUI
