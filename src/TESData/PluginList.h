@@ -133,7 +133,7 @@ private:
   void readGroups(const QString& fileName);
   void writeGroups(const QString& fileName) const;
   [[nodiscard]] QString destinationGroup(
-      int oldPriority, int newPriority, const QString& originalGroup,
+      int oldPriority, int newPriority, const QString& originalGroup, bool isESM,
       const boost::container::flat_set<QString, MOBase::FileNameComparator>&
           exclusions);
 

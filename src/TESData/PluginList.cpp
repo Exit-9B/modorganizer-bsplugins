@@ -335,7 +335,7 @@ bool PluginList::canMoveToPriority(const std::vector<int>& ids, int newPriority)
 }
 
 QString PluginList::destinationGroup(
-    int oldPriority, int newPriority, const QString& originalGroup,
+    int oldPriority, int newPriority, const QString& originalGroup, bool isESM,
     const boost::container::flat_set<QString, MOBase::FileNameComparator>& exclusions)
 {
   const auto findPrevious = [&, this](int priority) -> FileInfo* {
@@ -361,13 +361,13 @@ QString PluginList::destinationGroup(
   bool removedFromGroup = false;
   if (!originalGroup.isEmpty()) {
     if (const auto previous = findPrevious(oldPriority)) {
-      if (previous->group() == originalGroup) {
+      if (previous->group() == originalGroup && previous->isMasterFile() == isESM) {
         removedFromGroup = true;
       }
     }
 
     if (const auto next = findNext(oldPriority)) {
-      if (next->group() == originalGroup) {
+      if (next->group() == originalGroup && next->isMasterFile() == isESM) {
         removedFromGroup = true;
       }
     }
@@ -437,8 +437,9 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
       }
 
       const int newPriority = destination;
-      pluginToMove->setGroup(
-          destinationGroup(priority, newPriority, pluginToMove->group(), names));
+      pluginToMove->setGroup(destinationGroup(priority, newPriority,
+                                              pluginToMove->group(),
+                                              pluginToMove->isMasterFile(), names));
       for (int i = priority; i > destination; --i) {
         m_PluginsByPriority[i] = m_PluginsByPriority[i - 1];
         m_Plugins[m_PluginsByPriority[i]]->setPriority(i);
@@ -456,8 +457,9 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
       }
 
       const int newPriority = --destination;
-      pluginToMove->setGroup(
-          destinationGroup(priority, newPriority, pluginToMove->group(), names));
+      pluginToMove->setGroup(destinationGroup(priority, newPriority,
+                                              pluginToMove->group(),
+                                              pluginToMove->isMasterFile(), names));
       for (int i = priority; i < newPriority; ++i) {
         m_PluginsByPriority[i] = m_PluginsByPriority[i + 1];
         m_Plugins[m_PluginsByPriority[i]]->setPriority(i);

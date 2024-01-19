@@ -355,42 +355,28 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
     groupName              = groupInfo ? groupInfo->name : QString();
   }
 
-  if (!sourceModel()->dropMimeData(data, action, sourceRow, 0, QModelIndex())) {
-    return false;
-  }
+  if (baseModel) {
+    auto regroupRows = dropInfo.sourceRows();
+    if (draggedToBottom || groupName.isEmpty()) {
+      for (const std::size_t id : m_DraggingGroups) {
+        const auto& groupItem = m_ProxyItems.at(id);
+        const auto group      = groupItem.groupInfo;
 
-  if (!baseModel) {
-    return true;
-  }
+        for (const std::size_t childId : group->children) {
+          const auto& childItem = m_ProxyItems.at(childId);
+          const auto childIndex = createIndex(childItem.row, 0, childId);
 
-  if (!draggedToBottom && !groupName.isEmpty()) {
-    baseModel->m_Plugins->setGroup(dropInfo.sourceRows(), groupName);
-  } else {
-    auto sourceRows = dropInfo.sourceRows();
-    for (const std::size_t id : m_DraggingGroups) {
-      const auto& groupItem = m_ProxyItems.at(id);
-      const auto group      = groupItem.groupInfo;
-
-      for (const std::size_t childId : group->children) {
-        const auto& childItem = m_ProxyItems.at(childId);
-        const auto childIndex = createIndex(childItem.row, 0, childId);
-
-        auto sourceIndex = mapToSource(childIndex);
-        for (auto model = sourceModel(); model != baseModel;) {
-          const auto proxyModel = qobject_cast<QAbstractProxyModel*>(model);
-          if (proxyModel) {
-            sourceIndex = proxyModel->mapToSource(sourceIndex);
-            model       = proxyModel->sourceModel();
-          } else {
-            break;
-          }
+          std::erase(regroupRows, childIndex.data(PluginListModel::IndexRole).toInt());
         }
-
-        std::erase(sourceRows, sourceIndex.row());
       }
     }
-    baseModel->m_Plugins->setGroup(sourceRows, groupName);
-    m_DraggingGroups.clear();
+
+    baseModel->m_Plugins->setGroup(regroupRows, groupName);
+  }
+  m_DraggingGroups.clear();
+
+  if (!sourceModel()->dropMimeData(data, action, sourceRow, 0, QModelIndex())) {
+    return false;
   }
 
   emit layoutAboutToBeChanged();
