@@ -279,8 +279,7 @@ static QString makeLootTooltip(const MOTools::Loot::Plugin& lootInfo)
     return s;
   }
 
-  return "<hr>"
-         "<ul style=\"margin-top:0px; padding-top:0px; margin-left:15px; "
+  return "<ul style=\"margin-top:0px; padding-top:0px; margin-left:15px; "
          "-qt-list-indent: 0;\">" +
          s + "</ul>";
 }
@@ -295,98 +294,151 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     return QVariant();
   }
 
-  QString toolTip;
+  switch (index.column()) {
+  case COL_NAME: {
+    QString toolTip;
 
-  toolTip += "<b>" + tr("Origin") + "</b>: " + m_Plugins->getOriginName(id);
+    toolTip += "<b>" + tr("Origin") + "</b>: " + m_Plugins->getOriginName(id);
 
-  if (plugin->forceLoaded()) {
-    toolTip += "<br><b><i>" +
-               tr("This plugin can't be disabled or moved (enforced by the game).") +
-               "</i></b>";
-  } else if (plugin->forceEnabled()) {
-    toolTip += "<br><b><i>" +
-               tr("This plugin can't be disabled (enforced by the game).") + "</i></b>";
+    if (plugin->forceLoaded()) {
+      toolTip += "<br><b><i>" +
+                 tr("This plugin can't be disabled or moved (enforced by the game).") +
+                 "</i></b>";
+    } else if (plugin->forceEnabled()) {
+      toolTip += "<br><b><i>" +
+                 tr("This plugin can't be disabled (enforced by the game).") +
+                 "</i></b>";
+    }
+
+    if (!plugin->author().isEmpty()) {
+      toolTip += "<br><b>" + tr("Author") + "</b>: " + truncateString(plugin->author());
+    }
+
+    if (plugin->description().size() > 0) {
+      toolTip += "<br><b>" + tr("Description") +
+                 "</b>: " + truncateString(plugin->description());
+    }
+
+    if (plugin->missingMasters().size() > 0) {
+      toolTip += "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
+                 truncateString(QStringList(plugin->missingMasters().begin(),
+                                            plugin->missingMasters().end())
+                                    .join(", ")) +
+                 "</b>";
+    }
+
+    std::set<QString> enabledMasters;
+    std::ranges::set_difference(plugin->masters(), plugin->missingMasters(),
+                                std::inserter(enabledMasters, enabledMasters.end()),
+                                MOBase::FileNameComparator{});
+
+    if (!enabledMasters.empty()) {
+      toolTip += "<br><b>" + tr("Enabled Masters") +
+                 "</b>: " + truncateString(MOBase::SetJoin(enabledMasters, ", "));
+    }
+
+    if (!plugin->archives().empty()) {
+      QString archiveString =
+          plugin->archives().size() < 6
+              ? truncateString(
+                    QStringList(plugin->archives().begin(), plugin->archives().end())
+                        .join(", "))
+              : "";
+      toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " + archiveString;
+    }
+
+    if (plugin->hasIni()) {
+      toolTip += "<br><b>" + tr("Loads INI settings") +
+                 "</b>: " + QFileInfo(plugin->name()).baseName() + ".ini";
+    }
+
+    if (plugin->hasNoRecords()) {
+      toolTip +=
+          "<br><br>" + tr("This is a dummy plugin. It contains no records and is "
+                          "typically used to load a paired archive file.");
+    }
+
+    return toolTip;
   }
+  case COL_CONFLICTS: {
+    const bool overriding = !data(index, OverridingRole).toList().empty();
+    const bool overridden = !data(index, OverriddenRole).toList().empty();
 
-  if (!plugin->author().isEmpty()) {
-    toolTip += "<br><b>" + tr("Author") + "</b>: " + truncateString(plugin->author());
+    if (overriding && overridden) {
+      return tr("Overrides & has overridden records");
+    } else if (overriding) {
+      return tr("Overrides records");
+    } else if (overridden) {
+      return tr("Has overridden records");
+    }
+    return QVariant();
   }
+  case COL_FLAGS: {
+    // HACK: insert some HTML to enable multiline tooltips
+    QString toolTip       = "<nobr/>";
+    const QString spacing = "<br><br>";
 
-  if (plugin->description().size() > 0) {
-    toolTip += "<br><b>" + tr("Description") +
-               "</b>: " + truncateString(plugin->description());
+    if (plugin->missingMasters().size() > 0) {
+      toolTip += "<b>" + tr("Missing Masters") + "</b>: " + "<b>" +
+                 truncateString(QStringList(plugin->missingMasters().begin(),
+                                            plugin->missingMasters().end())
+                                    .join(", ")) +
+                 "</b>" + spacing;
+    }
+
+    if (plugin->hasIni()) {
+      toolTip +=
+          tr("There is an ini file connected to this plugin. Its settings will "
+             "be added to your game settings, overwriting in case of conflicts.") +
+          "<br><br>";
+    }
+
+    if (!plugin->archives().empty()) {
+      toolTip +=
+          tr("There are Archives connected to this plugin. Their assets will be "
+             "added to your game, overwriting in case of conflicts following the "
+             "plugin order. Loose files will always overwrite assets from "
+             "Archives.") +
+          spacing;
+    }
+
+    if (plugin->isSmallFile()) {
+      QString type = plugin->isMasterFile() ? "ESM" : "ESP";
+      toolTip += tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
+                    "order but the records will be loaded in ESL space.")
+                     .arg(type) +
+                 spacing;
+    }
+
+    if (plugin->isOverlayFlagged()) {
+      toolTip += tr("This plugin is flagged as an overlay plugin. It contains only "
+                    "modified records and will overlay those changes onto the "
+                    "existing records in memory. It takes no memory space.") +
+                 spacing;
+    }
+
+    if (plugin->forceDisabled()) {
+      toolTip += tr("This game does not currently permit custom plugin "
+                    "loading. There may be manual workarounds.");
+    }
+
+    if (toolTip.endsWith(spacing)) {
+      toolTip.chop(spacing.length());
+    }
+
+    if (lootInfo) {
+      const auto lootToolTip = makeLootTooltip(*lootInfo);
+      if (toolTip.length() > 7 && !lootToolTip.isEmpty()) {
+        toolTip += "<hr>";
+      }
+      toolTip += lootToolTip;
+    }
+
+    return toolTip;
   }
-
-  if (plugin->missingMasters().size() > 0) {
-    toolTip += "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
-               truncateString(QStringList(plugin->missingMasters().begin(),
-                                          plugin->missingMasters().end())
-                                  .join(", ")) +
-               "</b>";
+  default:
+    return QVariant();
   }
-
-  std::set<QString> enabledMasters;
-  std::ranges::set_difference(plugin->masters(), plugin->missingMasters(),
-                              std::inserter(enabledMasters, enabledMasters.end()),
-                              MOBase::FileNameComparator{});
-
-  if (!enabledMasters.empty()) {
-    toolTip += "<br><b>" + tr("Enabled Masters") +
-               "</b>: " + truncateString(MOBase::SetJoin(enabledMasters, ", "));
-  }
-
-  if (!plugin->archives().empty()) {
-    QString archiveString = plugin->archives().size() < 6
-                                ? truncateString(QStringList(plugin->archives().begin(),
-                                                             plugin->archives().end())
-                                                     .join(", ")) +
-                                      "<br>"
-                                : "";
-    toolTip += "<br><b>" + tr("Loads Archives") + "</b>: " + archiveString +
-               tr("There are Archives connected to this plugin. Their assets will be "
-                  "added to your game, overwriting in case of conflicts following the "
-                  "plugin order. Loose files will always overwrite assets from "
-                  "Archives.");
-  }
-
-  if (plugin->hasIni()) {
-    toolTip += "<br><b>" + tr("Loads INI settings") +
-               "</b>: "
-               "<br>" +
-               tr("There is an ini file connected to this plugin. Its settings will "
-                  "be added to your game settings, overwriting in case of conflicts.");
-  }
-
-  if (plugin->isSmallFile()) {
-    QString type = plugin->isMasterFile() ? "ESM" : "ESP";
-    toolTip +=
-        "<br><br>" + tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
-                        "order but the records will be loaded in ESL space.")
-                         .arg(type);
-  }
-
-  if (plugin->isOverlayFlagged()) {
-    toolTip +=
-        "<br><br>" + tr("This plugin is flagged as an overlay plugin. It contains only "
-                        "modified records and will overlay those changes onto the "
-                        "existing records in memory. It takes no memory space.");
-  }
-
-  if (plugin->hasNoRecords()) {
-    toolTip += "<br><br>" + tr("This is a dummy plugin. It contains no records and is "
-                               "typically used to load a paired archive file.");
-  }
-
-  if (plugin->forceDisabled()) {
-    toolTip += "<br><br>" + tr("This game does not currently permit custom plugin "
-                               "loading. There may be manual workarounds.");
-  }
-
-  if (lootInfo) {
-    toolTip += makeLootTooltip(*lootInfo);
-  }
-
-  return toolTip;
 }
 
 QVariant PluginListModel::conflictData(const QModelIndex& index) const

@@ -194,6 +194,18 @@
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Overrides &amp; has overridden records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overrides records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has overridden records</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPluginList::PluginsWidget</name>
