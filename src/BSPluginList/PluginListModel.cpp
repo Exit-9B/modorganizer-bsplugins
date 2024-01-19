@@ -177,23 +177,13 @@ QVariant PluginListModel::foregroundData(const QModelIndex& index) const
     return QVariant();
   }
 
-  if (plugin->isAlwaysEnabled()) {
-    if (index.column() == COL_NAME) {
-      return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::Text);
-    }
-  }
-
   if (plugin->hasNoRecords()) {
     if (index.column() == COL_NAME) {
       return QBrush(Qt::gray);
     }
   }
 
-  if (plugin->forceLoaded()) {
-    if (index.column() == COL_PRIORITY || index.column() == COL_MODINDEX) {
-      return QGuiApplication::palette().brush(QPalette::Disabled, QPalette::Text);
-    }
-  } else if (plugin->forceDisabled()) {
+  if (plugin->forceDisabled()) {
     if (index.column() == COL_NAME) {
       return QBrush(Qt::darkRed);
     }

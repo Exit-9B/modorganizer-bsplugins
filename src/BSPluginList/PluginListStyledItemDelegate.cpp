@@ -38,8 +38,28 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
     optFrame.midLineWidth = 1;
     optFrame.state |= QStyle::State_Sunken;
 
-    QApplication::style()->drawControl(QStyle::CE_ShapedFrame, &optFrame, painter, widget);
+    QApplication::style()->drawControl(QStyle::CE_ShapedFrame, &optFrame, painter,
+                                       widget);
     return;
+  }
+
+  const auto plugin =
+      index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+
+  bool disabledText = false;
+  switch (index.column()) {
+  case PluginListModel::COL_NAME:
+    disabledText = plugin && plugin->isAlwaysEnabled();
+    break;
+  case PluginListModel::COL_PRIORITY:
+  case PluginListModel::COL_MODINDEX:
+    disabledText = plugin && plugin->forceLoaded();
+    break;
+  }
+
+  if (disabledText) {
+    opt.palette.setBrush(QPalette::Text,
+                         opt.palette.brush(QPalette::Disabled, QPalette::Text));
   }
 
   // HACK: we can't normally have a disabled checkbox on a selectable row, so create a
@@ -47,9 +67,6 @@ void PluginListStyledItemDelegate::paint(QPainter* painter,
   bool drawCheck = false;
   bool enabled   = false;
   if (index.column() == 0 && !index.data(Qt::CheckStateRole).isValid()) {
-    const auto plugin =
-        index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
-
     if (plugin) {
       drawCheck = true;
       if (plugin->forceLoaded() || plugin->forceEnabled()) {
