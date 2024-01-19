@@ -443,6 +443,10 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     result.append(":/MO/gui/warning");
   }
 
+  if (lootInfo && !lootInfo->messages.empty()) {
+    result.append(":/MO/gui/information");
+  }
+
   if (plugin->hasIni()) {
     result.append(":/MO/gui/attachment");
   }
@@ -453,6 +457,14 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
 
   if (plugin->isLightFlagged() || plugin->hasLightExtension()) {
     result.append(":/bsplugins/feather");
+  }
+
+  if (plugin->isOverlayFlagged()) {
+    result.append(":/MO/gui/instance_switch");
+  }
+
+  if (lootInfo && !lootInfo->dirty.empty()) {
+    result.append(":/MO/gui/edit_clear");
   }
 
   return result;
