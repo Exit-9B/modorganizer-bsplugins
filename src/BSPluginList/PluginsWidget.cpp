@@ -41,6 +41,9 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
+  // monitor main window for close event
+  topLevelWidget()->installEventFilter(this);
+
   restoreState();
 
   connect(m_PluginList, &TESData::PluginList::pluginsListChanged, this,
@@ -188,10 +191,19 @@ void PluginsWidget::on_espFilterEdit_textChanged(const QString& filter)
   updatePluginCount();
 }
 
-void PluginsWidget::changeEvent(QEvent* e)
+bool PluginsWidget::eventFilter(QObject* watched, QEvent* event)
 {
-  QWidget::changeEvent(e);
-  switch (e->type()) {
+  if (event->type() == QEvent::Close) {
+    m_PluginList->writePluginLists();
+  }
+
+  return QWidget::eventFilter(watched, event);
+}
+
+void PluginsWidget::changeEvent(QEvent* event)
+{
+  QWidget::changeEvent(event);
+  switch (event->type()) {
   case QEvent::LanguageChange:
     ui->retranslateUi(this);
     break;

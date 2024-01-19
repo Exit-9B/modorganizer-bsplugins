@@ -33,11 +33,13 @@ public:
 
   [[nodiscard]] TESData::PluginList* getPluginList() { return m_PluginList; }
 
+  bool eventFilter(QObject* watched, QEvent* event) override;
+
 public slots:
   void updatePluginCount();
 
 protected:
-  void changeEvent(QEvent* e) override;
+  void changeEvent(QEvent* event) override;
 
 private slots:
   void onSelectionChanged(const QItemSelection& selected,
