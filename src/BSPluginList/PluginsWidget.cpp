@@ -450,6 +450,34 @@ QMenu* PluginsWidget::listOptionsMenu()
                                        &PluginsWidget::toggleHideForceEnabled);
   toggleForceEnabled->setCheckable(true);
 
+  menu->addSeparator();
+
+  menu->addAction(tr("Collapse all"), [this]() {
+    ui->pluginList->collapseAll();
+    ui->pluginList->scrollToTop();
+  });
+  menu->addAction(tr("Expand all"), [this]() {
+    ui->pluginList->expandAll();
+    ui->pluginList->scrollToTop();
+  });
+
+  menu->addSeparator();
+
+  menu->addAction(tr("Enable all"), [this]() {
+    if (QMessageBox::question(topLevelWidget(), tr("Confirm"),
+                              tr("Really enable all plugins?"),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_PluginListModel->setEnabledAll(true);
+    }
+  });
+  menu->addAction(tr("Disable all"), [this]() {
+    if (QMessageBox::question(topLevelWidget(), tr("Confirm"),
+                              tr("Really disable all plugins?"),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_PluginListModel->setEnabledAll(false);
+    }
+  });
+
   return menu;
 }
 

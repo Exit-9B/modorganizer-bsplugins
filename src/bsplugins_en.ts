@@ -269,6 +269,34 @@
         <source>Load order was changed while running %1. Keep changes?</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Collapse all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expand all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Really enable all plugins?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Really disable all plugins?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>
