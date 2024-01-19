@@ -1,4 +1,5 @@
 #include "PluginListModel.h"
+#include "MOPlugin/Settings.h"
 #include "PluginListDropInfo.h"
 
 #include <QGuiApplication>
@@ -240,39 +241,45 @@ static QString truncateString(const QString& text, int length = 1024)
 static QString makeLootTooltip(const MOTools::Loot::Plugin& lootInfo)
 {
   QString s;
-  for (const auto& f : lootInfo.incompatibilities) {
-    s += "<li>" +
-         QObject::tr("Incompatible with %1")
-             .arg(!f.displayName.isEmpty() ? f.displayName : f.name) +
-         "</li>";
+  if (Settings::instance()->lootShowProblems()) {
+    for (const auto& f : lootInfo.incompatibilities) {
+      s += "<li>" +
+           QObject::tr("Incompatible with %1")
+               .arg(!f.displayName.isEmpty() ? f.displayName : f.name) +
+           "</li>";
+    }
   }
 
-  for (const auto& m : lootInfo.messages) {
-    s += "<li>";
+  if (Settings::instance()->lootShowMessages()) {
+    for (const auto& m : lootInfo.messages) {
+      s += "<li>";
 
-    switch (m.type) {
-    case MOBase::log::Warning:
-      s += QObject::tr("Warning") + ": ";
-      break;
+      switch (m.type) {
+      case MOBase::log::Warning:
+        s += QObject::tr("Warning") + ": ";
+        break;
 
-    case MOBase::log::Error:
-      s += QObject::tr("Error") + ": ";
-      break;
+      case MOBase::log::Error:
+        s += QObject::tr("Error") + ": ";
+        break;
 
-    case MOBase::log::Info:
-    case MOBase::log::Debug:
-      break;
+      case MOBase::log::Info:
+      case MOBase::log::Debug:
+        break;
+      }
+
+      s += m.text + "</li>";
+    }
+  }
+
+  if (Settings::instance()->lootShowDirty()) {
+    for (const auto& d : lootInfo.dirty) {
+      s += "<li>" + d.toString(false) + "</li>";
     }
 
-    s += m.text + "</li>";
-  }
-
-  for (const auto& d : lootInfo.dirty) {
-    s += "<li>" + d.toString(false) + "</li>";
-  }
-
-  for (const auto& c : lootInfo.clean) {
-    s += "<li>" + c.toString(true) + "</li>";
+    for (const auto& c : lootInfo.clean) {
+      s += "<li>" + c.toString(true) + "</li>";
+    }
   }
 
   if (s.isEmpty()) {
@@ -466,7 +473,7 @@ static bool isProblematic(const TESData::FileInfo* plugin,
     return true;
   }
 
-  if (lootInfo) {
+  if (lootInfo && Settings::instance()->lootShowProblems()) {
     if (!lootInfo->incompatibilities.empty()) {
       return true;
     }
@@ -495,7 +502,8 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     result.append(":/MO/gui/warning");
   }
 
-  if (lootInfo && !lootInfo->messages.empty()) {
+  if (lootInfo && !lootInfo->messages.empty() &&
+      Settings::instance()->lootShowMessages()) {
     result.append(":/MO/gui/information");
   }
 
@@ -515,7 +523,7 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     result.append(":/MO/gui/instance_switch");
   }
 
-  if (lootInfo && !lootInfo->dirty.empty()) {
+  if (lootInfo && !lootInfo->dirty.empty() && Settings::instance()->lootShowDirty()) {
     result.append(":/MO/gui/edit_clear");
   }
 

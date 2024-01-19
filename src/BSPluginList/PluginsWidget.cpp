@@ -41,6 +41,8 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
   optionsMenu = listOptionsMenu();
   ui->listOptionsBtn->setMenu(optionsMenu);
 
+  ui->sortButton->setVisible(Settings::instance()->enableSortButton());
+
   // monitor main window for close event
   topLevelWidget()->installEventFilter(this);
 
@@ -81,6 +83,9 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
 
   organizer->modList()->onModStateChanged(
       std::bind_front(&PluginsWidget::onModStateChanged, this));
+
+  Settings::instance()->onSettingChanged(
+      std::bind_front(&PluginsWidget::onSettingChanged, this));
 
   synchronizePluginLists(organizer);
   updatePluginCount();
@@ -556,7 +561,7 @@ bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
   return true;
 }
 
-bool PluginsWidget::onFinishedRun(const QString& binary,
+void PluginsWidget::onFinishedRun(const QString& binary,
                                   [[maybe_unused]] unsigned int exitCode)
 {
   const auto profilePath = QDir(m_Organizer->profilePath());
@@ -573,7 +578,7 @@ bool PluginsWidget::onFinishedRun(const QString& binary,
 
   if (binaryName.compare("lootcli.exe", Qt::CaseInsensitive) == 0 ||
       !pluginsSnapshot.exists())
-    return true;
+    return;
 
   if (!pluginsFile.exists() ||
       pluginsFile.lastModified() > pluginsSnapshot.lastModified()) {
@@ -596,7 +601,7 @@ bool PluginsWidget::onFinishedRun(const QString& binary,
               tr("Failed to restore the backup. Errorcode: %1")
                   .arg(QString::fromStdWString(MOBase::formatSystemMessage(e))));
 
-          return true;
+          return;
         }
       }
     }
@@ -604,7 +609,15 @@ bool PluginsWidget::onFinishedRun(const QString& binary,
 
   MOBase::shellDeleteQuiet(pluginsName + ".snapshot", parent);
   m_PluginListModel->invalidate();
-  return true;
+}
+
+void PluginsWidget::onSettingChanged(const QString& key,
+                                     [[maybe_unused]] const QVariant& oldValue,
+                                     const QVariant& newValue)
+{
+  if (key == u"enable_sort_button"_s) {
+    ui->sortButton->setVisible(newValue.value<bool>());
+  }
 }
 
 void PluginsWidget::importLootGroups()

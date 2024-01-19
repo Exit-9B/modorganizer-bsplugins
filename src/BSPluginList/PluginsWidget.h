@@ -65,7 +65,9 @@ private:
 
   void onModStateChanged(const std::map<QString, MOBase::IModList::ModStates>& mods);
   bool onAboutToRun(const QString& binary);
-  bool onFinishedRun(const QString& binary, unsigned int exitCode);
+  void onFinishedRun(const QString& binary, unsigned int exitCode);
+  void onSettingChanged(const QString& key, const QVariant& oldValue,
+                        const QVariant& newValue);
   void importLootGroups();
 
   // HACK: Attempt to keep our custom plugin list synchronized with the built-in panel

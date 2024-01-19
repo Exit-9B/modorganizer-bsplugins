@@ -14,7 +14,10 @@ static QString findIniPath(MOBase::IOrganizer* organizer)
 
 Settings::Settings(MOBase::IOrganizer* organizer)
     : Organizer{organizer}, MOSettings{findIniPath(organizer), QSettings::IniFormat}
-{}
+{
+  organizer->onPluginSettingChanged(
+      std::bind_front(&Settings::onPluginSettingChanged, this));
+}
 
 void Settings::init(MOBase::IOrganizer* organizer)
 {
@@ -34,6 +37,13 @@ void Settings::set(const QString& setting, const QVariant& value)
 [[nodiscard]] QVariant Settings::get(const QString& setting, const QVariant& def) const
 {
   return Organizer->persistent(BSPlugins::NAME, setting, def);
+}
+
+bool Settings::onSettingChanged(
+    const std::function<void(const QString&, const QVariant&, const QVariant&)>& func)
+{
+  auto connection = SettingChanged.connect(func);
+  return connection.connected();
 }
 
 QColor Settings::overwrittenLooseFilesColor() const
@@ -80,6 +90,26 @@ lootcli::LogLevels Settings::lootLogLevel() const
       .value<lootcli::LogLevels>();
 }
 
+bool Settings::enableSortButton() const
+{
+  return Organizer->pluginSetting(BSPlugins::NAME, "enable_sort_button").value<bool>();
+}
+
+bool Settings::lootShowDirty() const
+{
+  return Organizer->pluginSetting(BSPlugins::NAME, "loot_show_dirty").value<bool>();
+}
+
+bool Settings::lootShowMessages() const
+{
+  return Organizer->pluginSetting(BSPlugins::NAME, "loot_show_messages").value<bool>();
+}
+
+bool Settings::lootShowProblems() const
+{
+  return Organizer->pluginSetting(BSPlugins::NAME, "loot_show_problems").value<bool>();
+}
+
 static QString stateSettingName(const QHeaderView* header)
 {
   return header->parent()->objectName() + "_header";
@@ -118,4 +148,14 @@ void Settings::restoreGeometry(QDialog* dialog)
   if (!geometry.isEmpty()) {
     dialog->restoreGeometry(geometry);
   }
+}
+
+void Settings::onPluginSettingChanged(const QString& pluginName, const QString& key,
+                                      const QVariant& oldValue,
+                                      const QVariant& newValue)
+{
+  if (pluginName != BSPlugins::NAME)
+    return;
+
+  SettingChanged(key, oldValue, newValue);
 }
