@@ -521,7 +521,7 @@ void PluginGroupProxyModel::buildGroups()
 
   for (std::size_t id = 0; id < m_ProxyItems.size(); ++id) {
     auto& item = m_ProxyItems[id];
-    if (item.row < 0 || item.groupInfo != nullptr)
+    if (item.row < 0)
       continue;
 
     bool invalidate = false;
@@ -539,10 +539,14 @@ void PluginGroupProxyModel::buildGroups()
     }
 
     if (invalidate) {
+      // we want to try to keep items alive even if they are temporarily removed from
+      // the model, so assign them to an index that looks valid but won't be displayed
+      const int fakeRow = static_cast<int>(m_TopLevel.size());
       for (int column = 0, count = columnCount(); column < count; ++column) {
-        changePersistentIndex(createIndex(item.row, column, id), QModelIndex());
+        changePersistentIndex(createIndex(item.row, column, id),
+                              createIndex(fakeRow, column, id));
       }
-      item = ProxyItem{-1, -1, NO_ID, nullptr};
+      item = ProxyItem{fakeRow, -1, NO_ID, nullptr};
     }
   }
 }
