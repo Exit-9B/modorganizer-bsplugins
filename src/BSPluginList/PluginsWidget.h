@@ -68,6 +68,7 @@ private:
   void onFinishedRun(const QString& binary, unsigned int exitCode);
   void onSettingChanged(const QString& key, const QVariant& oldValue,
                         const QVariant& newValue);
+  void checkLoadOrderChanged(const QString& binaryName);
   void importLootGroups();
 
   // HACK: Attempt to keep our custom plugin list synchronized with the built-in panel
@@ -87,6 +88,8 @@ private:
   MOBase::IOrganizer* m_Organizer;
 
   bool m_DidUpdateMasterList = false;
+  bool m_OrganizerRefreshing = false;
+  bool m_IsRunningApp        = false;
 };
 
 }  // namespace BSPluginList

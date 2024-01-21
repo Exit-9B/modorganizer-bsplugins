@@ -12,6 +12,7 @@
 #include <boost/range/adaptor/reversed.hpp>
 
 #include <QApplication>
+#include <QCryptographicHash>
 #include <QMenu>
 #include <QMessageBox>
 #include <QStandardPaths>
@@ -556,6 +557,7 @@ bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
   if (QFileInfo(binary).fileName().compare("lootcli.exe") != 0) {
     createBackup(pluginsName, "snapshot", parent);
     createBackup(loadOrderName, "snapshot", parent);
+    m_IsRunningApp = true;
   }
 
   return true;
@@ -564,24 +566,60 @@ bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
 void PluginsWidget::onFinishedRun(const QString& binary,
                                   [[maybe_unused]] unsigned int exitCode)
 {
+  const auto binaryName = QFileInfo(binary).fileName();
+  if (binaryName.compare("lootcli.exe", Qt::CaseInsensitive) == 0) {
+    return;
+  }
+
+  // queue up behind the vanilla callbacks which might not have run yet, so we can react
+  // after loadorder.txt changes
+  m_Organizer->onNextRefresh([=, this]() {
+    m_IsRunningApp = false;
+    checkLoadOrderChanged(binaryName);
+  });
+}
+
+void PluginsWidget::onSettingChanged(const QString& key,
+                                     [[maybe_unused]] const QVariant& oldValue,
+                                     const QVariant& newValue)
+{
+  if (key == u"enable_sort_button"_s) {
+    ui->sortButton->setVisible(newValue.value<bool>());
+  }
+}
+
+static QByteArray hashFile(const QString& filePath)
+{
+  QCryptographicHash hash{QCryptographicHash::Sha1};
+  QFile file{filePath};
+  if (file.open(QIODevice::ReadOnly)) {
+    hash.addData(file.readAll());
+  } else {
+    return ""_ba;
+  }
+
+  return hash.result();
+}
+
+void PluginsWidget::checkLoadOrderChanged(const QString& binaryName)
+{
   const auto profilePath = QDir(m_Organizer->profilePath());
   const auto pluginsName = QDir::cleanPath(profilePath.absoluteFilePath("plugins.txt"));
   const auto loadOrderName =
       QDir::cleanPath(profilePath.absoluteFilePath("loadorder.txt"));
   const auto parent = this->topLevelWidget();
 
-  const auto binaryName        = QFileInfo(binary).fileName();
-  const auto pluginsFile       = QFileInfo(pluginsName);
-  const auto pluginsSnapshot   = QFileInfo(pluginsName + ".snapshot");
-  const auto loadOrderFile     = QFileInfo(loadOrderName);
-  const auto loadOrderSnapshot = QFileInfo(loadOrderName + ".snapshot");
+  const auto pluginsSnapshot   = pluginsName + ".snapshot";
+  const auto loadOrderSnapshot = loadOrderName + ".snapshot";
 
-  if (binaryName.compare("lootcli.exe", Qt::CaseInsensitive) == 0 ||
-      !pluginsSnapshot.exists())
+  const auto pluginsFile   = QFileInfo(pluginsName);
+  const auto loadOrderFile = QFileInfo(loadOrderName);
+
+  if (!QFileInfo(loadOrderSnapshot).exists())
     return;
 
-  if (!pluginsFile.exists() ||
-      pluginsFile.lastModified() > pluginsSnapshot.lastModified()) {
+  // we just refreshed and rewrote loadorder.txt if plugins.txt changed
+  if (hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
 
     if (binaryName.compare("Loot.exe", Qt::CaseInsensitive) == 0) {
       importLootGroups();
@@ -607,17 +645,9 @@ void PluginsWidget::onFinishedRun(const QString& binary,
     }
   }
 
-  MOBase::shellDeleteQuiet(pluginsName + ".snapshot", parent);
+  MOBase::shellDeleteQuiet(pluginsSnapshot, parent);
+  MOBase::shellDeleteQuiet(loadOrderSnapshot, parent);
   m_PluginListModel->invalidate();
-}
-
-void PluginsWidget::onSettingChanged(const QString& key,
-                                     [[maybe_unused]] const QVariant& oldValue,
-                                     const QVariant& newValue)
-{
-  if (key == u"enable_sort_button"_s) {
-    ui->sortButton->setVisible(newValue.value<bool>());
-  }
 }
 
 void PluginsWidget::importLootGroups()
@@ -646,44 +676,52 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
   }
 
   static bool refreshing = false;
-  static std::function<void()> setRefreshing;
-  setRefreshing = [this] {
-    refreshing = true;
-    m_PluginListModel->invalidate();
+  static std::function<void()> startRefresh;
+  startRefresh = [this] {
+    m_OrganizerRefreshing = true;
+    // if we just finished running an application, we want the vanilla plugin list to
+    // finish reading and rewriting the load order files so that we don't end up
+    // ignoring the change
+    if (!m_IsRunningApp) {
+      m_PluginListModel->invalidate();
+    }
   };
 
-  organizer->onNextRefresh(setRefreshing, false);
+  organizer->onNextRefresh(startRefresh, false);
 
-  ipluginlist->onRefreshed([organizer]() {
-    refreshing = false;
-    organizer->onNextRefresh(setRefreshing, false);
+  ipluginlist->onRefreshed([this, organizer]() {
+    if (m_OrganizerRefreshing) {
+      m_OrganizerRefreshing = false;
+      organizer->onNextRefresh(startRefresh, false);
+    }
   });
 
   ipluginlist->onPluginMoved(
       [this](const QString& name, int oldPriority, int newPriority) {
-        if (refreshing)
+        if (m_OrganizerRefreshing)
           return;
         m_PluginListModel->movePlugin(name, oldPriority, newPriority);
       });
 
   ipluginlist->onPluginStateChanged(
       [this](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
-        if (refreshing)
+        if (m_OrganizerRefreshing)
           return;
         m_PluginListModel->changePluginStates(infos);
       });
 
-  m_PluginList->onPluginMoved(
-      [=](const QString& name, [[maybe_unused]] int oldPriority, int newPriority) {
-        if (refreshing)
-          return;
+  m_PluginList->onPluginMoved([=, this](const QString& name,
+                                        [[maybe_unused]] int oldPriority,
+                                        int newPriority) {
+    if (m_OrganizerRefreshing)
+      return;
 
-        ipluginlist->setPriority(name, newPriority);
-      });
+    ipluginlist->setPriority(name, newPriority);
+  });
 
   m_PluginList->onPluginStateChanged(
-      [=](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
-        if (refreshing || infos.empty())
+      [=, this](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
+        if (m_OrganizerRefreshing || infos.empty())
           return;
 
         for (const auto& [name, state] : infos) {
