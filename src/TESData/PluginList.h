@@ -137,6 +137,8 @@ private:
       const boost::container::flat_set<QString, MOBase::FileNameComparator>&
           exclusions);
 
+  void queuePluginStateChange(const QString& pluginName, PluginStates state);
+  void dispatchPluginStateChanges();
   void pluginStatesChanged(const QStringList& pluginNames, PluginStates state) const;
   void enforcePluginRelationships();
   void testMasters();
@@ -160,6 +162,8 @@ private:
   std::map<TESFile::Type, std::shared_ptr<Record>> m_DefaultObjects;
 
   bool m_Refreshing = true;
+  std::map<QString, PluginStates> m_QueuedStateChanges;
+
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
   SignalPluginStateChanged m_PluginStateChanged;

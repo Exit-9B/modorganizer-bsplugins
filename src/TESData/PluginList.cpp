@@ -216,6 +216,7 @@ void PluginList::refresh(bool invalidate)
 
   computeCompileIndices();
   refreshLoadOrder();
+  dispatchPluginStateChanges();
   testMasters();
 
   m_Refreshing = false;
@@ -585,12 +586,7 @@ void PluginList::setState(const QString& name, PluginStates state)
     plugin->setEnabled(shouldEnable);
   }
 
-  if (!isRefreshing()) {
-    computeCompileIndices();
-    refreshLoadOrder();
-    pluginStatesChanged({plugin->name()}, state);
-    testMasters();
-  }
+  queuePluginStateChange(plugin->name(), state);
 }
 
 int PluginList::priority(const QString& name) const
@@ -996,6 +992,26 @@ void PluginList::writeGroups(const QString& fileName) const
   }
 
   file.commit();
+}
+
+void PluginList::queuePluginStateChange(const QString& pluginName, PluginStates state)
+{
+  if (m_Refreshing) {
+    m_QueuedStateChanges[pluginName] = state;
+  } else {
+    computeCompileIndices();
+    refreshLoadOrder();
+    pluginStatesChanged({pluginName}, state);
+    testMasters();
+  }
+}
+
+void PluginList::dispatchPluginStateChanges()
+{
+  if (!m_QueuedStateChanges.empty()) {
+    m_PluginStateChanged(m_QueuedStateChanges);
+    m_QueuedStateChanges.clear();
+  }
 }
 
 void PluginList::pluginStatesChanged(const QStringList& pluginNames,

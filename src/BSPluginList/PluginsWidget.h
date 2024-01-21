@@ -87,9 +87,10 @@ private:
 
   MOBase::IOrganizer* m_Organizer;
 
-  bool m_DidUpdateMasterList = false;
-  bool m_OrganizerRefreshing = false;
-  bool m_IsRunningApp        = false;
+  bool m_DidUpdateMasterList   = false;
+  bool m_OrganizerRefreshing   = false;
+  bool m_IsRunningApp          = false;
+  bool m_ExternalStatesChanged = false;
 };
 
 }  // namespace BSPluginList

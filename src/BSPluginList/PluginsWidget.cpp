@@ -574,8 +574,10 @@ void PluginsWidget::onFinishedRun(const QString& binary,
   // queue up behind the vanilla callbacks which might not have run yet, so we can react
   // after loadorder.txt changes
   m_Organizer->onNextRefresh([=, this]() {
-    m_IsRunningApp = false;
+    m_PluginList->refresh();
     checkLoadOrderChanged(binaryName);
+    m_IsRunningApp = false;
+    m_ExternalStatesChanged = false;
   });
 }
 
@@ -619,7 +621,7 @@ void PluginsWidget::checkLoadOrderChanged(const QString& binaryName)
     return;
 
   // we just refreshed and rewrote loadorder.txt if plugins.txt changed
-  if (hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
+  if (m_ExternalStatesChanged || hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
 
     if (binaryName.compare("Loot.exe", Qt::CaseInsensitive) == 0) {
       importLootGroups();
@@ -711,7 +713,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
   m_PluginList->onPluginMoved([=, this](const QString& name,
                                         [[maybe_unused]] int oldPriority,
                                         int newPriority) {
-    if (m_OrganizerRefreshing)
+    if (m_PluginList->isRefreshing())
       return;
 
     ipluginlist->setPriority(name, newPriority);
@@ -719,7 +721,11 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
 
   m_PluginList->onPluginStateChanged(
       [=, this](const std::map<QString, MOBase::IPluginList::PluginStates>& infos) {
-        if (m_OrganizerRefreshing || infos.empty())
+        if (m_IsRunningApp) {
+          m_ExternalStatesChanged = true;
+        }
+
+        if (m_PluginList->isRefreshing() || infos.empty())
           return;
 
         for (const auto& [name, state] : infos) {
