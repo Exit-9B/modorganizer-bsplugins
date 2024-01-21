@@ -323,7 +323,7 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
                  "</b>: " + truncateString(plugin->description());
     }
 
-    if (plugin->missingMasters().size() > 0) {
+    if (plugin->enabled() && plugin->missingMasters().size() > 0) {
       toolTip += "<br><b>" + tr("Missing Masters") + "</b>: " + "<b>" +
                  truncateString(QStringList(plugin->missingMasters().begin(),
                                             plugin->missingMasters().end())
@@ -382,7 +382,7 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     QString toolTip       = "<nobr/>";
     const QString spacing = "<br><br>";
 
-    if (plugin->missingMasters().size() > 0) {
+    if (plugin->enabled() && plugin->missingMasters().size() > 0) {
       toolTip += "<b>" + tr("Missing Masters") + "</b>: " + "<b>" +
                  truncateString(QStringList(plugin->missingMasters().begin(),
                                             plugin->missingMasters().end())
@@ -466,7 +466,7 @@ QVariant PluginListModel::conflictData(const QModelIndex& index) const
 static bool isProblematic(const TESData::FileInfo* plugin,
                           const MOTools::Loot::Plugin* lootInfo)
 {
-  if (plugin && plugin->hasMissingMasters()) {
+  if (plugin && plugin->enabled() && plugin->hasMissingMasters()) {
     return true;
   }
 
