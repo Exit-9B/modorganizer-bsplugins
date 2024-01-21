@@ -675,9 +675,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
     return;
   }
 
-  static bool refreshing = false;
-  static std::function<void()> startRefresh;
-  startRefresh = [this] {
+  std::function<void()> startRefresh = [this] {
     m_OrganizerRefreshing = true;
     // if we just finished running an application, we want the vanilla plugin list to
     // finish reading and rewriting the load order files so that we don't end up
@@ -689,7 +687,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
 
   organizer->onNextRefresh(startRefresh, false);
 
-  ipluginlist->onRefreshed([this, organizer]() {
+  ipluginlist->onRefreshed([this, organizer, startRefresh]() {
     if (m_OrganizerRefreshing) {
       m_OrganizerRefreshing = false;
       organizer->onNextRefresh(startRefresh, false);
