@@ -89,7 +89,11 @@ QRect PluginListView::visualRect(const QModelIndex& index) const
 
 QColor PluginListView::markerColor(const QModelIndex& index) const
 {
-  const uint pluginIndex    = index.data(PluginListModel::IndexRole).toUInt();
+  bool ok;
+  const uint pluginIndex = index.data(PluginListModel::IndexRole).toUInt(&ok);
+  if (!ok) {
+    return QColor();
+  }
   const bool highlight      = m_Markers.highlight.contains(pluginIndex);
   const bool overriding     = m_Markers.overriding.contains(pluginIndex);
   const bool overridden     = m_Markers.overridden.contains(pluginIndex);
