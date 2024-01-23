@@ -403,110 +403,6 @@
     </message>
 </context>
 <context>
-    <name>ModInfoDialog</name>
-    <message>
-        <source>Mod Info</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>General</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files that exist in other mods but are overwritten by this mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Winning file conflicts:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files that are unused because they are overwritten by other mods</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Losing file conflicts:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files that have no conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The following files have no conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Advanced</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Whether files that have no conflicts should be visible in the list</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show files that have no conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shows all mods overwriting or being overwritten by this mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show all conflicting mods</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shows only the nearest conflicting mods, in order of priority</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show nearest conflicting mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Filter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Filetree</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open Mod in Explorer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A directory view of this mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a modifiable directory view of the mod directory. You can move around files using drag &amp;amp; drop and rename them (double click).&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Changes happen immediately on disc, so do&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt; be careful&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Previous</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>PluginsWidget</name>
     <message>
         <source>Plugins</source>
@@ -660,13 +556,6 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>ctvWidget</name>
-    <message>
-        <source>Files that exist in other mods but are overwritten by this mod</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
