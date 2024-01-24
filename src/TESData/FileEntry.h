@@ -5,6 +5,7 @@
 #include "TESFile/Type.h"
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -22,7 +23,9 @@ public:
 
   [[nodiscard]] TESFileHandle handle() const;
   [[nodiscard]] const std::string& name() const;
-  [[nodiscard]] std::vector<std::shared_ptr<Record>> records() const;
+
+  void
+  forEachRecord(std::function<void(const std::shared_ptr<const Record>&)> func) const;
 
   std::shared_ptr<Record> createForm(std::uint32_t formId);
 

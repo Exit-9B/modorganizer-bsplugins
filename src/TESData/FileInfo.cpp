@@ -79,7 +79,7 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
     return conflicts;
   }
 
-  for (const auto& record : entry->records()) {
+  entry->forEachRecord([&](auto&& record) {
     for (const auto& alternative : record->alternatives()) {
       const auto altEntry = m_PluginList->findEntryByHandle(alternative);
 
@@ -101,7 +101,7 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
         conflicts.m_OverriddenList.insert(altIndex);
       }
     }
-  }
+  });
 
   uint conflictState = CONFLICT_NONE;
   if (!conflicts.m_OverridingList.empty()) {

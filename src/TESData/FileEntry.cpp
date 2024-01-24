@@ -17,25 +17,22 @@ const std::string& FileEntry::name() const
   return m_Name;
 }
 
-std::vector<std::shared_ptr<Record>> FileEntry::records() const
+void FileEntry::forEachRecord(
+    std::function<void(const std::shared_ptr<const Record>&)> func) const
 {
-  std::vector<std::shared_ptr<Record>> result;
-
   for (const auto& [master, forms] : m_Forms) {
     for (const auto& [formId, record] : forms) {
-      result.push_back(record);
+      func(record);
     }
   }
 
   for (const auto& [setting, record] : m_Settings) {
-    result.push_back(record);
+    func(record);
   }
 
   for (const auto& [type, record] : m_DefaultObjects) {
-    result.push_back(record);
+    func(record);
   }
-
-  return result;
 }
 
 std::shared_ptr<Record> FileEntry::createForm(std::uint32_t formId)
