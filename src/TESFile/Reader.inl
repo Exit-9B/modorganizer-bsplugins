@@ -64,7 +64,8 @@ template <ReaderHandler Handler>
 inline std::uint32_t Reader<Handler>::parseRecord(std::istream& stream,
                                                   Handler& handler)
 {
-  const RecordHeader header = readType<RecordHeader>(stream);
+  RecordHeader header;
+  stream.read(reinterpret_cast<char*>(&header), headerSize_);
   if (stream.fail()) {
     throw std::runtime_error("record incomplete");
   }
