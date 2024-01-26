@@ -61,10 +61,8 @@ public:
   [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle);
 
   FileEntry* createEntry(const std::string& name);
-  void addSetting(const std::string& pluginName, const std::string& setting);
-  void addForm(const std::string& pluginName, TESFile::Type type,
-               const std::string& master, std::uint32_t formId);
-  void addDefaultObject(const std::string& pluginName, TESFile::Type type);
+  void addRecordConflict(const std::string& pluginName, TESFile::Type type,
+                         const RecordPath& path);
 
   void refresh(bool invalidate = false);
 

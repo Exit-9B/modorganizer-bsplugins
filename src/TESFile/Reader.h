@@ -15,16 +15,16 @@ namespace TESFile
 template <typename Handler>
 concept ReaderHandler = requires(Handler& handler) {
   {
-    handler.Group(std::declval<const GroupData&>())
+    handler.Group(std::declval<GroupData>())
   } -> std::convertible_to<bool>;
   {
-    handler.Form(std::declval<const FormData&>())
+    handler.Form(std::declval<FormData>())
   } -> std::convertible_to<bool>;
   {
     handler.Chunk(std::declval<Type>())
   } -> std::convertible_to<bool>;
   {
-    handler.ChunkData(std::declval<Type>(), std::declval<std::istream&>())
+    handler.Data(std::declval<std::istream&>())
   };
 };
 

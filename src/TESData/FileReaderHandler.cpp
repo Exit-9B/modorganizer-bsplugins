@@ -12,11 +12,13 @@ namespace TESData
 FileReaderHandler::FileReaderHandler(PluginList* pluginList, FileInfo* plugin,
                                      bool lightSupported, bool overlaySupported)
     : m_PluginList{pluginList}, m_Plugin{plugin}, m_LightSupported{lightSupported},
-      m_OverlaySupported{overlaySupported}, m_CurrentGroup{NO_TYPE}
+      m_OverlaySupported{overlaySupported}
 {}
 
-bool FileReaderHandler::Group(const TESFile::GroupData& group)
+bool FileReaderHandler::Group(TESFile::GroupData group)
 {
+  m_CurrentPath.push(group, m_Masters, m_Plugin->name().toStdString());
+
   if (!group.hasFormType()) {
     return false;
   }
@@ -26,17 +28,18 @@ bool FileReaderHandler::Group(const TESFile::GroupData& group)
     return false;
   }
 
-  m_CurrentGroup = group.formType();
   return true;
 }
 
-bool FileReaderHandler::Form(const TESFile::FormData& form)
+void FileReaderHandler::EndGroup()
 {
-  switch (m_CurrentGroup) {
-  case NO_TYPE:
-    if (form.type() == "TES4"_ts) {
-      m_CurrentGroup = "TES4"_ts;
+  m_CurrentPath.pop();
+}
 
+bool FileReaderHandler::Form(TESFile::FormData form)
+{
+  if (m_CurrentPath.groups().empty()) {
+    if (form.type() == "TES4"_ts) {
       m_Plugin->setMasterFlagged(form.flags() & TESFile::RecordFlags::Master);
       m_Plugin->setOverlayFlagged(m_OverlaySupported &&
                                   (form.flags() & TESFile::RecordFlags::Overlay));
@@ -48,17 +51,20 @@ bool FileReaderHandler::Form(const TESFile::FormData& form)
     } else {
       throw std::runtime_error("Unsupported header record");
     }
+  }
 
-  case "GMST"_ts:
+  switch (m_CurrentPath.groups().front().formType()) {
   case "DOBJ"_ts:
+  case "GMST"_ts:
     return true;
-
   default:
+    m_CurrentPath.setFormId(form.formId(), m_Masters, m_Plugin->name().toStdString());
+
     const int localModIndex   = form.localModIndex();
     const bool isMasterRecord = localModIndex < m_Masters.size();
     if (isMasterRecord) {
-      m_PluginList->addForm(m_Plugin->name().toStdString(), m_CurrentGroup,
-                            m_Masters[localModIndex], form.formId());
+      m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), form.type(),
+                                      m_CurrentPath);
     }
     return isMasterRecord;
   }
@@ -66,8 +72,8 @@ bool FileReaderHandler::Form(const TESFile::FormData& form)
 
 bool FileReaderHandler::Chunk(TESFile::Type type)
 {
-  switch (m_CurrentGroup) {
-  case "TES4"_ts:
+  m_CurrentChunk = type;
+  if (m_CurrentPath.groups().empty()) {
     switch (type) {
     case "HEDR"_ts:
     case "MAST"_ts:
@@ -76,15 +82,13 @@ bool FileReaderHandler::Chunk(TESFile::Type type)
       return true;
     }
     return false;
-
-  case "DOBJ"_ts:
+  } else if (m_CurrentPath.groups().front().formType() == "DOBJ"_ts) {
     switch (type) {
     case "DNAM"_ts:
       return true;
     }
     return false;
-
-  default:
+  } else {
     switch (type) {
     case "EDID"_ts:
       return true;
@@ -93,90 +97,112 @@ bool FileReaderHandler::Chunk(TESFile::Type type)
   }
 }
 
-void FileReaderHandler::ChunkData(TESFile::Type type, std::istream& stream)
+void FileReaderHandler::Data(std::istream& stream)
 {
-  switch (m_CurrentGroup) {
-  case "TES4"_ts:
-    switch (type) {
-    case "HEDR"_ts: {
-      struct Header
-      {
-        float version;
-        int32_t numRecords;
-        uint32_t nextObjectId;
-      };
+  if (m_CurrentPath.groups().empty()) {
+    return MainRecordData(stream);
+  }
 
-      const auto header = TESFile::readType<Header>(stream);
-      if (stream.fail()) {
-        MOBase::log::error("failed to read HEDR data");
-        return;
+  switch (m_CurrentPath.groups().front().formType()) {
+  case "DOBJ"_ts:
+    return DefaultObjectData(stream);
+  case "GMST"_ts:
+    return GameSettingData(stream);
+  default:
+    return StandardData(stream);
+  }
+}
+
+void FileReaderHandler::MainRecordData(std::istream& stream)
+{
+  switch (m_CurrentChunk) {
+  case "HEDR"_ts: {
+    struct Header
+    {
+      float version;
+      int32_t numRecords;
+      uint32_t nextObjectId;
+    };
+
+    const auto header = TESFile::readType<Header>(stream);
+    if (stream.fail()) {
+      MOBase::log::error("failed to read HEDR data");
+      return;
+    }
+
+    m_Plugin->setHasNoRecords(header.numRecords == 0);
+  } break;
+
+  case "MAST"_ts: {
+    std::string master;
+    std::getline(stream, master, '\0');
+    if (!master.empty()) {
+      m_Plugin->addMaster(QString::fromStdString(master.c_str()));
+      m_Masters.push_back(master);
+    }
+  } break;
+
+  case "CNAM"_ts: {
+    std::string author;
+    std::getline(stream, author, '\0');
+    if (!author.empty()) {
+      m_Plugin->setAuthor(QString::fromLatin1(author.data()));
+    }
+  } break;
+
+  case "SNAM"_ts: {
+    std::string desc;
+    std::getline(stream, desc, '\0');
+    if (!desc.empty()) {
+      m_Plugin->setDescription(QString::fromLatin1(desc.data()));
+    }
+  } break;
+  }
+}
+
+void FileReaderHandler::DefaultObjectData(std::istream& stream)
+{
+  switch (m_CurrentChunk) {
+  case "DNAM"_ts:
+    while (!stream.eof()) {
+      const TESFile::Type name = TESFile::readType<TESFile::Type>(stream);
+      [[maybe_unused]] const std::uint32_t formId =
+          TESFile::readType<std::uint32_t>(stream);
+      if (name == TESFile::Type()) {
+        continue;
       }
-
-      m_Plugin->setHasNoRecords(header.numRecords == 0);
-    } break;
-
-    case "MAST"_ts: {
-      std::string master;
-      std::getline(stream, master, '\0');
-      if (!master.empty()) {
-        m_Plugin->addMaster(QString::fromStdString(master.c_str()));
-        m_Masters.push_back(master);
+      if (name == "BBBB"_ts) {
+        break;
       }
-    } break;
-
-    case "CNAM"_ts: {
-      std::string author;
-      std::getline(stream, author, '\0');
-      if (!author.empty()) {
-        m_Plugin->setAuthor(QString::fromLatin1(author.data()));
-      }
-    } break;
-
-    case "SNAM"_ts: {
-      std::string desc;
-      std::getline(stream, desc, '\0');
-      if (!desc.empty()) {
-        m_Plugin->setDescription(QString::fromLatin1(desc.data()));
-      }
-    } break;
+      m_CurrentPath.setTypeId(name);
+      m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), "DOBJ"_ts,
+                                      m_CurrentPath);
     }
     break;
+  }
+}
 
-  case "DOBJ"_ts:
-    switch (type) {
-    case "DNAM"_ts:
-      while (!stream.eof()) {
-        const TESFile::Type name = TESFile::readType<TESFile::Type>(stream);
-        [[maybe_unused]] const std::uint32_t formId =
-            TESFile::readType<std::uint32_t>(stream);
-        if (name == TESFile::Type()) {
-          continue;
-        }
-        if (name == "BBBB"_ts) {
-          break;
-        }
-        m_PluginList->addDefaultObject(m_Plugin->name().toStdString(), name);
-      }
-      break;
-    }
+void FileReaderHandler::GameSettingData(std::istream& stream)
+{
+  switch (m_CurrentChunk) {
+  case "EDID"_ts:
+    std::string editorId;
+    std::getline(stream, editorId, '\0');
+    m_CurrentPath.setEditorId(editorId);
+    m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), "GMST"_ts,
+                                    m_CurrentPath);
+    break;
+  }
+}
 
-  case "GMST"_ts:
-    switch (type) {
-    case "EDID"_ts:
-      std::string editorId;
-      std::getline(stream, editorId, '\0');
-      m_PluginList->addSetting(m_Plugin->name().toStdString(), editorId);
-      break;
-    }
-
-  default:
-    switch (type) {
-    case "EDID"_ts:
-      std::string editorId;
-      std::getline(stream, editorId, '\0');
-      // TODO
-      break;
-    }
+void FileReaderHandler::StandardData(std::istream& stream)
+{
+  switch (m_CurrentChunk) {
+  case "EDID"_ts:
+    std::string editorId;
+    std::getline(stream, editorId, '\0');
+    // TODO
+    break;
   }
 }
 

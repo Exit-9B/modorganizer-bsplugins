@@ -1,6 +1,7 @@
 #ifndef TESDATA_FILEREADERHANDLER_H
 #define TESDATA_FILEREADERHANDLER_H
 
+#include "RecordPath.h"
 #include "TESFile/Stream.h"
 
 #include <string>
@@ -18,16 +19,21 @@ public:
   FileReaderHandler(PluginList* pluginList, FileInfo* plugin, bool lightSupported,
                     bool overlaySupported);
 
-  bool Group(const TESFile::GroupData& group);
+  bool Group(TESFile::GroupData group);
 
-  bool Form(const TESFile::FormData& form);
+  void EndGroup();
+
+  bool Form(TESFile::FormData form);
 
   bool Chunk(TESFile::Type type);
 
-  void ChunkData(TESFile::Type type, std::istream& stream);
+  void Data(std::istream& stream);
 
 private:
-  static constexpr TESFile::Type NO_TYPE = "\0\0\0\0"_ts;
+  void MainRecordData(std::istream& stream);
+  void DefaultObjectData(std::istream& stream);
+  void GameSettingData(std::istream& stream);
+  void StandardData(std::istream& stream);
 
   PluginList* m_PluginList;
   FileInfo* m_Plugin;
@@ -35,7 +41,8 @@ private:
   bool m_OverlaySupported;
 
   std::vector<std::string> m_Masters;
-  TESFile::Type m_CurrentGroup;
+  RecordPath m_CurrentPath;
+  TESFile::Type m_CurrentChunk;
 };
 
 }  // namespace TESData

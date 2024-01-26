@@ -149,44 +149,17 @@ FileEntry* PluginList::createEntry(const std::string& name)
   return entry.get();
 }
 
-void PluginList::addSetting(const std::string& pluginName, const std::string& setting)
+void PluginList::addRecordConflict(const std::string& pluginName,
+                                   [[maybe_unused]] TESFile::Type type,
+                                   const RecordPath& path)
 {
-  std::shared_ptr<Record> record;
-  const auto it = m_Settings.find(setting);
-  if (it != m_Settings.end()) {
-    record = it->second;
-  } else {
-    record              = std::make_shared<Record>();
-    m_Settings[setting] = record;
-  }
-  const auto entry = createEntry(pluginName);
-  entry->addSetting(setting, record);
-}
-
-void PluginList::addForm(const std::string& pluginName,
-                         [[maybe_unused]] TESFile::Type type, const std::string& master,
-                         std::uint32_t formId)
-{
-  const auto masterEntry = createEntry(master);
-  const auto record      = masterEntry->createForm(formId & 0xFFFFFF);
+  const auto& master = path.hasFormId() ? path.files()[path.formId() >> 24] : "";
+  const auto owner   = createEntry(master);
+  const auto record  = owner->createRecord(path);
   if (pluginName != master) {
     const auto entry = createEntry(pluginName);
-    entry->addForm(master, formId & 0xFFFFFF, record);
+    entry->addRecord(path, record);
   }
-}
-
-void PluginList::addDefaultObject(const std::string& pluginName, TESFile::Type type)
-{
-  std::shared_ptr<Record> record;
-  const auto it = m_DefaultObjects.find(type);
-  if (it != m_DefaultObjects.end()) {
-    record = it->second;
-  } else {
-    record                 = std::make_shared<Record>();
-    m_DefaultObjects[type] = record;
-  }
-  const auto entry = createEntry(pluginName);
-  entry->addDefaultObject(type, record);
 }
 
 #pragma endregion Record Access

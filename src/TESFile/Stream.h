@@ -50,10 +50,10 @@ struct RecordFlags
 {
   enum TES4Flag : std::uint32_t
   {
-    Master = 0x1,
-    LightNew = 0x100, // Starfield ESL flag
-    LightOld = 0x200, // SSE/F4 ESL flag
-    Overlay = 0x200, // Starfield ESQ flag
+    Master   = 0x1,
+    LightNew = 0x100,  // Starfield ESL flag
+    LightOld = 0x200,  // SSE/F4 ESL flag
+    Overlay  = 0x200,  // Starfield ESQ flag
   };
 
   enum Flag : std::uint32_t
@@ -107,11 +107,35 @@ static_assert(sizeof(ChunkHeader) == 6);
 class GroupData
 {
 public:
-  GroupData(std::uint32_t label, GroupType type) : formId_{label}, groupType_{type} {}
+  constexpr GroupData() : formId_{0}, groupType_{GroupType::Top} {}
 
-  [[nodiscard]] bool hasFormType() const { return groupType_ == GroupType::Top; }
+  constexpr GroupData(std::uint32_t label, GroupType type)
+      : formId_{label}, groupType_{type}
+  {}
 
-  [[nodiscard]] bool hasParent() const
+  constexpr auto operator<=>(const GroupData& other) const
+  {
+    if (groupType_ != other.groupType_) {
+      return groupType_ <=> other.groupType_;
+    } else {
+      // grids order by (x, y); others order by integral value
+      return formId_ <=> other.formId_;
+    }
+  }
+
+  constexpr bool operator==(const GroupData& other) const
+  {
+    return groupType_ == other.groupType_ && formId_ == other.formId_;
+  }
+
+  [[nodiscard]] constexpr GroupType type() const { return groupType_; }
+
+  [[nodiscard]] constexpr bool hasFormType() const
+  {
+    return groupType_ == GroupType::Top;
+  }
+
+  [[nodiscard]] constexpr bool hasParent() const
   {
     return groupType_ == GroupType::WorldChildren ||
            groupType_ == GroupType::CellChildren ||
@@ -121,27 +145,34 @@ public:
            groupType_ == GroupType::CellVisibleDistantChildren;
   }
 
-  [[nodiscard]] bool hasBlock() const
+  [[nodiscard]] constexpr bool hasBlock() const
   {
     return groupType_ == GroupType::InteriorCellBlock ||
            groupType_ == GroupType::InteriorCellSubBlock;
   }
 
-  [[nodiscard]] bool hasGridCell() const
+  [[nodiscard]] constexpr bool hasGridCell() const
   {
     return groupType_ == GroupType::ExteriorCellBlock ||
            groupType_ == GroupType::ExteriorCellSubBlock;
   }
 
-  [[nodiscard]] Type formType() const { return formType_; }
+  [[nodiscard]] constexpr Type formType() const { return formType_; }
 
-  [[nodiscard]] std::uint32_t parent() const { return formId_; }
+  [[nodiscard]] constexpr std::uint32_t parent() const { return formId_; }
 
-  [[nodiscard]] std::int32_t block() const { return number_; }
+  [[nodiscard]] constexpr std::int32_t block() const { return number_; }
 
-  [[nodiscard]] std::pair<std::uint16_t, std::uint16_t> gridCell() const
+  [[nodiscard]] constexpr std::pair<std::uint16_t, std::uint16_t> gridCell() const
   {
-    return {cell_.y, cell_.x};
+    return {cell_.x, cell_.y};
+  }
+
+  constexpr void setLocalIndex(std::uint8_t index)
+  {
+    if (hasParent()) {
+      formId_ = (formId_ & 0xFFFFFFU) | (index << 24U);
+    }
   }
 
 private:
@@ -162,17 +193,17 @@ private:
 class FormData
 {
 public:
-  FormData(Type type, std::uint32_t flags, std::uint32_t formId)
+  constexpr FormData(Type type, std::uint32_t flags, std::uint32_t formId)
       : type_{type}, flags_{flags}, formId_{formId}
   {}
 
-  [[nodiscard]] Type type() const { return type_; }
+  [[nodiscard]] constexpr Type type() const { return type_; }
 
-  [[nodiscard]] std::uint32_t flags() const { return flags_; }
+  [[nodiscard]] constexpr std::uint32_t flags() const { return flags_; }
 
-  [[nodiscard]] std::uint32_t formId() const { return formId_; }
+  [[nodiscard]] constexpr std::uint32_t formId() const { return formId_; }
 
-  [[nodiscard]] std::uint8_t localModIndex() const { return formId_ >> 24; }
+  [[nodiscard]] constexpr std::uint8_t localModIndex() const { return formId_ >> 24; }
 
 private:
   Type type_;

@@ -177,6 +177,9 @@ inline std::uint32_t Reader<Handler>::handleGroup(std::istream& stream,
     }
   }
 
+  if constexpr (requires { handler.EndGroup(); }) {
+    handler.EndGroup();
+  }
   return header.dataSize;
 }
 
@@ -210,7 +213,7 @@ inline std::uint32_t Reader<Handler>::parseChunk(std::istream& stream, Handler& 
       throw std::runtime_error("chunk data incomplete");
     }
     std::istringstream data(std::move(field));
-    handler.ChunkData(header.type, data);
+    handler.Data(data);
   } else {
     stream.seekg(dataSize, std::istream::cur);
     if (stream.fail()) {
