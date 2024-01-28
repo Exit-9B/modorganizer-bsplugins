@@ -51,6 +51,8 @@ public:
 
   [[nodiscard]] std::span<const TESFile::GroupData> groups() const { return m_Groups; }
 
+  [[nodiscard]] std::string string() const;
+
   void setFormId(std::uint32_t formId, const std::vector<std::string>& masters,
                  const std::string& file);
 

@@ -301,11 +301,15 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
     const auto fileName = nameIdx.data().toString();
     const auto modInfo  = modList->getMod(pluginList->origin(fileName));
     if (modInfo && !modInfo->isForeign()) {
-      const auto infoAction = addAction(tr("Open Origin Info..."), [this, nameIdx] {
+      addAction(tr("Open Origin Info..."), [this, nameIdx] {
         emit openModInformation(nameIdx);
       });
-      setDefaultAction(infoAction);
     }
+
+    const auto pluginInfoAction = addAction("Open Plugin Info...", [this, nameIdx] {
+      emit openPluginInformation(nameIdx);
+    });
+    setDefaultAction(pluginInfoAction);
   }
 }
 

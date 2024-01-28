@@ -20,13 +20,10 @@ public:
                     bool overlaySupported);
 
   bool Group(TESFile::GroupData group);
-
   void EndGroup();
-
   bool Form(TESFile::FormData form);
-
+  void EndForm();
   bool Chunk(TESFile::Type type);
-
   void Data(std::istream& stream);
 
 private:
@@ -42,7 +39,9 @@ private:
 
   std::vector<std::string> m_Masters;
   RecordPath m_CurrentPath;
+  TESFile::Type m_CurrentType;
   TESFile::Type m_CurrentChunk;
+  std::string m_CurrentName;
 };
 
 }  // namespace TESData

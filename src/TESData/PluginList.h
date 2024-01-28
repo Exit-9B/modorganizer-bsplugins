@@ -62,7 +62,7 @@ public:
 
   FileEntry* createEntry(const std::string& name);
   void addRecordConflict(const std::string& pluginName, TESFile::Type type,
-                         const RecordPath& path);
+                         const RecordPath& path, const std::string& name);
 
   void refresh(bool invalidate = false);
 

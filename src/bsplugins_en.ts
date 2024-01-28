@@ -2,6 +2,53 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>BSPluginInfo::PluginRecordModel</name>
+    <message>
+        <source>Children</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Block %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-Block %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Block %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sub-Block %1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Persistent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Temporary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visible Distant</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Form</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editor ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BSPluginList::PluginListContextMenu</name>
     <message>
         <source>Enable selected</source>

@@ -1,10 +1,60 @@
 #include "RecordPath.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <iterator>
+#include <sstream>
 
 namespace TESData
 {
+
+std::string RecordPath::string() const
+{
+  std::ostringstream ss;
+  ss << ":/";
+
+  for (const TESFile::GroupData group : m_Groups) {
+    if (group.hasFormType()) {
+      ss << group.formType().view() << "/";
+    } else if (group.hasParent()) {
+      switch (group.type()) {
+      case TESFile::GroupType::CellPersistentChildren:
+        ss << "Persistent/";
+      case TESFile::GroupType::CellTemporaryChildren:
+        ss << "Temporary/";
+      case TESFile::GroupType::CellVisibleDistantChildren:
+        ss << "Visible Distant/";
+      default: {
+        const auto parentId           = group.parent();
+        const std::uint8_t localIndex = parentId >> 24U;
+        const std::string& owner      = m_Files.at(localIndex);
+        ss << owner << "|";
+        ss << std::hex << std::setfill('0') << std::setw(6) << (parentId & 0xFFFFFF);
+        ss << "/";
+      }
+      }
+    } else if (group.hasBlock()) {
+      ss << group.block() << "/";
+    } else if (group.hasGridCell()) {
+      auto [x, y] = group.gridCell();
+      ss << x << ", " << y << "/";
+    }
+  }
+
+  if (hasFormId()) {
+    const auto id                 = formId();
+    const std::uint8_t localIndex = id >> 24U;
+    const std::string& owner      = m_Files.at(localIndex);
+    ss << owner << "|";
+    ss << std::hex << std::setfill('0') << std::setw(6) << (id & 0xFFFFFF);
+  } else if (hasEditorId()) {
+    ss << editorId();
+  } else if (hasTypeId()) {
+    ss << typeId();
+  }
+
+  return ss.str();
+}
 
 void RecordPath::setFormId(std::uint32_t formId,
                            const std::vector<std::string>& masters,

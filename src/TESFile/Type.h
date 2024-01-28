@@ -48,6 +48,13 @@ struct Type
   {
     return std::string_view(reinterpret_cast<const char*>(&value), sizeof(value));
   }
+
+  [[nodiscard]] const char* data() const
+  {
+    return reinterpret_cast<const char*>(&value);
+  }
+
+  [[nodiscard]] static constexpr std::size_t size() { return sizeof(value); }
 };
 static_assert(sizeof(Type) == 4);
 static_assert(alignof(Type) == 1);

@@ -3,7 +3,7 @@
 
 #include <QString>
 
-#include <vector>
+#include <set>
 
 namespace TESData
 {
@@ -13,13 +13,13 @@ using TESFileHandle = int;
 class Record final
 {
 public:
-  [[nodiscard]] const std::vector<TESFileHandle>& alternatives() const;
+  [[nodiscard]] const std::set<TESFileHandle>& alternatives() const;
 
   void addAlternative(TESFileHandle origin);
 
 private:
   QString m_EditorID;
-  std::vector<TESFileHandle> m_Alternatives;
+  std::set<TESFileHandle> m_Alternatives;
 };
 
 }  // namespace TESData

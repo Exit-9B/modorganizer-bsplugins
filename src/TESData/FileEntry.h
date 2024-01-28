@@ -32,21 +32,29 @@ public:
         std::variant<TESFile::GroupData, std::uint32_t, std::string, TESFile::Type>;
 
     const TreeItem* parent;
-    std::variant<std::monostate, std::shared_ptr<Record>, TESFile::GroupData> data;
+    std::string name;
+    TESFile::Type formType;
+    Identifier identifier;
+    std::shared_ptr<Record> record;
     cont::flat_map<Identifier, std::shared_ptr<TreeItem>> children;
   };
 
   FileEntry(TESFileHandle handle, const std::string& name);
 
-  [[nodiscard]] TESFileHandle handle() const;
-  [[nodiscard]] const std::string& name() const;
+  [[nodiscard]] TESFileHandle handle() const { return m_Handle; }
+  [[nodiscard]] const std::string& name() const { return m_Name; }
+  [[nodiscard]] TreeItem* dataRoot() const { return m_Root.get(); }
+  [[nodiscard]] const std::vector<std::string>& files() const { return m_Files; }
 
   void
   forEachRecord(std::function<void(const std::shared_ptr<const Record>&)> func) const;
 
-  std::shared_ptr<Record> createRecord(const RecordPath& path);
+  std::shared_ptr<Record> createRecord(const RecordPath& path, const std::string& name,
+                                       TESFile::Type formType);
+  void addRecord(const RecordPath& path, const std::string& name,
+                 TESFile::Type formType, std::shared_ptr<Record> record);
 
-  void addRecord(const RecordPath& path, std::shared_ptr<Record> record);
+  [[nodiscard]] std::shared_ptr<Record> findRecord(const RecordPath& path) const;
 
 private:
   std::shared_ptr<TreeItem> createHierarchy(const RecordPath& path);

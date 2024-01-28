@@ -149,16 +149,15 @@ FileEntry* PluginList::createEntry(const std::string& name)
   return entry.get();
 }
 
-void PluginList::addRecordConflict(const std::string& pluginName,
-                                   [[maybe_unused]] TESFile::Type type,
-                                   const RecordPath& path)
+void PluginList::addRecordConflict(const std::string& pluginName, TESFile::Type type,
+                                   const RecordPath& path, const std::string& name)
 {
   const auto& master = path.hasFormId() ? path.files()[path.formId() >> 24] : "";
   const auto owner   = createEntry(master);
-  const auto record  = owner->createRecord(path);
+  const auto record  = owner->createRecord(path, name, type);
   if (pluginName != master) {
     const auto entry = createEntry(pluginName);
-    entry->addRecord(path, record);
+    entry->addRecord(path, name, type, record);
   }
 }
 
@@ -818,6 +817,10 @@ void PluginList::scanDataFiles(bool invalidate)
     m_Plugins.clear();
     m_PluginsByName.clear();
     m_PluginsByPriority.clear();
+
+    m_EntriesByName.clear();
+    m_EntriesByHandle.clear();
+    m_NextHandle = 0;
   }
 
   const auto managedGame = m_Organizer->managedGame();

@@ -1,0 +1,260 @@
+#include "PluginRecordModel.h"
+
+#include <ranges>
+
+using namespace Qt::Literals::StringLiterals;
+
+namespace BSPluginInfo
+{
+
+PluginRecordModel::PluginRecordModel(TESData::PluginList* pluginList,
+                                     const std::string& pluginName)
+    : m_PluginName{pluginName}, m_PluginList{pluginList},
+      m_FileEntry{pluginList->findEntryByName(pluginName)}
+{
+  if (m_FileEntry) {
+    m_DataRoot = m_FileEntry->dataRoot();
+  }
+}
+
+TESData::RecordPath PluginRecordModel::getPath(const QModelIndex& index) const
+{
+  TESData::RecordPath path;
+
+  std::vector<const Item*> parents;
+  const auto last = static_cast<const Item*>(index.internalPointer());
+  for (auto item = last->parent; item->parent; item = item->parent) {
+    parents.push_back(item);
+  }
+
+  for (const auto& item : std::ranges::reverse_view(parents)) {
+    if (std::holds_alternative<TESFile::GroupData>(item->identifier)) {
+      path.push(std::get<TESFile::GroupData>(item->identifier), m_FileEntry->files(),
+                m_PluginName);
+    } else if (std::holds_alternative<std::uint32_t>(item->identifier)) {
+      const std::uint32_t label = std::get<std::uint32_t>(item->identifier);
+      switch (item->formType) {
+      case "WRLD"_ts:
+        path.push(TESFile::GroupData(label, TESFile::GroupType::WorldChildren),
+                  m_FileEntry->files(), m_PluginName);
+        break;
+      case "CELL"_ts:
+        path.push(TESFile::GroupData(label, TESFile::GroupType::CellChildren),
+                  m_FileEntry->files(), m_PluginName);
+        break;
+      case "DIAL"_ts:
+        path.push(TESFile::GroupData(label, TESFile::GroupType::TopicChildren),
+                  m_FileEntry->files(), m_PluginName);
+        break;
+      }
+    }
+  }
+
+  const auto& identifier = last->identifier;
+  if (std::holds_alternative<std::uint32_t>(identifier)) {
+    const auto formId = std::get<std::uint32_t>(identifier);
+    path.setFormId(formId, m_FileEntry->files(), m_PluginName);
+  } else if (std::holds_alternative<std::string>(identifier)) {
+    const auto editorId = std::get<std::string>(identifier);
+    path.setEditorId(editorId);
+  } else if (std::holds_alternative<TESFile::Type>(identifier)) {
+    const auto typeId = std::get<TESFile::Type>(identifier);
+    path.setTypeId(typeId);
+  }
+
+  return path;
+}
+
+QModelIndex PluginRecordModel::index(int row, int column,
+                                     const QModelIndex& parent) const
+{
+  if (row < 0 || column < 0)
+    return QModelIndex();
+
+  const auto parentItem = parent.isValid()
+                              ? static_cast<const Item*>(parent.internalPointer())
+                              : m_DataRoot;
+
+  if (!parentItem || row >= parentItem->children.size())
+    return QModelIndex();
+
+  const auto item = parentItem->children.nth(row)->second.get();
+  return createIndex(row, column, item);
+}
+
+QModelIndex PluginRecordModel::parent(const QModelIndex& index) const
+{
+  if (!index.isValid())
+    return QModelIndex();
+
+  const auto item = static_cast<const Item*>(index.internalPointer());
+  if (!item->parent || !item->parent->parent) {
+    return QModelIndex();
+  }
+
+  const auto& siblings = item->parent->parent->children;
+  const int row        = static_cast<int>(
+      siblings.index_of(std::ranges::find(siblings, item->parent, [&](auto&& pair) {
+        return pair.second.get();
+      })));
+
+  return createIndex(row, 0, item->parent);
+}
+
+int PluginRecordModel::rowCount(const QModelIndex& parent) const
+{
+  const auto parentItem = parent.isValid()
+                              ? static_cast<const Item*>(parent.internalPointer())
+                              : m_DataRoot;
+
+  return parentItem ? static_cast<int>(parentItem->children.size()) : 0;
+}
+
+int PluginRecordModel::columnCount([[maybe_unused]] const QModelIndex& parent) const
+{
+  return COL_COUNT;
+}
+
+QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
+{
+  const auto item = static_cast<const Item*>(index.internalPointer());
+
+  switch (role) {
+  case Qt::DisplayRole:
+  case Qt::EditRole: {
+    switch (index.column()) {
+    case COL_ID: {
+      if (std::holds_alternative<TESFile::GroupData>(item->identifier)) {
+        return makeGroupName(std::get<TESFile::GroupData>(item->identifier));
+
+      } else if (std::holds_alternative<std::uint32_t>(item->identifier)) {
+        const auto formId = std::get<std::uint32_t>(item->identifier);
+        return u"%2:%1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
+            .toUpper()
+            .arg(QString::fromLocal8Bit(item->formType.data(), item->formType.size()));
+
+      } else if (std::holds_alternative<std::string>(item->identifier)) {
+        return QString::fromStdString(std::get<std::string>(item->identifier));
+
+      } else if (std::holds_alternative<TESFile::Type>(item->identifier)) {
+        const auto view = std::get<TESFile::Type>(item->identifier).view();
+        return QString::fromLocal8Bit(view.data(), view.size());
+      }
+
+      return QVariant();
+    }
+
+    case COL_OWNER: {
+      if (std::holds_alternative<std::uint32_t>(item->identifier)) {
+        const auto formId     = std::get<std::uint32_t>(item->identifier);
+        const auto localIndex = formId >> 24U;
+        const auto file       = m_FileEntry->files().at(localIndex);
+
+        return QString::fromStdString(file);
+      }
+      return QVariant();
+    }
+
+    case COL_NAME: {
+      if (std::holds_alternative<std::uint32_t>(item->identifier)) {
+        return QString::fromStdString(item->name);
+      }
+      return QVariant();
+    }
+    }
+
+    return QVariant();
+  }
+
+  case Qt::BackgroundRole: {
+    if (!m_PluginList || !m_FileEntry || !item->record) {
+      return QVariant();
+    }
+
+    const auto info =
+        m_PluginList->getPluginByName(QString::fromStdString(m_PluginName));
+    if (!info) {
+      return QVariant();
+    }
+
+    if (item->record->alternatives().size() <= 1) {
+      return QVariant();
+    }
+
+    for (const auto alternative : item->record->alternatives()) {
+      const auto altEntry = m_PluginList->findEntryByHandle(alternative);
+      if (!altEntry || altEntry == m_FileEntry)
+        continue;
+
+      const auto altInfo =
+          m_PluginList->getPluginByName(QString::fromStdString(altEntry->name()));
+      if (!altInfo)
+        continue;
+
+      if (altInfo->priority() > info->priority()) {
+        return QColor(255, 0, 0, 64);
+      }
+    }
+
+    return QColor(0, 255, 0, 64);
+  }
+  }
+
+  return QVariant();
+}
+
+QString PluginRecordModel::makeGroupName(TESFile::GroupData group)
+{
+  using GroupType = TESFile::GroupType;
+
+  switch (group.type()) {
+  case GroupType::Top:
+    return QString::fromStdString(group.formType().string());
+  case GroupType::WorldChildren:
+    return tr("Children");
+  case GroupType::InteriorCellBlock:
+    return tr("Block %1").arg(group.block());
+  case GroupType::InteriorCellSubBlock:
+    return tr("Sub-Block %1").arg(group.block());
+  case GroupType::ExteriorCellBlock: {
+    const auto [x, y] = group.gridCell();
+    return tr("Block %1, %2").arg(x).arg(y);
+  }
+  case GroupType::ExteriorCellSubBlock: {
+    const auto [x, y] = group.gridCell();
+    return tr("Sub-Block %1, %2").arg(x).arg(y);
+  }
+  case GroupType::CellChildren:
+    return tr("Children");
+  case GroupType::TopicChildren:
+    return tr("Children");
+  case GroupType::CellPersistentChildren:
+    return tr("Persistent");
+  case GroupType::CellTemporaryChildren:
+    return tr("Temporary");
+  case GroupType::CellVisibleDistantChildren:
+    return tr("Visible Distant");
+  }
+
+  return tr("Children");
+}
+
+QVariant PluginRecordModel::headerData(int section, Qt::Orientation orientation,
+                                       int role) const
+{
+  if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+    return QVariant();
+
+  switch (section) {
+  case COL_ID:
+    return tr("Form");
+  case COL_OWNER:
+    return tr("Origin");
+  case COL_NAME:
+    return tr("Editor ID");
+  }
+
+  return QVariant();
+}
+
+}  // namespace BSPluginInfo

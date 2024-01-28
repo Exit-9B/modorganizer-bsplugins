@@ -24,6 +24,7 @@ public:
 
 signals:
   void openModInformation(const QModelIndex& index);
+  void openPluginInformation(const QModelIndex& index);
 
 private:
   void addAllItemsMenu();

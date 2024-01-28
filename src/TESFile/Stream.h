@@ -50,10 +50,11 @@ struct RecordFlags
 {
   enum TES4Flag : std::uint32_t
   {
-    Master   = 0x1,
-    LightNew = 0x100,  // Starfield ESL flag
-    LightOld = 0x200,  // SSE/F4 ESL flag
-    Overlay  = 0x200,  // Starfield ESQ flag
+    Master    = 0x1,
+    Localized = 0x80,
+    LightNew  = 0x100,  // Starfield ESL flag
+    LightOld  = 0x200,  // SSE/F4 ESL flag
+    Overlay   = 0x200,  // Starfield ESQ flag
   };
 
   enum Flag : std::uint32_t
@@ -104,7 +105,7 @@ struct ChunkHeader
 };
 static_assert(sizeof(ChunkHeader) == 6);
 
-class GroupData
+class GroupData final
 {
 public:
   constexpr GroupData() : formId_{0}, groupType_{GroupType::Top} {}
@@ -118,8 +119,15 @@ public:
     if (groupType_ != other.groupType_) {
       return groupType_ <=> other.groupType_;
     } else {
-      // grids order by (x, y); others order by integral value
-      return formId_ <=> other.formId_;
+      if (hasFormType()) {
+        return formType() <=> other.formType();
+      } else if (hasBlock()) {
+        return block() <=> other.block();
+      } else if (hasGridCell()) {
+        return gridCell() <=> other.gridCell();
+      } else {
+        return formId_ <=> other.formId_;
+      }
     }
   }
 
@@ -145,6 +153,20 @@ public:
            groupType_ == GroupType::CellVisibleDistantChildren;
   }
 
+  [[nodiscard]] constexpr bool hasDirectParent() const
+  {
+    return groupType_ == GroupType::WorldChildren ||
+           groupType_ == GroupType::CellChildren ||
+           groupType_ == GroupType::TopicChildren;
+  }
+
+  [[nodiscard]] constexpr bool hasIndirectParent() const
+  {
+    return groupType_ == GroupType::CellPersistentChildren ||
+           groupType_ == GroupType::CellTemporaryChildren ||
+           groupType_ == GroupType::CellVisibleDistantChildren;
+  }
+
   [[nodiscard]] constexpr bool hasBlock() const
   {
     return groupType_ == GroupType::InteriorCellBlock ||
@@ -163,7 +185,7 @@ public:
 
   [[nodiscard]] constexpr std::int32_t block() const { return number_; }
 
-  [[nodiscard]] constexpr std::pair<std::uint16_t, std::uint16_t> gridCell() const
+  [[nodiscard]] constexpr std::pair<std::int16_t, std::int16_t> gridCell() const
   {
     return {cell_.x, cell_.y};
   }
@@ -190,7 +212,7 @@ private:
   };
 };
 
-class FormData
+class FormData final
 {
 public:
   constexpr FormData(Type type, std::uint32_t flags, std::uint32_t formId)
