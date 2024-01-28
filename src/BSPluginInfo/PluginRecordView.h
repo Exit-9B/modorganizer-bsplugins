@@ -33,6 +33,8 @@ public:
 private slots:
   void recordPicked(const QModelIndex& current);
 
+  void on_pickRecordView_expanded(const QModelIndex& index);
+
 private:
   Ui::PluginRecordView* ui;
   MOBase::IOrganizer* m_Organizer;

@@ -175,6 +175,10 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
 
     return QColor(0, 255, 0, 64);
   }
+
+  case Qt::UserRole: {
+    return QVariant::fromValue(item);
+  }
   }
 
   return QVariant();

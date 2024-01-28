@@ -16,6 +16,8 @@ PluginRecordView::PluginRecordView(MOBase::IOrganizer* organizer,
 
   m_RecordModel = new PluginRecordModel(pluginList, pluginName.toStdString());
   ui->pickRecordView->setModel(m_RecordModel);
+  ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
+  on_pickRecordView_expanded(QModelIndex());
 
   connect(ui->pickRecordView->selectionModel(), &QItemSelectionModel::currentChanged,
           this, &PluginRecordView::recordPicked);
@@ -50,6 +52,19 @@ void PluginRecordView::recordPicked(const QModelIndex& current)
 
   if (oldModel) {
     delete oldModel;
+  }
+}
+
+void PluginRecordView::on_pickRecordView_expanded(const QModelIndex& index)
+{
+  for (int row = 0, count = m_RecordModel->rowCount(index); row < count; ++row) {
+    const auto child = m_RecordModel->index(row, 0, index);
+
+    using Item      = TESData::FileEntry::TreeItem;
+    const auto item = child.data(Qt::UserRole).value<const Item*>();
+    if (!item || !item->record || !item->record->hasFormId()) {
+      ui->pickRecordView->setFirstColumnSpanned(row, index, true);
+    }
   }
 }
 
