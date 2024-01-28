@@ -28,38 +28,13 @@ TESData::RecordPath PluginRecordModel::getPath(const QModelIndex& index) const
   }
 
   for (const auto& item : std::ranges::reverse_view(parents)) {
-    if (std::holds_alternative<TESFile::GroupData>(item->identifier)) {
-      path.push(std::get<TESFile::GroupData>(item->identifier), m_FileEntry->files(),
-                m_PluginName);
-    } else if (std::holds_alternative<std::uint32_t>(item->identifier)) {
-      const std::uint32_t label = std::get<std::uint32_t>(item->identifier);
-      switch (item->formType) {
-      case "WRLD"_ts:
-        path.push(TESFile::GroupData(label, TESFile::GroupType::WorldChildren),
-                  m_FileEntry->files(), m_PluginName);
-        break;
-      case "CELL"_ts:
-        path.push(TESFile::GroupData(label, TESFile::GroupType::CellChildren),
-                  m_FileEntry->files(), m_PluginName);
-        break;
-      case "DIAL"_ts:
-        path.push(TESFile::GroupData(label, TESFile::GroupType::TopicChildren),
-                  m_FileEntry->files(), m_PluginName);
-        break;
-      }
+    if (item->group.has_value()) {
+      path.push(item->group.value(), m_FileEntry->files(), m_PluginName);
     }
   }
 
-  const auto& identifier = last->identifier;
-  if (std::holds_alternative<std::uint32_t>(identifier)) {
-    const auto formId = std::get<std::uint32_t>(identifier);
-    path.setFormId(formId, m_FileEntry->files(), m_PluginName);
-  } else if (std::holds_alternative<std::string>(identifier)) {
-    const auto editorId = std::get<std::string>(identifier);
-    path.setEditorId(editorId);
-  } else if (std::holds_alternative<TESFile::Type>(identifier)) {
-    const auto typeId = std::get<TESFile::Type>(identifier);
-    path.setTypeId(typeId);
+  if (last->record) {
+    path.setIdentifier(last->record->identifier(), {&last->record->file(), 1});
   }
 
   return path;
@@ -124,29 +99,31 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
   case Qt::EditRole: {
     switch (index.column()) {
     case COL_ID: {
-      if (std::holds_alternative<TESFile::GroupData>(item->identifier)) {
-        return makeGroupName(std::get<TESFile::GroupData>(item->identifier));
+      if (item->record) {
+        if (item->record->hasFormId()) {
+          const auto formId = item->record->formId();
+          return u"%2:%1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
+              .toUpper()
+              .arg(
+                  QString::fromLocal8Bit(item->formType.data(), item->formType.size()));
+        } else if (item->record->hasEditorId()) {
+          return QString::fromStdString(item->record->editorId());
+        } else if (item->record->hasTypeId()) {
+          return QString::fromLocal8Bit(item->record->typeId().data(),
+                                        item->record->typeId().size());
+        }
+      }
 
-      } else if (std::holds_alternative<std::uint32_t>(item->identifier)) {
-        const auto formId = std::get<std::uint32_t>(item->identifier);
-        return u"%2:%1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
-            .toUpper()
-            .arg(QString::fromLocal8Bit(item->formType.data(), item->formType.size()));
-
-      } else if (std::holds_alternative<std::string>(item->identifier)) {
-        return QString::fromStdString(std::get<std::string>(item->identifier));
-
-      } else if (std::holds_alternative<TESFile::Type>(item->identifier)) {
-        const auto view = std::get<TESFile::Type>(item->identifier).view();
-        return QString::fromLocal8Bit(view.data(), view.size());
+      if (item->group.has_value()) {
+        return makeGroupName(item->group.value());
       }
 
       return QVariant();
     }
 
     case COL_OWNER: {
-      if (std::holds_alternative<std::uint32_t>(item->identifier)) {
-        const auto formId     = std::get<std::uint32_t>(item->identifier);
+      if (item->record && item->record->hasFormId()) {
+        const auto formId     = item->record->formId();
         const auto localIndex = formId >> 24U;
         const auto file       = m_FileEntry->files().at(localIndex);
 
@@ -156,7 +133,7 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
     }
 
     case COL_NAME: {
-      if (std::holds_alternative<std::uint32_t>(item->identifier)) {
+      if (item->record && item->record->hasFormId()) {
         return QString::fromStdString(item->name);
       }
       return QVariant();

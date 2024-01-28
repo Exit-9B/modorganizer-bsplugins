@@ -9,10 +9,9 @@
 
 #include <cstdint>
 #include <functional>
-#include <map>
 #include <memory>
+#include <optional>
 #include <string>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -28,15 +27,15 @@ class FileEntry final
 public:
   struct TreeItem
   {
-    using Identifier =
+    using Key =
         std::variant<TESFile::GroupData, std::uint32_t, std::string, TESFile::Type>;
 
     const TreeItem* parent;
     std::string name;
     TESFile::Type formType;
-    Identifier identifier;
+    std::optional<TESFile::GroupData> group;
     std::shared_ptr<Record> record;
-    cont::flat_map<Identifier, std::shared_ptr<TreeItem>> children;
+    cont::flat_map<Key, std::shared_ptr<TreeItem>> children;
   };
 
   FileEntry(TESFileHandle handle, const std::string& name);

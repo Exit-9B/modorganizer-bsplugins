@@ -1,6 +1,8 @@
 #include "FileEntry.h"
 
-#include <log.h>
+#include <algorithm>
+#include <iterator>
+#include <utility>
 
 namespace TESData
 {
@@ -36,6 +38,7 @@ std::shared_ptr<Record> FileEntry::createRecord(const RecordPath& path,
 
   if (!item->record) {
     item->record = std::make_shared<Record>();
+    item->record->setIdentifier(path.identifier(), path.files());
     item->record->addAlternative(m_Handle);
     item->name     = name;
     item->formType = formType;
@@ -87,7 +90,7 @@ std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
     }
   }
 
-  TreeItem::Identifier identifier;
+  TreeItem::Key key;
   if (path.hasFormId()) {
     const auto& file            = path.files()[path.formId() >> 24];
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
@@ -98,14 +101,14 @@ std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
     }
 
     const std::uint32_t formId = (path.formId() & 0xFFFFFFU) | (newIndex << 24U);
-    identifier                 = formId;
+    key                        = formId;
   } else if (path.hasEditorId()) {
-    identifier = path.editorId();
+    key = path.editorId();
   } else if (path.hasTypeId()) {
-    identifier = path.typeId();
+    key = path.typeId();
   }
 
-  const auto it = item->children.find(identifier);
+  const auto it = item->children.find(key);
   return it != item->children.end() ? it->second->record : nullptr;
 }
 
@@ -129,24 +132,24 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
     if (group.hasDirectParent()) {
       auto& nextItem = item->children[group.parent()];
       if (!nextItem) {
-        nextItem             = std::make_shared<TreeItem>();
-        nextItem->parent     = item.get();
-        nextItem->identifier = group.parent();
+        nextItem         = std::make_shared<TreeItem>();
+        nextItem->parent = item.get();
       }
+      nextItem->group = group;
 
       item = nextItem;
     } else {
       auto& nextItem = item->children[group];
       if (!nextItem) {
-        nextItem             = std::make_shared<TreeItem>();
-        nextItem->parent     = item.get();
-        nextItem->identifier = group;
+        nextItem         = std::make_shared<TreeItem>();
+        nextItem->parent = item.get();
+        nextItem->group  = group;
       }
       item = nextItem;
     }
   }
 
-  TreeItem::Identifier identifier;
+  TreeItem::Key key;
   if (path.hasFormId()) {
     const auto& file            = path.files()[path.formId() >> 24];
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
@@ -157,17 +160,16 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
     }
 
     const std::uint32_t formId = (path.formId() & 0xFFFFFFU) | (newIndex << 24U);
-    identifier                 = formId;
+    key                        = formId;
   } else if (path.hasEditorId()) {
-    identifier = path.editorId();
+    key = path.editorId();
   } else if (path.hasTypeId()) {
-    identifier = path.typeId();
+    key = path.typeId();
   }
-  auto& recordItem = item->children[identifier];
+  auto& recordItem = item->children[key];
   if (!recordItem) {
-    recordItem             = std::make_shared<TreeItem>();
-    recordItem->parent     = item.get();
-    recordItem->identifier = identifier;
+    recordItem         = std::make_shared<TreeItem>();
+    recordItem->parent = item.get();
   }
 
   return recordItem;

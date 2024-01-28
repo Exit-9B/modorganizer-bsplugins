@@ -56,8 +56,7 @@ std::string RecordPath::string() const
   return ss.str();
 }
 
-void RecordPath::setFormId(std::uint32_t formId,
-                           const std::vector<std::string>& masters,
+void RecordPath::setFormId(std::uint32_t formId, std::span<const std::string> masters,
                            const std::string& file)
 {
   const std::uint8_t localIndex = formId >> 24U;
@@ -97,7 +96,18 @@ void RecordPath::setTypeId(TESFile::Type type)
   m_Identifier = type;
 }
 
-void RecordPath::push(TESFile::GroupData group, const std::vector<std::string>& masters,
+void RecordPath::setIdentifier(const Identifier& identifier,
+                               std::span<const std::string> masters)
+{
+  if (std::holds_alternative<std::uint32_t>(identifier)) {
+    setFormId(std::get<std::uint32_t>(identifier), masters, "");
+  } else {
+    unsetFormId();
+    m_Identifier = identifier;
+  }
+}
+
+void RecordPath::push(TESFile::GroupData group, std::span<const std::string> masters,
                       const std::string& file)
 {
   if (group.hasParent()) {
