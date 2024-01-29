@@ -123,10 +123,7 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
 
     case COL_OWNER: {
       if (item->record && item->record->hasFormId()) {
-        const auto formId     = item->record->formId();
-        const auto localIndex = formId >> 24U;
-        const auto file       = m_FileEntry->files().at(localIndex);
-
+        const auto file = item->record->file();
         return QString::fromStdString(file);
       }
       return QVariant();
