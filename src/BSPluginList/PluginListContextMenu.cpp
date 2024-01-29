@@ -286,6 +286,10 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
 
   addSeparator();
 
+  const auto selectedIdx =
+      m_ModelSelected.length() == 1 ? m_ModelSelected.first() : m_Index;
+  const auto nameIdx = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
+
   if (std::ranges::any_of(m_ModelSelected, [=](auto&& idx) {
         QString fileName   = idx.data().toString();
         const auto modInfo = modList->getMod(pluginList->origin(fileName));
@@ -295,9 +299,6 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
       openOriginExplorer(m_ModelSelected, modList, pluginList);
     });
 
-    const auto selectedIdx =
-        m_ModelSelected.length() == 1 ? m_ModelSelected.first() : m_Index;
-    const auto nameIdx  = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
     const auto fileName = nameIdx.data().toString();
     const auto modInfo  = modList->getMod(pluginList->origin(fileName));
     if (modInfo && !modInfo->isForeign()) {
@@ -305,12 +306,12 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
         emit openModInformation(nameIdx);
       });
     }
-
-    const auto pluginInfoAction = addAction("Open Plugin Info...", [this, nameIdx] {
-      emit openPluginInformation(nameIdx);
-    });
-    setDefaultAction(pluginInfoAction);
   }
+
+  const auto pluginInfoAction = addAction("Open Plugin Info...", [this, nameIdx] {
+    emit openPluginInformation(nameIdx);
+  });
+  setDefaultAction(pluginInfoAction);
 }
 
 void PluginListContextMenu::sendSelectedToGroup()
