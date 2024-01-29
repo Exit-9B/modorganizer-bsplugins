@@ -22,6 +22,10 @@ bool FileReaderHandler::Group(TESFile::GroupData group)
     return false;
   }
 
+  if (group.hasFormType() && group.formType() == "NAVI"_ts) {
+    return false;
+  }
+
   m_CurrentPath.push(group, m_Masters, m_Plugin->name().toStdString());
   return true;
 }
