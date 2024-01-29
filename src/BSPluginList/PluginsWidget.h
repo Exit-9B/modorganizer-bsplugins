@@ -50,6 +50,7 @@ private slots:
   void onSelectedOriginsChanged(const QList<QString>& origins);
 
   void toggleHideForceEnabled();
+  void displayPluginInformation(const QModelIndex& index);
 
   void on_pluginList_customContextMenuRequested(const QPoint& pos);
   void on_pluginList_doubleClicked(const QModelIndex& index);

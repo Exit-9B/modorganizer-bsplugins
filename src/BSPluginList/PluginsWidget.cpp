@@ -291,6 +291,17 @@ static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
   }
 }
 
+void PluginsWidget::displayPluginInformation(const QModelIndex& index)
+{
+  const int id        = index.data(PluginListModel::IndexRole).toInt();
+  const auto fileName = m_PluginList->getPlugin(id)->name();
+  const auto parent   = topLevelWidget();
+  BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName, parent};
+  dialog.exec();
+
+  ui->pluginList->updateOverwriteMarkers();
+}
+
 void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 {
   PluginListContextMenu menu{ui->pluginList->indexAt(pos), m_PluginListModel,
@@ -303,15 +314,8 @@ void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
             m_PanelInterface->displayOriginInformation(fileName);
           });
 
-  connect(&menu, &PluginListContextMenu::openPluginInformation,
-          [this](const QModelIndex& index) {
-            const auto window   = topLevelWidget();
-            const int id        = index.data(PluginListModel::IndexRole).toInt();
-            const auto fileName = m_PluginList->getPlugin(id)->name();
-            BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName,
-                                                  window};
-            dialog.exec();
-          });
+  connect(&menu, &PluginListContextMenu::openPluginInformation, this,
+          &PluginsWidget::displayPluginInformation);
 
   const QPoint p = ui->pluginList->viewport()->mapToGlobal(pos);
   menu.exec(p);
@@ -323,10 +327,9 @@ void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
     return;
   }
 
-  const int id = index.data(PluginListModel::IndexRole).toInt();
-
   Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
   if (modifiers.testFlag(Qt::ControlModifier)) {
+    const int id       = index.data(PluginListModel::IndexRole).toInt();
     const auto origin  = m_PluginList->getOriginName(id);
     const auto modInfo = m_Organizer->modList()->getMod(origin);
 
@@ -336,10 +339,7 @@ void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
 
     MOBase::shell::Explore(modInfo->absolutePath());
   } else {
-    const auto fileName = m_PluginList->getPlugin(id)->name();
-    const auto window   = topLevelWidget();
-    BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName, window};
-    dialog.exec();
+    displayPluginInformation(index);
   }
 }
 
