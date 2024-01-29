@@ -52,9 +52,10 @@ public:
                                        TESFile::Type formType);
   void addRecord(const RecordPath& path, const std::string& name,
                  TESFile::Type formType, std::shared_ptr<Record> record);
-  void addGroup(const RecordPath&);
+  void addChildGroup(const RecordPath&);
 
   [[nodiscard]] std::shared_ptr<Record> findRecord(const RecordPath& path) const;
+  [[nodiscard]] std::shared_ptr<TreeItem> findItem(const RecordPath& path) const;
 
 private:
   std::shared_ptr<TreeItem> createHierarchy(const RecordPath& path);

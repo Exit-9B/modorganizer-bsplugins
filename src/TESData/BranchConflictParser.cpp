@@ -33,15 +33,9 @@ bool BranchConflictParser::Group(TESFile::GroupData group)
     }
 
     return false;
-  } else if (group.hasDirectParent()) {
-    // this group won't be displayed so we need to read at least another level
-    m_CurrentPath.push(group, m_Masters, m_PluginName);
-    return true;
   } else {
     m_CurrentPath.push(group, m_Masters, m_PluginName);
-    m_PluginList->addGroupPlaceholder(m_PluginName, m_CurrentPath);
-    m_CurrentPath.pop();
-    return false;
+    return true;
   }
 }
 

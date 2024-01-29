@@ -57,8 +57,14 @@ void FileEntry::addRecord(const RecordPath& path, const std::string& name,
   item->formType  = formType;
 }
 
-void FileEntry::addGroup(const RecordPath& path)
+void FileEntry::addChildGroup(const RecordPath& path)
 {
+  const auto item = findItem(path);
+  if (!item || !item->record) {
+    // no record to add children to
+    return;
+  }
+
   TESFile::GroupData group = path.groups().back();
   if (group.hasParent()) {
     const auto& file            = path.files()[group.parent() >> 24];
@@ -72,11 +78,16 @@ void FileEntry::addGroup(const RecordPath& path)
     group.setLocalIndex(newIndex);
   }
 
-  const auto item = createHierarchy(path);
-  item->group     = group;
+  item->group = group;
 }
 
 std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
+{
+  const auto item = findItem(path);
+  return item ? item->record : nullptr;
+}
+
+std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path) const
 {
   const auto groups = path.groups();
   auto item         = m_Root;
@@ -126,11 +137,11 @@ std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
   } else if (path.hasTypeId()) {
     key = path.typeId();
   } else {
-    return item ? item->record : nullptr;
+    return item;
   }
 
   const auto it = item->children.find(key);
-  return it != item->children.end() ? it->second->record : nullptr;
+  return it != item->children.end() ? it->second : nullptr;
 }
 
 std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath& path)

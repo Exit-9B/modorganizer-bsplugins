@@ -166,7 +166,7 @@ void PluginList::addGroupPlaceholder(const std::string& pluginName,
                                      const RecordPath& path)
 {
   if (const auto entry = findEntryByName(pluginName)) {
-    entry->addGroup(path);
+    entry->addChildGroup(path);
   }
 }
 
