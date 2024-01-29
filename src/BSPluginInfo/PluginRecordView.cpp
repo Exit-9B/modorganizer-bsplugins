@@ -8,24 +8,43 @@
 namespace BSPluginInfo
 {
 
-PluginRecordView::PluginRecordView(MOBase::IOrganizer* organizer,
-                                   TESData::PluginList* pluginList,
-                                   const QString& pluginName, QWidget* parent)
-    : QWidget(parent), ui{new Ui::PluginRecordView()}, m_Organizer{organizer},
-      m_PluginList{pluginList}
+PluginRecordView::PluginRecordView(QWidget* parent)
+    : QWidget(parent), ui{new Ui::PluginRecordView()}
 {
   ui->setupUi(this);
+}
+
+void PluginRecordView::setup(MOBase::IOrganizer* organizer,
+                             TESData::PluginList* pluginList, const QString& pluginName)
+{
+  m_Organizer  = organizer;
+  m_PluginList = pluginList;
+
+  setFile(pluginName);
+
+  ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
+}
+
+void PluginRecordView::setFile(const QString& pluginName)
+{
+  const auto recordModel    = m_RecordModel;
+  const auto structureModel = m_StructureModel;
 
   m_RecordModel =
-      new PluginRecordModel(organizer, pluginList, pluginName.toStdString());
+      new PluginRecordModel(m_Organizer, m_PluginList, pluginName.toStdString());
   ui->pickRecordView->setModel(m_RecordModel);
-  ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
+
+  m_StructureModel = nullptr;
+  ui->recordStructureView->setModel(nullptr);
   on_pickRecordView_expanded(QModelIndex());
 
   connect(ui->pickRecordView->selectionModel(), &QItemSelectionModel::currentChanged,
           this, &PluginRecordView::recordPicked);
 
-  m_ConflictEntry = pluginList->findEntryByName(pluginName.toStdString());
+  m_ConflictEntry = m_PluginList->findEntryByName(pluginName.toStdString());
+
+  delete recordModel;
+  delete structureModel;
 }
 
 PluginRecordView::~PluginRecordView() noexcept

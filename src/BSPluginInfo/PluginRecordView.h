@@ -19,8 +19,7 @@ class PluginRecordView final : public QWidget
   Q_OBJECT
 
 public:
-  PluginRecordView(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
-                   const QString& pluginName, QWidget* parent = nullptr);
+  explicit PluginRecordView(QWidget* parent = nullptr);
 
   PluginRecordView(const PluginRecordView&) = delete;
   PluginRecordView(PluginRecordView&&)      = delete;
@@ -30,6 +29,11 @@ public:
   PluginRecordView& operator=(const PluginRecordView&) = delete;
   PluginRecordView& operator=(PluginRecordView&&)      = delete;
 
+  void setup(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
+             const QString& pluginName);
+
+  void setFile(const QString& pluginName);
+
 private slots:
   void recordPicked(const QModelIndex& current);
 
@@ -38,7 +42,7 @@ private slots:
 
 private:
   Ui::PluginRecordView* ui;
-  MOBase::IOrganizer* m_Organizer;
+  MOBase::IOrganizer* m_Organizer           = nullptr;
   const TESData::FileEntry* m_ConflictEntry = nullptr;
   TESData::PluginList* m_PluginList         = nullptr;
   PluginRecordModel* m_RecordModel          = nullptr;
