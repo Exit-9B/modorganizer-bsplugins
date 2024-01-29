@@ -154,10 +154,6 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
       return QVariant();
     }
 
-    if (item->record->alternatives().size() <= 1) {
-      return QVariant();
-    }
-
     for (const auto alternative : item->record->alternatives()) {
       const auto altEntry = m_PluginList->findEntryByHandle(alternative);
       if (!altEntry || altEntry == m_FileEntry)
@@ -165,7 +161,7 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
 
       const auto altInfo =
           m_PluginList->getPluginByName(QString::fromStdString(altEntry->name()));
-      if (!altInfo)
+      if (!altInfo || !altInfo->enabled())
         continue;
 
       if (altInfo->priority() > info->priority()) {
