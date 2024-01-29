@@ -34,6 +34,7 @@ private slots:
   void recordPicked(const QModelIndex& current);
 
   void on_pickRecordView_expanded(const QModelIndex& index);
+  void on_pickRecordView_customContextMenuRequested(const QPoint& pos);
 
 private:
   Ui::PluginRecordView* ui;

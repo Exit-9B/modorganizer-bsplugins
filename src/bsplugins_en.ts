@@ -49,6 +49,13 @@
     </message>
 </context>
 <context>
+    <name>BSPluginInfo::PluginRecordView</name>
+    <message>
+        <source>Ignore Record</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BSPluginList::PluginListContextMenu</name>
     <message>
         <source>Enable selected</source>

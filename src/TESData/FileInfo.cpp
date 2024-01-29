@@ -80,6 +80,9 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
   }
 
   entry->forEachRecord([&](auto&& record) {
+    if (record->ignored())
+      return;
+
     for (const auto& alternative : record->alternatives()) {
       const auto altEntry = m_PluginList->findEntryByHandle(alternative);
 

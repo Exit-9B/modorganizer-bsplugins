@@ -1,7 +1,7 @@
 #include "PluginRecordView.h"
 #include "ui_pluginrecordview.h"
 
-#include <log.h>
+#include <QMenu>
 
 namespace BSPluginInfo
 {
@@ -66,6 +66,37 @@ void PluginRecordView::on_pickRecordView_expanded(const QModelIndex& index)
       ui->pickRecordView->setFirstColumnSpanned(row, index, true);
     }
   }
+}
+
+void PluginRecordView::on_pickRecordView_customContextMenuRequested(const QPoint& pos)
+{
+  const auto selectionModel = ui->pickRecordView->selectionModel();
+  const auto currentIndex   = selectionModel->currentIndex();
+
+  using Item      = TESData::FileEntry::TreeItem;
+  const auto item = currentIndex.data(Qt::UserRole).value<const Item*>();
+  if (!item || !item->record)
+    return;
+
+  QMenu menu;
+
+  QAction* ignoreRecord;
+  ignoreRecord = menu.addAction(tr("Ignore Record"), [&] {
+    item->record->setIgnored(ignoreRecord->isChecked());
+    for (const auto handle : item->record->alternatives()) {
+      const auto entry = m_PluginList->findEntryByHandle(handle);
+      const auto info =
+          m_PluginList->getPluginByName(QString::fromStdString(entry->name()));
+      if (info) {
+        info->invalidateConflicts();
+      }
+    }
+  });
+  ignoreRecord->setCheckable(true);
+  ignoreRecord->setChecked(item->record->ignored());
+
+  const QPoint p = ui->pickRecordView->viewport()->mapToGlobal(pos);
+  menu.exec(p);
 }
 
 }  // namespace BSPluginInfo

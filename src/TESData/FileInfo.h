@@ -178,6 +178,8 @@ public:
   [[nodiscard]] bool canBeToggled() const;
   [[nodiscard]] bool mustLoadAfter(const FileInfo& other) const;
 
+  void invalidateConflicts() const { m_Conflicts.invalidate(); }
+
 private:
   [[nodiscard]] Conflicts doConflictCheck() const;
 
@@ -185,7 +187,7 @@ private:
   FileSystemData m_FileSystemData;
   Metadata m_Metadata;
   State m_State;
-  MOBase::MemoizedLocked<Conflicts> m_Conflicts;
+  mutable MOBase::MemoizedLocked<Conflicts> m_Conflicts;
 };
 
 }  // namespace TESData

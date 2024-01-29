@@ -60,6 +60,9 @@ public:
     return m_Alternatives;
   }
 
+  [[nodiscard]] bool ignored() const { return m_Ignored; }
+  void setIgnored(bool value) { m_Ignored = value; }
+
   void setIdentifier(const Identifier& identifier, std::span<const std::string> files)
   {
     m_Identifier = identifier;
@@ -79,6 +82,7 @@ private:
   std::string m_File;
   Identifier m_Identifier;
   std::set<TESFileHandle> m_Alternatives;
+  bool m_Ignored = false;
 };
 
 }  // namespace TESData
