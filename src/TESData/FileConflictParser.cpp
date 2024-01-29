@@ -1,4 +1,4 @@
-#include "FileReaderHandler.h"
+#include "FileConflictParser.h"
 #include "PluginList.h"
 
 #include <log.h>
@@ -9,14 +9,23 @@
 namespace TESData
 {
 
-FileReaderHandler::FileReaderHandler(PluginList* pluginList, FileInfo* plugin,
-                                     bool lightSupported, bool overlaySupported)
+FileConflictParser::FileConflictParser(PluginList* pluginList, FileInfo* plugin,
+                                       bool lightSupported, bool overlaySupported)
     : m_PluginList{pluginList}, m_Plugin{plugin}, m_LightSupported{lightSupported},
       m_OverlaySupported{overlaySupported}
-{}
-
-bool FileReaderHandler::Group(TESFile::GroupData group)
 {
+  m_PluginName = m_Plugin->name().toStdString();
+}
+
+bool FileConflictParser::Group(TESFile::GroupData group)
+{
+  if (group.hasDirectParent()) {
+    m_CurrentPath.push(group, m_Masters, m_PluginName);
+    m_PluginList->addGroupPlaceholder(m_PluginName, m_CurrentPath);
+    m_CurrentPath.pop();
+    return false;
+  }
+
   if (m_Masters.empty() && group.hasFormType() && group.formType() != "GMST"_ts &&
       group.formType() != "DOBJ"_ts) {
     return false;
@@ -26,16 +35,16 @@ bool FileReaderHandler::Group(TESFile::GroupData group)
     return false;
   }
 
-  m_CurrentPath.push(group, m_Masters, m_Plugin->name().toStdString());
+  m_CurrentPath.push(group, m_Masters, m_PluginName);
   return true;
 }
 
-void FileReaderHandler::EndGroup()
+void FileConflictParser::EndGroup()
 {
   m_CurrentPath.pop();
 }
 
-bool FileReaderHandler::Form(TESFile::FormData form)
+bool FileConflictParser::Form(TESFile::FormData form)
 {
   m_CurrentType = form.type();
 
@@ -59,7 +68,7 @@ bool FileReaderHandler::Form(TESFile::FormData form)
   case "GMST"_ts:
     return true;
   default:
-    m_CurrentPath.setFormId(form.formId(), m_Masters, m_Plugin->name().toStdString());
+    m_CurrentPath.setFormId(form.formId(), m_Masters, m_PluginName);
 
     const int localModIndex   = form.localModIndex();
     const bool isMasterRecord = localModIndex < m_Masters.size();
@@ -67,21 +76,22 @@ bool FileReaderHandler::Form(TESFile::FormData form)
   }
 }
 
-void FileReaderHandler::EndForm()
+void FileConflictParser::EndForm()
 {
   if (m_CurrentType != "TES4"_ts && m_CurrentType != "TES3"_ts &&
       m_CurrentType != "GMST"_ts && m_CurrentType != "DOBJ"_ts) {
 
-    m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), m_CurrentType,
-                                    m_CurrentPath, m_CurrentName);
+    m_PluginList->addRecordConflict(m_PluginName, m_CurrentPath, m_CurrentType,
+                                    m_CurrentName);
   }
 
+  m_CurrentPath.unsetFormId();
   m_CurrentType  = {};
   m_CurrentChunk = {};
   m_CurrentName.clear();
 }
 
-bool FileReaderHandler::Chunk(TESFile::Type type)
+bool FileConflictParser::Chunk(TESFile::Type type)
 {
   m_CurrentChunk = type;
   if (m_CurrentPath.groups().empty()) {
@@ -108,7 +118,7 @@ bool FileReaderHandler::Chunk(TESFile::Type type)
   }
 }
 
-void FileReaderHandler::Data(std::istream& stream)
+void FileConflictParser::Data(std::istream& stream)
 {
   if (m_CurrentPath.groups().empty()) {
     return MainRecordData(stream);
@@ -124,7 +134,7 @@ void FileReaderHandler::Data(std::istream& stream)
   }
 }
 
-void FileReaderHandler::MainRecordData(std::istream& stream)
+void FileConflictParser::MainRecordData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "HEDR"_ts: {
@@ -171,7 +181,7 @@ void FileReaderHandler::MainRecordData(std::istream& stream)
   }
 }
 
-void FileReaderHandler::DefaultObjectData(std::istream& stream)
+void FileConflictParser::DefaultObjectData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "DNAM"_ts:
@@ -186,36 +196,32 @@ void FileReaderHandler::DefaultObjectData(std::istream& stream)
         break;
       }
       m_CurrentPath.setTypeId(name);
-      m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), "DOBJ"_ts,
-                                      m_CurrentPath, "");
+      m_PluginList->addRecordConflict(m_PluginName, m_CurrentPath, "DOBJ"_ts, "");
     }
     break;
   }
 }
 
-void FileReaderHandler::GameSettingData(std::istream& stream)
+void FileConflictParser::GameSettingData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
-  case "EDID"_ts:
+  case "EDID"_ts: {
     std::string editorId;
     std::getline(stream, editorId, '\0');
     m_CurrentPath.setEditorId(editorId);
-    m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), "GMST"_ts,
-                                    m_CurrentPath, "");
-    break;
+    m_PluginList->addRecordConflict(m_PluginName, m_CurrentPath, "GMST"_ts, "");
+  } break;
   }
 }
 
-void FileReaderHandler::StandardData(std::istream& stream)
+void FileConflictParser::StandardData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
-  case "EDID"_ts:
+  case "EDID"_ts: {
     std::string editorId;
     std::getline(stream, editorId, '\0');
     m_CurrentName = std::move(editorId);
-    m_PluginList->addRecordConflict(m_Plugin->name().toStdString(), m_CurrentType,
-                                    m_CurrentPath, m_CurrentName);
-    break;
+  } break;
   }
 }
 

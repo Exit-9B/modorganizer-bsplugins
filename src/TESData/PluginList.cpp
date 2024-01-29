@@ -1,5 +1,5 @@
 #include "PluginList.h"
-#include "FileReaderHandler.h"
+#include "FileConflictParser.h"
 #include "TESFile/Reader.h"
 
 #include <gameplugins.h>
@@ -149,8 +149,9 @@ FileEntry* PluginList::createEntry(const std::string& name)
   return entry.get();
 }
 
-void PluginList::addRecordConflict(const std::string& pluginName, TESFile::Type type,
-                                   const RecordPath& path, const std::string& name)
+void PluginList::addRecordConflict(const std::string& pluginName,
+                                   const RecordPath& path, TESFile::Type type,
+                                   const std::string& name)
 {
   const auto& master = path.hasFormId() ? path.files()[path.formId() >> 24] : "";
   const auto owner   = createEntry(master);
@@ -158,6 +159,14 @@ void PluginList::addRecordConflict(const std::string& pluginName, TESFile::Type 
   if (pluginName != master) {
     const auto entry = createEntry(pluginName);
     entry->addRecord(path, name, type, record);
+  }
+}
+
+void PluginList::addGroupPlaceholder(const std::string& pluginName,
+                                     const RecordPath& path)
+{
+  if (const auto entry = findEntryByName(pluginName)) {
+    entry->addGroup(path);
   }
 }
 
@@ -876,9 +885,9 @@ void PluginList::scanDataFiles(bool invalidate)
     checkIni(*info, tree);
 
     try {
-      FileReaderHandler handler{this, info.get(), lightPluginsAreSupported,
-                                overridePluginsAreSupported};
-      TESFile::Reader<FileReaderHandler> reader{};
+      FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
+                                 overridePluginsAreSupported};
+      TESFile::Reader<FileConflictParser> reader{};
       reader.parse(std::filesystem::path(fullPath.toStdWString()), handler);
     } catch (std::exception& e) {
       MOBase::log::error("Error parsing \"{}\": {}", fullPath, e.what());

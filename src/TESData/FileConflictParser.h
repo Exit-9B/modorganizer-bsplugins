@@ -1,5 +1,5 @@
-#ifndef TESDATA_FILEREADERHANDLER_H
-#define TESDATA_FILEREADERHANDLER_H
+#ifndef TESDATA_FILECONFLICTPARSER_H
+#define TESDATA_FILECONFLICTPARSER_H
 
 #include "RecordPath.h"
 #include "TESFile/Stream.h"
@@ -13,10 +13,10 @@ namespace TESData
 class PluginList;
 class FileInfo;
 
-class FileReaderHandler final
+class FileConflictParser final
 {
 public:
-  FileReaderHandler(PluginList* pluginList, FileInfo* plugin, bool lightSupported,
+  FileConflictParser(PluginList* pluginList, FileInfo* plugin, bool lightSupported,
                     bool overlaySupported);
 
   bool Group(TESFile::GroupData group);
@@ -37,6 +37,7 @@ private:
   bool m_LightSupported;
   bool m_OverlaySupported;
 
+  std::string m_PluginName;
   std::vector<std::string> m_Masters;
   RecordPath m_CurrentPath;
   TESFile::Type m_CurrentType;
@@ -46,4 +47,4 @@ private:
 
 }  // namespace TESData
 
-#endif  // TESDATA_FILEREADERHANDLER_H
+#endif  // TESDATA_FILECONFLICTPARSER_H

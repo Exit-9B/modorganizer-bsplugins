@@ -61,8 +61,9 @@ public:
   [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle);
 
   FileEntry* createEntry(const std::string& name);
-  void addRecordConflict(const std::string& pluginName, TESFile::Type type,
-                         const RecordPath& path, const std::string& name);
+  void addRecordConflict(const std::string& pluginName, const RecordPath& path,
+                         TESFile::Type type, const std::string& name);
+  void addGroupPlaceholder(const std::string& pluginName, const RecordPath& path);
 
   void refresh(bool invalidate = false);
 

@@ -1,4 +1,6 @@
 #include "PluginRecordModel.h"
+#include "TESData/BranchConflictParser.h"
+#include "TESFile/Reader.h"
 
 #include <ranges>
 
@@ -7,9 +9,10 @@ using namespace Qt::Literals::StringLiterals;
 namespace BSPluginInfo
 {
 
-PluginRecordModel::PluginRecordModel(TESData::PluginList* pluginList,
+PluginRecordModel::PluginRecordModel(MOBase::IOrganizer* organizer,
+                                     TESData::PluginList* pluginList,
                                      const std::string& pluginName)
-    : m_PluginName{pluginName}, m_PluginList{pluginList},
+    : m_PluginName{pluginName}, m_Organizer{organizer}, m_PluginList{pluginList},
       m_FileEntry{pluginList->findEntryByName(pluginName)}
 {
   if (m_FileEntry) {
@@ -23,7 +26,7 @@ TESData::RecordPath PluginRecordModel::getPath(const QModelIndex& index) const
 
   std::vector<const Item*> parents;
   const auto last = static_cast<const Item*>(index.internalPointer());
-  for (auto item = last->parent; item->parent; item = item->parent) {
+  for (auto item = last; item->parent; item = item->parent) {
     parents.push_back(item);
   }
 
@@ -34,6 +37,9 @@ TESData::RecordPath PluginRecordModel::getPath(const QModelIndex& index) const
   }
 
   if (last->record) {
+    if (last->group.has_value()) {
+      path.pop();
+    }
     path.setIdentifier(last->record->identifier(), {&last->record->file(), 1});
   }
 
@@ -76,13 +82,55 @@ QModelIndex PluginRecordModel::parent(const QModelIndex& index) const
   return createIndex(row, 0, item->parent);
 }
 
+bool PluginRecordModel::hasChildren(const QModelIndex& parent) const
+{
+  if (!parent.isValid()) {
+    return m_DataRoot && !m_DataRoot->children.empty();
+  }
+
+  const auto parentItem = static_cast<const Item*>(parent.internalPointer());
+  return parentItem ? parentItem->group.has_value() : false;
+}
+
 int PluginRecordModel::rowCount(const QModelIndex& parent) const
 {
   const auto parentItem = parent.isValid()
                               ? static_cast<const Item*>(parent.internalPointer())
                               : m_DataRoot;
+  if (!parentItem) {
+    return 0;
+  }
 
-  return parentItem ? static_cast<int>(parentItem->children.size()) : 0;
+  if (parentItem->children.empty() && parentItem->group.has_value()) {
+    QList<QString> names;
+
+    if (parentItem->record) {
+      for (const auto handle : parentItem->record->alternatives()) {
+        const auto entry = m_PluginList->findEntryByHandle(handle);
+        names.append(QString::fromStdString(entry->name()));
+      }
+    } else {
+      names.append(QString::fromStdString(m_PluginName));
+    }
+
+    for (const auto& name : names) {
+      const auto vfsEntry =
+          m_Organizer->virtualFileTree()->find(name, MOBase::FileTreeEntry::FILE);
+
+      const auto filePath = m_Organizer->resolvePath(name);
+
+      try {
+        TESData::BranchConflictParser handler{m_PluginList, name.toStdString(),
+                                              getPath(parent)};
+        TESFile::Reader<TESData::BranchConflictParser> reader{};
+        reader.parse(std::filesystem::path(filePath.toStdWString()), handler);
+      } catch (std::exception& e) {
+        MOBase::log::error("Error parsing \"{}\": {}", filePath, e.what());
+      }
+    }
+  }
+
+  return static_cast<int>(parentItem->children.size());
 }
 
 int PluginRecordModel::columnCount([[maybe_unused]] const QModelIndex& parent) const

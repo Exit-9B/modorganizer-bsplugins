@@ -3,6 +3,8 @@
 
 #include "TESData/PluginList.h"
 
+#include <imoinfo.h>
+
 #include <QAbstractItemModel>
 
 namespace BSPluginInfo
@@ -22,13 +24,15 @@ public:
     COL_COUNT
   };
 
-  PluginRecordModel(TESData::PluginList* pluginList, const std::string& pluginName);
+  PluginRecordModel(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
+                    const std::string& pluginName);
 
   [[nodiscard]] TESData::RecordPath getPath(const QModelIndex& index) const;
 
   QModelIndex index(int row, int column,
                     const QModelIndex& parent = QModelIndex()) const override;
   QModelIndex parent(const QModelIndex& index) const override;
+  bool hasChildren(const QModelIndex& parent = QModelIndex()) const override;
   int rowCount(const QModelIndex& parent = QModelIndex()) const override;
   int columnCount(const QModelIndex& parent = QModelIndex()) const override;
   QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
@@ -41,6 +45,7 @@ private:
   static QString makeGroupName(TESFile::GroupData group);
 
   std::string m_PluginName;
+  MOBase::IOrganizer* m_Organizer   = nullptr;
   TESData::PluginList* m_PluginList = nullptr;
   TESData::FileEntry* m_FileEntry   = nullptr;
   Item* m_DataRoot                  = nullptr;

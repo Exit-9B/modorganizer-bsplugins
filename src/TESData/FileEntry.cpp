@@ -57,6 +57,25 @@ void FileEntry::addRecord(const RecordPath& path, const std::string& name,
   item->formType  = formType;
 }
 
+void FileEntry::addGroup(const RecordPath& path)
+{
+  TESFile::GroupData group = path.groups().back();
+  if (group.hasParent()) {
+    const auto& file            = path.files()[group.parent() >> 24];
+    const std::uint8_t newIndex = static_cast<std::uint8_t>(
+        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+
+    if (newIndex == m_Files.size()) {
+      m_Files.push_back(file);
+    }
+
+    group.setLocalIndex(newIndex);
+  }
+
+  const auto item = createHierarchy(path);
+  item->group     = group;
+}
+
 std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
 {
   const auto groups = path.groups();
@@ -106,6 +125,8 @@ std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
     key = path.editorId();
   } else if (path.hasTypeId()) {
     key = path.typeId();
+  } else {
+    return item ? item->record : nullptr;
   }
 
   const auto it = item->children.find(key);
@@ -165,7 +186,10 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
     key = path.editorId();
   } else if (path.hasTypeId()) {
     key = path.typeId();
+  } else {
+    return item;
   }
+
   auto& recordItem = item->children[key];
   if (!recordItem) {
     recordItem         = std::make_shared<TreeItem>();

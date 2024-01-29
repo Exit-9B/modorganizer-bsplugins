@@ -16,7 +16,8 @@ PluginRecordView::PluginRecordView(MOBase::IOrganizer* organizer,
 {
   ui->setupUi(this);
 
-  m_RecordModel = new PluginRecordModel(pluginList, pluginName.toStdString());
+  m_RecordModel =
+      new PluginRecordModel(organizer, pluginList, pluginName.toStdString());
   ui->pickRecordView->setModel(m_RecordModel);
   ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
   on_pickRecordView_expanded(QModelIndex());

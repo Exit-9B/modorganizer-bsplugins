@@ -52,6 +52,7 @@ public:
                                        TESFile::Type formType);
   void addRecord(const RecordPath& path, const std::string& name,
                  TESFile::Type formType, std::shared_ptr<Record> record);
+  void addGroup(const RecordPath&);
 
   [[nodiscard]] std::shared_ptr<Record> findRecord(const RecordPath& path) const;
 
