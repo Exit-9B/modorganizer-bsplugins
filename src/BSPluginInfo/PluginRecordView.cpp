@@ -3,6 +3,8 @@
 
 #include <QMenu>
 
+#include <ranges>
+
 namespace BSPluginInfo
 {
 
@@ -71,29 +73,41 @@ void PluginRecordView::on_pickRecordView_expanded(const QModelIndex& index)
 void PluginRecordView::on_pickRecordView_customContextMenuRequested(const QPoint& pos)
 {
   const auto selectionModel = ui->pickRecordView->selectionModel();
-  const auto currentIndex   = selectionModel->currentIndex();
+  const auto selectedRows   = selectionModel->selectedRows();
+  const auto items = std::ranges::transform_view(selectedRows, [](auto&& index) {
+    using Item      = TESData::FileEntry::TreeItem;
+    const auto item = index.data(Qt::UserRole).value<const Item*>();
+    return item;
+  });
 
-  using Item      = TESData::FileEntry::TreeItem;
-  const auto item = currentIndex.data(Qt::UserRole).value<const Item*>();
-  if (!item || !item->record)
+  if (items.empty() || !std::ranges::all_of(items, [](auto&& item) {
+        return item && item->record;
+      })) {
     return;
+  }
 
   QMenu menu;
 
   QAction* ignoreRecord;
   ignoreRecord = menu.addAction(tr("Ignore Record"), [&] {
-    item->record->setIgnored(ignoreRecord->isChecked());
-    for (const auto handle : item->record->alternatives()) {
-      const auto entry = m_PluginList->findEntryByHandle(handle);
-      const auto info =
-          m_PluginList->getPluginByName(QString::fromStdString(entry->name()));
-      if (info) {
-        info->invalidateConflicts();
+    for (auto&& item : items) {
+      item->record->setIgnored(ignoreRecord->isChecked());
+
+      for (const auto handle : item->record->alternatives()) {
+        const auto entry = m_PluginList->findEntryByHandle(handle);
+        const auto info =
+            m_PluginList->getPluginByName(QString::fromStdString(entry->name()));
+        if (info) {
+          info->invalidateConflicts();
+        }
       }
     }
   });
+
   ignoreRecord->setCheckable(true);
-  ignoreRecord->setChecked(item->record->ignored());
+  ignoreRecord->setChecked(std::ranges::all_of(items, [](auto&& item) {
+    return item->record->ignored();
+  }));
 
   const QPoint p = ui->pickRecordView->viewport()->mapToGlobal(pos);
   menu.exec(p);
