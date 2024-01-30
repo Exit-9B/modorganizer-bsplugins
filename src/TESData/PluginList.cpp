@@ -165,8 +165,15 @@ void PluginList::addRecordConflict(const std::string& pluginName,
 void PluginList::addGroupPlaceholder(const std::string& pluginName,
                                      const RecordPath& path)
 {
-  if (const auto entry = findEntryByName(pluginName)) {
-    entry->addChildGroup(path);
+  const auto group = path.groups().back();
+  const auto& master = group.hasParent() ? path.files()[group.parent() >> 24] : "";
+  if (const auto owner = findEntryByName(master)) {
+    owner->addChildGroup(path);
+  }
+  if (pluginName != master) {
+    if (const auto entry = findEntryByName(pluginName)) {
+      entry->addChildGroup(path);
+    }
   }
 }
 
