@@ -54,6 +54,13 @@ bool SingleRecordParser::Form(TESFile::FormData form)
       return false;
     }
 
+    const std::uint8_t localIndex = form.formId() >> 24U;
+    const std::string& owner =
+        localIndex < m_Masters.size() ? m_Masters[localIndex] : m_File;
+    if (m_Path.files()[m_Path.formId() >> 24U] != owner) {
+      return false;
+    }
+
     m_RecordFound = true;
     return true;
   } else {
