@@ -19,6 +19,8 @@ public:
   RecordStructureModel(TESData::PluginList* pluginList, TESData::Record* record,
                        const TESData::RecordPath& path, MOBase::IOrganizer* organizer);
 
+  void refresh();
+
   [[nodiscard]] const QString& file(int index) const { return m_Files[index]; }
 
   QModelIndex index(int row, int column,
@@ -35,8 +37,10 @@ private:
                 int index = 0);
 
   QList<QString> m_Files;
+  MOBase::IOrganizer* m_Organizer   = nullptr;
   TESData::PluginList* m_PluginList = nullptr;
   TESData::Record* m_Record         = nullptr;
+  TESData::RecordPath m_Path;
   std::shared_ptr<DataItem> m_Root;
 };
 

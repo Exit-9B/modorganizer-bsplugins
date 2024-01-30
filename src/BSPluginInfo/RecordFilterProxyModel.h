@@ -29,10 +29,18 @@ public:
   [[nodiscard]] FilterFlags filterFlags() const { return m_FilterFlags; }
   void setFilterFlags(FilterFlags filterFlags);
 
+  void setSourceModel(QAbstractItemModel* sourceModel) override;
+
+protected:
   bool filterAcceptsRow(int source_row,
                         const QModelIndex& source_parent) const override;
 
+private slots:
+  void onSourceDataChanged();
+  void onSourceRowsRemoved(const QModelIndex& parent, int first, int last);
+
 private:
+
   const TESData::PluginList* m_PluginList;
   const QString m_PluginName;
   FilterFlags m_FilterFlags;

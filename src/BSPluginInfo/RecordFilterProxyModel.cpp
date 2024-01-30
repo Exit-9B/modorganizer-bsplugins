@@ -17,6 +17,33 @@ void RecordFilterProxyModel::setFilterFlags(FilterFlags filterFlags)
   invalidateRowsFilter();
 }
 
+void RecordFilterProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
+{
+  QSortFilterProxyModel::setSourceModel(sourceModel);
+
+  connect(sourceModel, &QAbstractItemModel::dataChanged, this,
+          &RecordFilterProxyModel::onSourceDataChanged);
+  connect(sourceModel, &QAbstractItemModel::rowsRemoved, this,
+          &RecordFilterProxyModel::onSourceRowsRemoved);
+}
+
+void RecordFilterProxyModel::onSourceDataChanged()
+{
+  if (dynamicSortFilter()) {
+    invalidateRowsFilter();
+  }
+}
+
+void RecordFilterProxyModel::onSourceRowsRemoved(const QModelIndex& parent, int first,
+                                                 int last)
+{
+  const auto proxyParent = mapFromSource(parent);
+  const int proxyFirst   = mapFromSource(sourceModel()->index(first, 0, parent)).row();
+  const int proxyLast    = mapFromSource(sourceModel()->index(last, 0, parent)).row();
+  beginRemoveRows(proxyParent, proxyFirst, proxyLast);
+  endRemoveRows();
+}
+
 bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
                                               const QModelIndex& source_parent) const
 {

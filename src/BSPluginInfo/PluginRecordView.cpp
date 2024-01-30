@@ -65,18 +65,20 @@ PluginRecordView::~PluginRecordView() noexcept
 
 void PluginRecordView::onRecordPicked(const QModelIndex& current)
 {
+  if (!current.isValid()) {
+    return;
+  }
+
   const auto oldModel = m_StructureModel;
   m_StructureModel    = nullptr;
 
-  if (current.isValid()) {
-    const auto sourceIndex = m_FilterProxy->mapToSource(current);
-    if (m_ConflictEntry) {
-      const auto path   = m_RecordModel->getPath(sourceIndex);
-      const auto record = m_ConflictEntry->findRecord(path).get();
-      if (record) {
-        m_StructureModel =
-            new RecordStructureModel(m_PluginList, record, path, m_Organizer);
-      }
+  const auto sourceIndex = m_FilterProxy->mapToSource(current);
+  if (m_ConflictEntry) {
+    const auto path   = m_RecordModel->getPath(sourceIndex);
+    const auto record = m_ConflictEntry->findRecord(path).get();
+    if (record) {
+      m_StructureModel =
+          new RecordStructureModel(m_PluginList, record, path, m_Organizer);
     }
   }
 
@@ -113,11 +115,12 @@ void PluginRecordView::onFileHeaderMoved(int logicalIndex, int oldVisualIndex,
 
     if (m_PluginList->canMoveToPriority({index}, destination)) {
       m_PluginList->moveToPriority({index}, destination);
+      m_RecordModel->emit dataChanged(QModelIndex(), QModelIndex());
+      m_StructureModel->refresh();
     }
   }
 
   ui->recordStructureView->header()->moveSection(newVisualIndex, oldVisualIndex);
-  onRecordPicked(ui->pickRecordView->selectionModel()->currentIndex());
   m_MovingSection = false;
 }
 

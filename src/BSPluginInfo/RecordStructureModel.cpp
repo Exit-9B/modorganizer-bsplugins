@@ -13,13 +13,19 @@ RecordStructureModel::RecordStructureModel(TESData::PluginList* pluginList,
                                            TESData::Record* record,
                                            const TESData::RecordPath& path,
                                            MOBase::IOrganizer* organizer)
-    : m_PluginList{pluginList}, m_Record{record}, m_Root{std::make_shared<DataItem>()}
+    : m_Organizer{organizer}, m_PluginList{pluginList}, m_Record{record}, m_Path{path},
+      m_Root{std::make_shared<DataItem>()}
+{
+  refresh();
+}
+
+void RecordStructureModel::refresh()
 {
   boost::container::flat_map<int, const TESData::FileEntry*> entries;
-  for (const auto handle : record->alternatives()) {
-    const auto entry = pluginList->findEntryByHandle(handle);
+  for (const auto handle : m_Record->alternatives()) {
+    const auto entry = m_PluginList->findEntryByHandle(handle);
     const auto info =
-        pluginList->getPluginByName(QString::fromStdString(entry->name()));
+        m_PluginList->getPluginByName(QString::fromStdString(entry->name()));
     if (info && info->enabled()) {
       entries.emplace(info->priority(), entry);
     }
@@ -31,12 +37,12 @@ RecordStructureModel::RecordStructureModel(TESData::PluginList* pluginList,
     const auto entry = entries.nth(index)->second;
     const auto name  = QString::fromStdString(entry->name());
     const auto vfsEntry =
-        organizer->virtualFileTree()->find(name, MOBase::FileTreeEntry::FILE);
+        m_Organizer->virtualFileTree()->find(name, MOBase::FileTreeEntry::FILE);
 
-    const auto filePath = organizer->resolvePath(name);
+    const auto filePath = m_Organizer->resolvePath(name);
     m_Files[index]      = QFileInfo(filePath).fileName();
 
-    readFile(path, filePath, index);
+    readFile(m_Path, filePath, index);
   }
 }
 
