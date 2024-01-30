@@ -48,7 +48,7 @@ private:
   TESData::PluginList* m_PluginList         = nullptr;
   PluginRecordModel* m_RecordModel          = nullptr;
   RecordStructureModel* m_StructureModel    = nullptr;
-  bool m_MovingSection = false;
+  bool m_MovingSection                      = false;
 };
 
 }  // namespace BSPluginInfo
