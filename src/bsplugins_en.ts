@@ -474,6 +474,25 @@
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Records</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PluginRecordView</name>
+    <message>
+        <source>All conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Winning conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Losing conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PluginsWidget</name>

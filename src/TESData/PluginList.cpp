@@ -124,13 +124,13 @@ const FileInfo* PluginList::findPlugin(const QString& name) const
 #pragma endregion Plugin Access
 #pragma region Record Access
 
-FileEntry* PluginList::findEntryByName(const std::string& pluginName)
+FileEntry* PluginList::findEntryByName(const std::string& pluginName) const
 {
   const auto it = m_EntriesByName.find(pluginName);
   return it != m_EntriesByName.end() ? it->second.get() : nullptr;
 }
 
-FileEntry* PluginList::findEntryByHandle(TESFileHandle handle)
+FileEntry* PluginList::findEntryByHandle(TESFileHandle handle) const
 {
   const auto it = m_EntriesByHandle.find(handle);
   return it != m_EntriesByHandle.end() ? it->second.get() : nullptr;
@@ -165,7 +165,7 @@ void PluginList::addRecordConflict(const std::string& pluginName,
 void PluginList::addGroupPlaceholder(const std::string& pluginName,
                                      const RecordPath& path)
 {
-  const auto group = path.groups().back();
+  const auto group   = path.groups().back();
   const auto& master = group.hasParent() ? path.files()[group.parent() >> 24] : "";
   if (const auto owner = findEntryByName(master)) {
     owner->addChildGroup(path);

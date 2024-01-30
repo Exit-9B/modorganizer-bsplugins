@@ -12,17 +12,20 @@ PluginRecordView::PluginRecordView(QWidget* parent)
     : QWidget(parent), ui{new Ui::PluginRecordView()}
 {
   ui->setupUi(this);
+  ui->conflictFilterRow->hide();
 }
 
 void PluginRecordView::setup(MOBase::IOrganizer* organizer,
                              TESData::PluginList* pluginList, const QString& pluginName)
 {
-  m_Organizer  = organizer;
-  m_PluginList = pluginList;
+  m_Organizer   = organizer;
+  m_PluginList  = pluginList;
+  m_FilterProxy = new RecordFilterProxyModel(pluginList, pluginName);
+  ui->conflictFilterRow->show();
 
   setFile(pluginName);
 
-  ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
+  ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 222);
 
   connect(ui->recordStructureView->header(), &QHeaderView::sectionMoved, this,
           &PluginRecordView::onFileHeaderMoved);
@@ -35,10 +38,12 @@ void PluginRecordView::setFile(const QString& pluginName)
 
   m_RecordModel =
       new PluginRecordModel(m_Organizer, m_PluginList, pluginName.toStdString());
-  ui->pickRecordView->setModel(m_RecordModel);
+  m_FilterProxy->setSourceModel(m_RecordModel);
+  ui->pickRecordView->setModel(m_FilterProxy);
 
   m_StructureModel = nullptr;
   ui->recordStructureView->setModel(nullptr);
+  ui->recordStructureView->setVisible(false);
   on_pickRecordView_expanded(QModelIndex());
 
   connect(ui->pickRecordView->selectionModel(), &QItemSelectionModel::currentChanged,
@@ -54,6 +59,7 @@ PluginRecordView::~PluginRecordView() noexcept
 {
   delete ui;
   delete m_RecordModel;
+  delete m_FilterProxy;
   delete m_StructureModel;
 }
 
@@ -63,8 +69,9 @@ void PluginRecordView::onRecordPicked(const QModelIndex& current)
   m_StructureModel    = nullptr;
 
   if (current.isValid()) {
+    const auto sourceIndex = m_FilterProxy->mapToSource(current);
     if (m_ConflictEntry) {
-      const auto path   = m_RecordModel->getPath(current);
+      const auto path   = m_RecordModel->getPath(sourceIndex);
       const auto record = m_ConflictEntry->findRecord(path).get();
       if (record) {
         m_StructureModel =
@@ -74,6 +81,7 @@ void PluginRecordView::onRecordPicked(const QModelIndex& current)
   }
 
   ui->recordStructureView->setModel(m_StructureModel);
+  ui->recordStructureView->setVisible(m_StructureModel != nullptr);
 
   if (oldModel) {
     delete oldModel;
@@ -115,8 +123,9 @@ void PluginRecordView::onFileHeaderMoved(int logicalIndex, int oldVisualIndex,
 
 void PluginRecordView::on_pickRecordView_expanded(const QModelIndex& index)
 {
-  for (int row = 0, count = m_RecordModel->rowCount(index); row < count; ++row) {
-    const auto child = m_RecordModel->index(row, 0, index);
+  const auto model = ui->pickRecordView->model();
+  for (int row = 0, count = model->rowCount(index); row < count; ++row) {
+    const auto child = model->index(row, 0, index);
 
     using Item      = TESData::FileEntry::TreeItem;
     const auto item = child.data(Qt::UserRole).value<const Item*>();
@@ -167,6 +176,21 @@ void PluginRecordView::on_pickRecordView_customContextMenuRequested(const QPoint
 
   const QPoint p = ui->pickRecordView->viewport()->mapToGlobal(pos);
   menu.exec(p);
+}
+
+void PluginRecordView::on_filterCombo_currentIndexChanged(int index)
+{
+  switch (index) {
+  case Filter_AllConflicts:
+    m_FilterProxy->setFilterFlags(RecordFilterProxyModel::Filter_AllConflicts);
+    break;
+  case Filter_WinningConflicts:
+    m_FilterProxy->setFilterFlags(RecordFilterProxyModel::Filter_WinningConflicts);
+    break;
+  case Filter_LosingConflicts:
+    m_FilterProxy->setFilterFlags(RecordFilterProxyModel::Filter_LosingConflicts);
+    break;
+  }
 }
 
 }  // namespace BSPluginInfo

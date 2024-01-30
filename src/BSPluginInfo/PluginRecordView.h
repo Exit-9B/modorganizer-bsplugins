@@ -2,6 +2,7 @@
 #define BSPLUGININFO_PLUGINRECORDVIEW_H
 
 #include "PluginRecordModel.h"
+#include "RecordFilterProxyModel.h"
 #include "RecordStructureModel.h"
 
 #include <QWidget>
@@ -19,6 +20,13 @@ class PluginRecordView final : public QWidget
   Q_OBJECT
 
 public:
+  enum ConflictFilter
+  {
+    Filter_AllConflicts,
+    Filter_WinningConflicts,
+    Filter_LosingConflicts,
+  };
+
   explicit PluginRecordView(QWidget* parent = nullptr);
 
   PluginRecordView(const PluginRecordView&) = delete;
@@ -40,6 +48,7 @@ private slots:
 
   void on_pickRecordView_expanded(const QModelIndex& index);
   void on_pickRecordView_customContextMenuRequested(const QPoint& pos);
+  void on_filterCombo_currentIndexChanged(int index);
 
 private:
   Ui::PluginRecordView* ui;
@@ -47,6 +56,7 @@ private:
   const TESData::FileEntry* m_ConflictEntry = nullptr;
   TESData::PluginList* m_PluginList         = nullptr;
   PluginRecordModel* m_RecordModel          = nullptr;
+  RecordFilterProxyModel* m_FilterProxy     = nullptr;
   RecordStructureModel* m_StructureModel    = nullptr;
   bool m_MovingSection                      = false;
 };

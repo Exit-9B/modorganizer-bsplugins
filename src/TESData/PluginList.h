@@ -57,8 +57,8 @@ public:
   [[nodiscard]] int getIndexAtPriority(int priority) const;
   [[nodiscard]] QString getOriginName(int index) const;
 
-  [[nodiscard]] FileEntry* findEntryByName(const std::string& pluginName);
-  [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle);
+  [[nodiscard]] FileEntry* findEntryByName(const std::string& pluginName) const;
+  [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle) const;
 
   FileEntry* createEntry(const std::string& name);
   void addRecordConflict(const std::string& pluginName, const RecordPath& path,
