@@ -19,6 +19,8 @@ public:
   RecordStructureModel(TESData::PluginList* pluginList, TESData::Record* record,
                        const TESData::RecordPath& path, MOBase::IOrganizer* organizer);
 
+  [[nodiscard]] const QString& file(int index) const { return m_Files[index]; }
+
   QModelIndex index(int row, int column,
                     const QModelIndex& parent = QModelIndex()) const override;
   QModelIndex parent(const QModelIndex& index) const override;

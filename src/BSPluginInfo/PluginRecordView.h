@@ -35,7 +35,8 @@ public:
   void setFile(const QString& pluginName);
 
 private slots:
-  void recordPicked(const QModelIndex& current);
+  void onRecordPicked(const QModelIndex& current);
+  void onFileHeaderMoved(int logicalIndex, int oldVisualIndex, int newVisualIndex);
 
   void on_pickRecordView_expanded(const QModelIndex& index);
   void on_pickRecordView_customContextMenuRequested(const QPoint& pos);
@@ -47,6 +48,7 @@ private:
   TESData::PluginList* m_PluginList         = nullptr;
   PluginRecordModel* m_RecordModel          = nullptr;
   RecordStructureModel* m_StructureModel    = nullptr;
+  bool m_MovingSection = false;
 };
 
 }  // namespace BSPluginInfo

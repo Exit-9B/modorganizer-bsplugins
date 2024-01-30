@@ -23,6 +23,9 @@ void PluginRecordView::setup(MOBase::IOrganizer* organizer,
   setFile(pluginName);
 
   ui->pickRecordView->header()->resizeSection(PluginRecordModel::COL_ID, 220);
+
+  connect(ui->recordStructureView->header(), &QHeaderView::sectionMoved, this,
+          &PluginRecordView::onFileHeaderMoved);
 }
 
 void PluginRecordView::setFile(const QString& pluginName)
@@ -39,7 +42,7 @@ void PluginRecordView::setFile(const QString& pluginName)
   on_pickRecordView_expanded(QModelIndex());
 
   connect(ui->pickRecordView->selectionModel(), &QItemSelectionModel::currentChanged,
-          this, &PluginRecordView::recordPicked);
+          this, &PluginRecordView::onRecordPicked);
 
   m_ConflictEntry = m_PluginList->findEntryByName(pluginName.toStdString());
 
@@ -54,7 +57,7 @@ PluginRecordView::~PluginRecordView() noexcept
   delete m_StructureModel;
 }
 
-void PluginRecordView::recordPicked(const QModelIndex& current)
+void PluginRecordView::onRecordPicked(const QModelIndex& current)
 {
   const auto oldModel = m_StructureModel;
   m_StructureModel    = nullptr;
@@ -75,6 +78,39 @@ void PluginRecordView::recordPicked(const QModelIndex& current)
   if (oldModel) {
     delete oldModel;
   }
+}
+
+void PluginRecordView::onFileHeaderMoved(int logicalIndex, int oldVisualIndex,
+                                         int newVisualIndex)
+{
+  if (!m_PluginList || m_MovingSection) {
+    return;
+  }
+
+  m_MovingSection = true;
+
+  const auto& file = m_StructureModel->file(logicalIndex - 1);
+  const int index  = m_PluginList->getIndex(file);
+  const auto info  = m_PluginList->getPlugin(index);
+  if (!info) {
+    return;
+  }
+
+  const auto& otherFile = m_StructureModel->file(newVisualIndex - 1);
+  const auto otherInfo  = m_PluginList->getPluginByName(otherFile);
+  if (otherInfo) {
+    int destination = otherInfo->priority();
+    if (newVisualIndex > oldVisualIndex)
+      ++destination;
+
+    if (m_PluginList->canMoveToPriority({index}, destination)) {
+      m_PluginList->moveToPriority({index}, destination);
+    }
+  }
+
+  ui->recordStructureView->header()->moveSection(newVisualIndex, oldVisualIndex);
+  onRecordPicked(ui->pickRecordView->selectionModel()->currentIndex());
+  m_MovingSection = false;
 }
 
 void PluginRecordView::on_pickRecordView_expanded(const QModelIndex& index)
