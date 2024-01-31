@@ -1,5 +1,7 @@
 #include "RecordFilterProxyModel.h"
 
+#include <algorithm>
+
 namespace BSPluginInfo
 {
 
@@ -53,7 +55,7 @@ void RecordFilterProxyModel::onSourceRowsRemoved(const QModelIndex& parent, int 
   const auto proxyParent = mapFromSource(parent);
   const int proxyFirst   = mapFromSource(sourceModel()->index(first, 0, parent)).row();
   const int proxyLast    = mapFromSource(sourceModel()->index(last, 0, parent)).row();
-  beginRemoveRows(proxyParent, proxyFirst, proxyLast);
+  beginRemoveRows(proxyParent, std::max(proxyFirst, 0), std::max(proxyLast, 0));
   endRemoveRows();
 }
 
