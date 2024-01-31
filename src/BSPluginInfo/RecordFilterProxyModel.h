@@ -26,6 +26,9 @@ public:
   RecordFilterProxyModel(const TESData::PluginList* pluginList,
                          const QString& pluginName);
 
+  [[nodiscard]] const QString& file() const { return m_PluginName; }
+  void setFile(const QString& pluginName);
+
   [[nodiscard]] FilterFlags filterFlags() const { return m_FilterFlags; }
   void setFilterFlags(FilterFlags filterFlags);
 
@@ -40,9 +43,8 @@ private slots:
   void onSourceRowsRemoved(const QModelIndex& parent, int first, int last);
 
 private:
-
   const TESData::PluginList* m_PluginList;
-  const QString m_PluginName;
+  QString m_PluginName;
   FilterFlags m_FilterFlags;
 };
 

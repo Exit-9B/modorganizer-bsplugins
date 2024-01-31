@@ -38,6 +38,7 @@ void PluginRecordView::setFile(const QString& pluginName)
 
   m_RecordModel =
       new PluginRecordModel(m_Organizer, m_PluginList, pluginName.toStdString());
+  m_FilterProxy->setFile(pluginName);
   m_FilterProxy->setSourceModel(m_RecordModel);
   ui->pickRecordView->setModel(m_FilterProxy);
 

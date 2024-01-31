@@ -11,6 +11,11 @@ RecordFilterProxyModel::RecordFilterProxyModel(const TESData::PluginList* plugin
   setRecursiveFilteringEnabled(true);
 }
 
+void RecordFilterProxyModel::setFile(const QString& pluginName)
+{
+  m_PluginName = pluginName;
+}
+
 void RecordFilterProxyModel::setFilterFlags(FilterFlags filterFlags)
 {
   m_FilterFlags = filterFlags;
@@ -19,12 +24,20 @@ void RecordFilterProxyModel::setFilterFlags(FilterFlags filterFlags)
 
 void RecordFilterProxyModel::setSourceModel(QAbstractItemModel* sourceModel)
 {
+  emit beginResetModel();
+
+  if (const auto oldSource = this->sourceModel()) {
+    disconnect(oldSource, nullptr, this, nullptr);
+  }
+
   QSortFilterProxyModel::setSourceModel(sourceModel);
 
   connect(sourceModel, &QAbstractItemModel::dataChanged, this,
           &RecordFilterProxyModel::onSourceDataChanged);
   connect(sourceModel, &QAbstractItemModel::rowsRemoved, this,
           &RecordFilterProxyModel::onSourceRowsRemoved);
+
+  emit endResetModel();
 }
 
 void RecordFilterProxyModel::onSourceDataChanged()
