@@ -5,8 +5,15 @@
 #include "TESData/RecordPath.h"
 #include "TESFile/Stream.h"
 
+#include <coroutine>
+#include <functional>
+#include <memory>
+#include <vector>
+
 namespace BSPluginInfo
 {
+
+class IFormParser;
 
 class SingleRecordParser final
 {
@@ -23,7 +30,11 @@ private:
   TESData::RecordPath m_Path;
   std::string m_File;
   DataItem* m_DataRoot;
-  int m_Index;
+  int m_FileIndex;
+
+  TESFile::Type m_CurrentType;
+  std::coroutine_handle<> m_ParseTask;
+  std::istream* m_ChunkStream;
 
   std::vector<std::string> m_Masters;
   int m_Depth        = 0;

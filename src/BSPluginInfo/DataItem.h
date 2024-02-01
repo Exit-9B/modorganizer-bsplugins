@@ -4,8 +4,11 @@
 #include "TESFile/Type.h"
 
 #include <QList>
+#include <QString>
 #include <QVariant>
 
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -31,7 +34,12 @@ public:
   [[nodiscard]] QVariant rowHeader() const
   {
     const auto view = m_Signature.view();
-    return QString::fromLocal8Bit(view.data(), view.size());
+    if (!m_Name.isEmpty()) {
+      return QStringLiteral("%1 - %2").arg(
+          QString::fromLocal8Bit(view.data(), view.size()), m_Name);
+    } else {
+      return QString::fromLocal8Bit(view.data(), view.size());
+    }
   }
 
   [[nodiscard]] QVariant displayData(int index) const
@@ -53,23 +61,22 @@ public:
     return std::distance(std::begin(m_Children), it);
   }
 
-  DataItem* findOrAddChild(TESFile::Type signature, const QString& name)
+  DataItem* insertChild(int index, TESFile::Type signature, const QString& name)
   {
-    const auto it = std::ranges::find_if(m_Children, [&](auto&& item) {
-      return item->m_Signature == signature;
-    });
-
-    if (it != std::end(m_Children)) {
-      return it->get();
-    } else {
-      return addChild(signature, name);
-    }
+    const auto it = m_Children.insert(
+        m_Children.begin() + index, std::make_shared<DataItem>(signature, name, this));
+    return it->get();
   }
 
-  DataItem* addChild(TESFile::Type signature, const QString& name)
+  DataItem* getOrInsertChild(int index, TESFile::Type signature, const QString& name)
   {
-    m_Children.push_back(std::make_shared<DataItem>(signature, name, this));
-    return m_Children.back().get();
+    if (index < m_Children.size()) {
+      const auto& child = m_Children[index];
+      if (child->signature() == signature) {
+        return child.get();
+      }
+    }
+    return insertChild(index, signature, name);
   }
 
   void setDisplayData(int index, const QVariant& data)

@@ -1,4 +1,5 @@
 #include "SingleRecordParser.h"
+#include "FormParser.h"
 
 #include <algorithm>
 #include <iterator>
@@ -11,7 +12,7 @@ namespace BSPluginInfo
 SingleRecordParser::SingleRecordParser(const TESData::RecordPath& path,
                                        const std::string& file, DataItem* root,
                                        int index)
-    : m_Path{path}, m_File{file}, m_DataRoot{root}, m_Index{index}
+    : m_Path{path}, m_File{file}, m_DataRoot{root}, m_FileIndex{index}
 {}
 
 bool SingleRecordParser::Group(TESFile::GroupData group)
@@ -41,6 +42,8 @@ bool SingleRecordParser::Group(TESFile::GroupData group)
 
 bool SingleRecordParser::Form(TESFile::FormData form)
 {
+  m_CurrentType = form.type();
+
   if (m_Depth == 0) {
     if (form.type() == "TES4"_ts) {
       m_Localized = (form.flags() & TESFile::RecordFlags::Localized);
@@ -78,6 +81,8 @@ bool SingleRecordParser::Chunk(TESFile::Type type)
 
 void SingleRecordParser::Data(std::istream& stream)
 {
+  m_ChunkStream = &stream;
+
   if (m_Depth == 0) {
     if (m_CurrentChunk == "MAST"_ts) {
       std::string master;
@@ -89,25 +94,15 @@ void SingleRecordParser::Data(std::istream& stream)
     return;
   }
 
-  if (m_CurrentChunk == "EDID"_ts) {
+  if (m_Path.hasEditorId() && m_CurrentChunk == "EDID"_ts) {
     std::string editorId;
     std::getline(stream, editorId, '\0');
-    if (!m_RecordFound && m_Path.hasEditorId()) {
-      if (editorId == m_Path.editorId()) {
-        m_RecordFound = true;
-      } else {
-        return;
-      }
-    }
-
-    if (m_RecordFound) {
-      m_DataRoot
-          ->findOrAddChild(
-              m_CurrentChunk,
-              QString::fromLocal8Bit(m_CurrentChunk.data(), m_CurrentChunk.size()))
-          ->setDisplayData(m_Index, QString::fromStdString(editorId));
+    if (editorId != m_Path.editorId()) {
       return;
     }
+
+    m_RecordFound = true;
+    stream.seekg(std::ios::beg);
   }
 
   if (m_Path.hasTypeId() && m_CurrentChunk == "DNAM"_ts) {
@@ -117,10 +112,9 @@ void SingleRecordParser::Data(std::istream& stream)
       const std::uint8_t localIndex = formId >> 24U;
       const auto& file = localIndex < m_Masters.size() ? m_Masters[localIndex] : m_File;
       if (name == m_Path.typeId()) {
-        m_DataRoot
-            ->findOrAddChild(name, QString::fromLocal8Bit(name.data(), name.size()))
-            ->setDisplayData(m_Index,
-                             u"%2|%1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
+        m_DataRoot->getOrInsertChild(0, name, u""_s)
+            ->setDisplayData(m_FileIndex,
+                             u"%2 | %1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
                                  .toUpper()
                                  .arg(QString::fromStdString(file)));
         m_RecordFound = true;
@@ -137,18 +131,13 @@ void SingleRecordParser::Data(std::istream& stream)
     return;
   }
 
-  QString data;
-  while (!stream.eof() && data.length() < 1023) {
-    char ch;
-    stream.get(ch);
-    data += u"%1 "_s.arg(static_cast<std::uint8_t>(ch), 2, 16, QChar(u'0')).toUpper();
+  if (!m_ParseTask) {
+    m_ParseTask = FormParserManager::getParser(m_CurrentType)
+                      ->parseForm(m_DataRoot, m_FileIndex, m_Localized, m_CurrentChunk,
+                                  m_ChunkStream);
   }
-  data.chop(1);
 
-  m_DataRoot
-      ->findOrAddChild(m_CurrentChunk, QString::fromLocal8Bit(m_CurrentChunk.data(),
-                                                              m_CurrentChunk.size()))
-      ->setDisplayData(m_Index, data);
+  m_ParseTask.resume();
 }
 
 }  // namespace BSPluginInfo
