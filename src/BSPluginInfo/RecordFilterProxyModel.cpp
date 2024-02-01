@@ -66,16 +66,8 @@ bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
     return true;
   }
 
-  if ((m_FilterFlags & Filter_AllConflicts) == Filter_AllConflicts) {
-    return true;
-  }
-
   using Item       = TESData::FileEntry::TreeItem;
   const auto index = sourceModel()->index(source_row, 0, source_parent);
-
-  if (sourceModel()->canFetchMore(index)) {
-    sourceModel()->fetchMore(index);
-  }
 
   const auto item = index.data(Qt::UserRole).value<const Item*>();
   const auto info = m_PluginList->getPluginByName(m_PluginName);
@@ -85,6 +77,22 @@ bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
 
   if (!item->record) {
     return false;
+  }
+
+  if (m_FilterFlags == Filter_AllConflicts) {
+    return std::ranges::count_if(item->record->alternatives(), [this](auto handle) {
+             const auto entry = m_PluginList->findEntryByHandle(handle);
+             const auto info  = entry ? m_PluginList->getPluginByName(
+                                           QString::fromStdString(entry->name()))
+                                      : nullptr;
+             return info && info->enabled();
+           }) > 1;
+  } else if (m_FilterFlags == Filter_AllRecords) {
+    return true;
+  }
+
+  if (sourceModel()->canFetchMore(index)) {
+    sourceModel()->fetchMore(index);
   }
 
   bool isConflicted = false;

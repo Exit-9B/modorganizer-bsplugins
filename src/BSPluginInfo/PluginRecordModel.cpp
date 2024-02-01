@@ -218,6 +218,7 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
       return QVariant();
     }
 
+    bool isConflicted = false;
     for (const auto alternative : item->record->alternatives()) {
       const auto altEntry = m_PluginList->findEntryByHandle(alternative);
       if (!altEntry || altEntry == m_FileEntry)
@@ -228,12 +229,17 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
       if (!altInfo || !altInfo->enabled())
         continue;
 
+      isConflicted = true;
       if (altInfo->priority() > info->priority()) {
         return QColor(255, 0, 0, 64);
       }
     }
 
-    return QColor(0, 255, 0, 64);
+    if (isConflicted) {
+      return QColor(0, 255, 0, 64);
+    } else {
+      return QVariant();
+    }
   }
 
   case Qt::UserRole: {
