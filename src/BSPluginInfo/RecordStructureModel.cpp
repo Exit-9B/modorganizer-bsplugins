@@ -14,7 +14,7 @@ RecordStructureModel::RecordStructureModel(TESData::PluginList* pluginList,
                                            const TESData::RecordPath& path,
                                            MOBase::IOrganizer* organizer)
     : m_Organizer{organizer}, m_PluginList{pluginList}, m_Record{record}, m_Path{path},
-      m_Root{std::make_shared<DataItem>()}
+      m_Root{std::make_shared<Item>()}
 {
   refresh();
 }
@@ -50,7 +50,8 @@ void RecordStructureModel::readFile(const TESData::RecordPath& path,
                                     const QString& filePath, int index)
 try {
   const auto fileName = QFileInfo(filePath).fileName().toStdString();
-  SingleRecordParser handler(path, fileName, m_Root.get(), index);
+  const auto gameName = m_Organizer->managedGame()->gameName();
+  SingleRecordParser handler(gameName, path, fileName, m_Root.get(), index);
   TESFile::Reader<SingleRecordParser> reader{};
   reader.parse(std::filesystem::path(filePath.toStdWString()), handler);
 } catch (const std::exception& e) {
@@ -65,7 +66,7 @@ QModelIndex RecordStructureModel::index(int row, int column,
   }
 
   const auto parentItem = parent.isValid()
-                              ? static_cast<const DataItem*>(parent.internalPointer())
+                              ? static_cast<const Item*>(parent.internalPointer())
                               : m_Root.get();
   if (parentItem && row < parentItem->numChildren()) {
     const auto childItem = parentItem->childAt(row);
@@ -78,7 +79,7 @@ QModelIndex RecordStructureModel::index(int row, int column,
 QModelIndex RecordStructureModel::parent(const QModelIndex& index) const
 {
   const auto item =
-      index.isValid() ? static_cast<const DataItem*>(index.internalPointer()) : nullptr;
+      index.isValid() ? static_cast<const Item*>(index.internalPointer()) : nullptr;
   const auto parentItem = item ? item->parent() : nullptr;
   if (!parentItem) {
     return QModelIndex();
@@ -91,7 +92,7 @@ QModelIndex RecordStructureModel::parent(const QModelIndex& index) const
 int RecordStructureModel::rowCount(const QModelIndex& parent) const
 {
   const auto item = parent.isValid()
-                        ? static_cast<const DataItem*>(parent.internalPointer())
+                        ? static_cast<const Item*>(parent.internalPointer())
                         : m_Root.get();
   return item ? item->numChildren() : 0;
 }
@@ -104,7 +105,7 @@ int RecordStructureModel::columnCount([[maybe_unused]] const QModelIndex& parent
 QVariant RecordStructureModel::data(const QModelIndex& index, int role) const
 {
   const auto item =
-      index.isValid() ? static_cast<const DataItem*>(index.internalPointer()) : nullptr;
+      index.isValid() ? static_cast<const Item*>(index.internalPointer()) : nullptr;
   if (!item) {
     return QVariant();
   }
@@ -118,35 +119,21 @@ QVariant RecordStructureModel::data(const QModelIndex& index, int role) const
       return item->displayData(index.column() - 1);
     }
 
-  case Qt::BackgroundRole:
+  case Qt::BackgroundRole: {
     if (index.column() == 0) {
       return QVariant();
     }
 
-    const int count      = columnCount();
-    const auto data      = item->displayData(index.column() - 1);
-    const auto winner    = item->displayData(count - 2);
-    const bool isWinning = data == winner;
-
-    bool isConflicted = !isWinning;
-    if (!isConflicted) {
-      for (int i = 0; i < count - 2; ++i) {
-        if (i != index.column() && item->displayData(i) != data) {
-          isConflicted = true;
-          break;
-        }
-      }
-    }
-
-    if (isConflicted) {
-      if (isWinning) {
-        return QColor(0, 255, 0, 64);
-      } else {
-        return QColor(255, 0, 0, 64);
-      }
+    const int count     = columnCount() - 1;
+    const int fileIndex = index.column() - 1;
+    if (item->isLosingConflict(fileIndex, count)) {
+      return QColor(255, 0, 0, 64);
+    } else if (item->isOverriding(fileIndex)) {
+      return QColor(0, 255, 0, 64);
     }
 
     return QVariant();
+  }
   }
 
   return QVariant();

@@ -48,6 +48,7 @@ private slots:
 
   void on_pickRecordView_expanded(const QModelIndex& index);
   void on_pickRecordView_customContextMenuRequested(const QPoint& pos);
+  void on_recordStructureView_expanded(const QModelIndex& index);
   void on_filterCombo_currentIndexChanged(int index);
 
 private:

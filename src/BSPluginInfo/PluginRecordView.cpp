@@ -182,6 +182,17 @@ void PluginRecordView::on_pickRecordView_customContextMenuRequested(const QPoint
   menu.exec(p);
 }
 
+void PluginRecordView::on_recordStructureView_expanded(const QModelIndex& index)
+{
+  const auto model = ui->recordStructureView->model();
+  if (model->rowCount(index) == 1) {
+    const auto child = model->index(0, 0, index);
+    if (model->hasChildren(child)) {
+      ui->recordStructureView->expand(child);
+    }
+  }
+}
+
 void PluginRecordView::on_filterCombo_currentIndexChanged(int index)
 {
   switch (index) {

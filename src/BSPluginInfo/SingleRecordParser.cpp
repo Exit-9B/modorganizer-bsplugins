@@ -1,18 +1,46 @@
 #include "SingleRecordParser.h"
-#include "FormParser.h"
+#include "TESData/FormParser.h"
 
 #include <algorithm>
+#include <array>
 #include <iterator>
+#include <utility>
 
 using namespace Qt::Literals::StringLiterals;
 
 namespace BSPluginInfo
 {
 
-SingleRecordParser::SingleRecordParser(const TESData::RecordPath& path,
-                                       const std::string& file, DataItem* root,
+using Game = TESData::FormParserManager::Game;
+
+static constexpr auto GameMap = std::to_array<std::pair<QStringView, Game>>({
+    {u"Skyrim Special Edition", Game::SSE},
+    {u"Fallout 4", Game::FO4},
+    {u"Skyrim", Game::TES5},
+    {u"New Vegas", Game::FNV},
+    {u"Fallout 3", Game::FO3},
+    {u"Oblivion", Game::TES4},
+});
+
+static Game gameIdentifier(QStringView gameName)
+{
+  const auto it = std::ranges::find_if(GameMap, [=](auto&& pair) {
+    return pair.first == gameName;
+  });
+
+  if (it != std::end(GameMap)) {
+    return it->second;
+  } else {
+    return Game::Unknown;
+  }
+}
+
+SingleRecordParser::SingleRecordParser(const QString& gameName,
+                                       const TESData::RecordPath& path,
+                                       const std::string& file, TESData::DataItem* root,
                                        int index)
-    : m_Path{path}, m_File{file}, m_DataRoot{root}, m_FileIndex{index}
+    : m_GameName{gameName}, m_Path{path}, m_File{file}, m_DataRoot{root},
+      m_FileIndex{index}
 {}
 
 bool SingleRecordParser::Group(TESFile::GroupData group)
@@ -132,9 +160,10 @@ void SingleRecordParser::Data(std::istream& stream)
   }
 
   if (!m_ParseTask) {
-    m_ParseTask = FormParserManager::getParser(m_CurrentType)
-                      ->parseForm(m_DataRoot, m_FileIndex, m_Localized, m_CurrentChunk,
-                                  m_ChunkStream);
+    const auto game = gameIdentifier(m_GameName);
+    m_ParseTask     = TESData::FormParserManager::getParser(game, m_CurrentType)
+                      ->parseForm(m_DataRoot, m_FileIndex, m_Localized, m_Masters,
+                                  m_File, m_CurrentChunk, m_ChunkStream);
   }
 
   m_ParseTask.resume();

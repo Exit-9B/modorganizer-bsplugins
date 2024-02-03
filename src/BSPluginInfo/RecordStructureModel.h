@@ -1,7 +1,7 @@
 #ifndef BSPLUGININFO_RECORDSTRUCTUREMODEL_H
 #define BSPLUGININFO_RECORDSTRUCTUREMODEL_H
 
-#include "DataItem.h"
+#include "TESData/DataItem.h"
 #include "TESData/PluginList.h"
 #include "TESData/RecordPath.h"
 
@@ -33,6 +33,8 @@ public:
                       int role = Qt::DisplayRole) const override;
 
 private:
+  using Item = TESData::DataItem;
+
   void readFile(const TESData::RecordPath& path, const QString& filePath,
                 int index = 0);
 
@@ -41,7 +43,7 @@ private:
   TESData::PluginList* m_PluginList = nullptr;
   TESData::Record* m_Record         = nullptr;
   TESData::RecordPath m_Path;
-  std::shared_ptr<DataItem> m_Root;
+  std::shared_ptr<Item> m_Root;
 };
 
 }  // namespace BSPluginInfo

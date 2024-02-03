@@ -1,9 +1,11 @@
 #ifndef BSPLUGININFO_SINGLERECORDPARSER_H
 #define BSPLUGININFO_SINGLERECORDPARSER_H
 
-#include "DataItem.h"
+#include "TESData/DataItem.h"
 #include "TESData/RecordPath.h"
 #include "TESFile/Stream.h"
+
+#include <iplugingame.h>
 
 #include <coroutine>
 #include <functional>
@@ -18,8 +20,8 @@ class IFormParser;
 class SingleRecordParser final
 {
 public:
-  SingleRecordParser(const TESData::RecordPath& path, const std::string& file,
-                     DataItem* root, int index);
+  SingleRecordParser(const QString& gameName, const TESData::RecordPath& path,
+                     const std::string& file, TESData::DataItem* root, int index);
 
   bool Group(TESFile::GroupData group);
   bool Form(TESFile::FormData form);
@@ -27,9 +29,10 @@ public:
   void Data(std::istream& stream);
 
 private:
+  QString m_GameName;
   TESData::RecordPath m_Path;
   std::string m_File;
-  DataItem* m_DataRoot;
+  TESData::DataItem* m_DataRoot;
   int m_FileIndex;
 
   TESFile::Type m_CurrentType;
