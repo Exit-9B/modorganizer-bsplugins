@@ -33,7 +33,9 @@ bool DataItem::isLosingConflict(int fileIndex, int fileCount) const
   }
 
   if (!m_DisplayData.isEmpty()) {
-    if (fileCount > m_DisplayData.length()) {
+    if (fileIndex >= m_DisplayData.length()) {
+      return false;
+    } else if (fileCount > m_DisplayData.length()) {
       return true;
     }
 
@@ -60,7 +62,7 @@ bool DataItem::isOverriding(int fileIndex) const
   }
 
   if (!m_DisplayData.isEmpty()) {
-    if (fileIndex > m_DisplayData.length()) {
+    if (fileIndex >= m_DisplayData.length()) {
       return true;
     }
 
