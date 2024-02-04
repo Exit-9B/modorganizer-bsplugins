@@ -185,11 +185,19 @@ void PluginRecordView::on_pickRecordView_customContextMenuRequested(const QPoint
 
 void PluginRecordView::on_recordStructureView_expanded(const QModelIndex& index)
 {
-  const auto model = ui->recordStructureView->model();
-  if (model->rowCount(index) == 1) {
+  const auto model   = ui->recordStructureView->model();
+  const int rowCount = model->rowCount(index);
+  if (rowCount == 1) {
     const auto child = model->index(0, 0, index);
     if (model->hasChildren(child)) {
       ui->recordStructureView->expand(child);
+    }
+  } else {
+    for (int i = 0; i < rowCount; ++i) {
+      const auto child = model->index(i, 0, index);
+      if (model->hasChildren(child) && child.data().toString().isEmpty()) {
+        ui->recordStructureView->expand(child);
+      }
     }
   }
 }
