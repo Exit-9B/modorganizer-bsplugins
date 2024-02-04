@@ -1,5 +1,5 @@
 #include "RecordStructureModel.h"
-#include "SingleRecordParser.h"
+#include "TESData/SingleRecordParser.h"
 #include "TESFile/Reader.h"
 
 #include <log.h>
@@ -51,8 +51,8 @@ void RecordStructureModel::readFile(const TESData::RecordPath& path,
 try {
   const auto fileName = QFileInfo(filePath).fileName().toStdString();
   const auto gameName = m_Organizer->managedGame()->gameName();
-  SingleRecordParser handler(gameName, path, fileName, m_Root.get(), index);
-  TESFile::Reader<SingleRecordParser> reader{};
+  TESData::SingleRecordParser handler(gameName, path, fileName, m_Root.get(), index);
+  TESFile::Reader<TESData::SingleRecordParser> reader{};
   reader.parse(std::filesystem::path(filePath.toStdWString()), handler);
 } catch (const std::exception& e) {
   MOBase::log::error("Error parsing \"{}\": {}", filePath, e.what());

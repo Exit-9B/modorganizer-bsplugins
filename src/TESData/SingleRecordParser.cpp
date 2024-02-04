@@ -1,5 +1,5 @@
 #include "SingleRecordParser.h"
-#include "TESData/FormParser.h"
+#include "FormParser.h"
 
 #include <algorithm>
 #include <array>
@@ -8,10 +8,10 @@
 
 using namespace Qt::Literals::StringLiterals;
 
-namespace BSPluginInfo
+namespace TESData
 {
 
-using Game = TESData::FormParserManager::Game;
+using Game = FormParserManager::Game;
 
 static constexpr auto GameMap = std::to_array<std::pair<QStringView, Game>>({
     {u"Skyrim Special Edition", Game::SSE},
@@ -35,9 +35,8 @@ static Game gameIdentifier(QStringView gameName)
   }
 }
 
-SingleRecordParser::SingleRecordParser(const QString& gameName,
-                                       const TESData::RecordPath& path,
-                                       const std::string& file, TESData::DataItem* root,
+SingleRecordParser::SingleRecordParser(const QString& gameName, const RecordPath& path,
+                                       const std::string& file, DataItem* root,
                                        int index)
     : m_GameName{gameName}, m_Path{path}, m_File{file}, m_DataRoot{root},
       m_FileIndex{index}
@@ -161,7 +160,7 @@ void SingleRecordParser::Data(std::istream& stream)
 
   if (!m_ParseTask) {
     const auto game = gameIdentifier(m_GameName);
-    m_ParseTask     = TESData::FormParserManager::getParser(game, m_CurrentType)
+    m_ParseTask     = FormParserManager::getParser(game, m_CurrentType)
                       ->parseForm(m_DataRoot, m_FileIndex, m_Localized, m_Masters,
                                   m_File, m_CurrentChunk, m_ChunkStream);
   }
@@ -169,4 +168,4 @@ void SingleRecordParser::Data(std::istream& stream)
   m_ParseTask.resume();
 }
 
-}  // namespace BSPluginInfo
+}  // namespace TESData
