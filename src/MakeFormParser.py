@@ -2,6 +2,28 @@ from typing import *
 import json
 import sys
 
+def push(code: TextIO, name: str, signature: Optional[str] = None,
+         conflictType: str = 'Override', alignable: bool = True) -> None:
+    func: str = 'getOrInsertChild' if alignable else 'insertChild'
+    if signature:
+        code.write(('item = item->{}('
+                    'indexStack.back()++, "{}"_ts, u"{}"_s, ConflictType::{});\n'
+                    ).format(func, signature, name, conflictType))
+    else:
+        code.write(('item = item->{}('
+                    'indexStack.back()++, u"{}"_s, ConflictType::{});\n'
+                    ).format(func, name, conflictType))
+    code.write('indexStack.push_back(0);\n')
+
+def pop(code: TextIO, name: str, signature: Optional[str] = None) -> None:
+    comment: str
+    if signature:
+        comment = signature + ' - ' + name
+    else:
+        comment = name
+    code.write('item = item->parent();\n')
+    code.write('indexStack.pop_back(); // {}\n\n'.format(comment))
+
 def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> None:
     if 'id' in format:
         format = defs[format['id']]
@@ -129,7 +151,7 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
         code.write('item->setDisplayData(fileIndex, val);\n')
 
     elif type == 'string':
-        localized: bool = 'localized' in element and element['localized']
+        localized: bool = element.get('localized', False)
         if localized:
             code.write('item->setDisplayData('
                        'fileIndex, readLstring(localized, *stream));\n')
@@ -158,7 +180,7 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
         code.write('item->setDisplayData('
                    'fileIndex, readFormId(masters, plugin, *stream));\n')
     elif type == 'bytes':
-        size: int = element['size'] if 'size' in element else 256
+        size: int = element.get('size', 256)
         code.write('item->setDisplayData(fileIndex, readBytes(*stream, {}));\n'.format(
             size))
     elif type == 'array':
@@ -227,12 +249,10 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
         arrayElement: dict[str, Any] = element['element']
         if 'id' in arrayElement:
             arrayElement = defs[arrayElement['id']]
-        code.write(('item = item->getOrInsertChild('
-                    'indexStack.back()++, u"{}"_s);\n').format(arrayElement['name']))
-        code.write('indexStack.push_back(0);\n')
+        elementName: str = arrayElement['name']
+        push(code, elementName)
         define_type(code, arrayElement, defs)
-        code.write('item = item->parent();\n')
-        code.write('indexStack.pop_back();\n\n')
+        pop(code, elementName)
         code.write('}\n')
         code.write('}\n')
     elif type == 'struct':
@@ -245,19 +265,13 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
             if 'id' in structElement:
                 structElement = {**structElement, **defs[structElement['id']]}
                 del structElement['id']
-            conflictType: str = (structElement['conflictType']
-                                 if 'conflictType' in structElement
-                                 else 'Override')
+            conflictType = structElement.get('conflictType', 'Override')
             elementName: str = structElement['name']
-            code.write(('item = item->getOrInsertChild('
-                        'indexStack.back()++, u"{}"_s, ConflictType::{});\n'
-                        ).format(elementName, conflictType))
-            code.write('indexStack.push_back(0);\n')
+            push(code, elementName, conflictType=conflictType)
             code.write('{\n')
             define_type(code, structElement, defs)
             code.write('}\n')
-            code.write('item = item->parent();\n')
-            code.write('indexStack.pop_back();\n\n')
+            pop(code, elementName)
         code.write('}\n')
     elif type == 'union':
         decider: str = element['decider']
@@ -379,18 +393,12 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
                 define_member(code, structMember, defs)
             else:
                 structSig: str = structMember['signature'].encode('unicode_escape').decode()
-                structName: str = ''
-                if 'name' in structMember:
-                    structName: str = structMember['name']
-                code.write(('item = item->getOrInsertChild('
-                            'indexStack.back()++, "{}"_ts, u"{}"_s);\n'
-                            ).format(structSig, structName))
-                code.write('indexStack.push_back(0);\n')
+                structName = structMember.get('name', '')
+                push(code, structName, signature=structSig)
                 code.write('if (signature == "{}"_ts) {{\n'.format(structSig))
                 define_type(code, structMember, defs)
                 code.write('co_await std::suspend_always();\n}\n')
-                code.write('item = item->parent();\n')
-                code.write('indexStack.pop_back();\n\n')
+                pop(code, structName, signature=structSig)
     elif type == 'memberUnion':
         define_member(code, element, defs)
     else:
@@ -413,9 +421,8 @@ def member_condition(member: dict[str, Any], defs: dict[str, Any]) -> str:
         return 'signature == "{}"_ts'.format(signature)
 
 def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
-    name: str = member['name'] if 'name' in member else 'Unknown'
-    conflictType: str = (member['conflictType'] if 'conflictType' in member
-                         else 'Override')
+    name: str = member.get('name', 'Unknown')
+    conflictType: str = member.get('conflictType', 'Override')
 
     alignable: bool = True
     if 'defFlags' in member:
@@ -431,42 +438,28 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
         arrayName: str = ''
         if 'name' in arrayMember:
             arrayName = arrayMember['name']
-        code.write(('item = item->getOrInsertChild('
-                    'indexStack.back()++, u"{}"_s, ConflictType::{});\n'
-                    ).format(name, conflictType))
-        code.write('indexStack.push_back(0);\n')
+        push(code, name, conflictType=conflictType)
         code.write('while ({}) {{\n'.format(member_condition(arrayMember, defs)))
 
         arrayType: str = arrayMember['type']
         if arrayType.startswith('member'):
             define_member(code, arrayMember, defs)
         else:
-            func: str = 'getOrInsertChild' if alignable else 'insertChild'
-            if 'signature' in arrayMember:
-                arraySig: str = arrayMember['signature'].encode('unicode_escape').decode()
-                code.write(('item = item->{}('
-                            'indexStack.back()++, "{}"_ts, u"{}"_s, '
-                            'ConflictType::{});\n'
-                            ).format(func, arraySig, arrayName, conflictType))
-            else:
-                code.write(('item = item->{}('
-                            'indexStack.back()++, u"{}"_s);\n').format(func, arrayName))
-            code.write('indexStack.push_back(0);\n')
+            arraySig: str = arrayMember.get('signature')
+            if arraySig:
+                arraySig = arraySig.encode('unicode_escape').decode()
+            push(code, arrayName, signature=arraySig, conflictType=conflictType,
+                 alignable=alignable)
 
             define_type(code, arrayMember, defs)
-            code.write('item = item->parent();\n')
-            code.write('indexStack.pop_back();\n\n')
+            pop(code, arrayName, signature=arraySig)
 
             if 'signature' in arrayMember:
                 code.write('co_await std::suspend_always();\n')
         code.write('}\n')
-        code.write('item = item->parent();\n')
-        code.write('indexStack.pop_back();\n\n')
+        pop(code, name)
     elif type == 'memberStruct':
-        code.write(('item = item->getOrInsertChild('
-                    'indexStack.back()++, u"{}"_s, ConflictType::{});\n'
-                    ).format(name, conflictType))
-        code.write('indexStack.push_back(0);\n')
+        push(code, name, conflictType=conflictType)
         members: list[Any] = member['members']
 
         structMember: dict[str, Any]
@@ -482,21 +475,14 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
                 structName: str = ''
                 if 'name' in structMember:
                     structName: str = structMember['name']
-                code.write(('item = item->getOrInsertChild('
-                            'indexStack.back()++, "{}"_ts, u"{}"_s);\n'
-                            ).format(structSig, structName))
-                code.write('indexStack.push_back(0);\n')
+                push(code, structName, signature=structSig)
                 code.write('if (signature == "{}"_ts) {{\n'.format(structSig))
                 define_type(code, structMember, defs)
                 code.write('co_await std::suspend_always();\n}\n')
-                code.write('item = item->parent();\n')
-                code.write('indexStack.pop_back();\n\n')
-        code.write('item = item->parent();\n')
-        code.write('indexStack.pop_back();\n\n')
+                pop(code, structName, signature=structSig)
+        pop(code, name)
     elif type == 'memberUnion':
-        code.write(('item = item->getOrInsertChild('
-                    'indexStack.back()++, u"{}"_s);\n').format(name))
-        code.write('indexStack.push_back(0);\n')
+        push(code, name)
         members: list[Any] = member['members']
 
         unionMember: dict[str, Any]
@@ -513,30 +499,21 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
                 if 'name' in unionMember:
                     unionName: str = unionMember['name']
                 code.write('if (signature == "{}"_ts) {{\n'.format(unionSig))
-                code.write(('item = item->getOrInsertChild('
-                            'indexStack.back()++, "{}"_ts, u"{}"_s);\n'
-                            ).format(unionSig, unionName))
-                code.write('indexStack.push_back(0);\n')
+                push(code, unionName, signature=unionSig)
                 define_type(code, unionMember, defs)
-                code.write('item = item->parent();\n')
-                code.write('indexStack.pop_back();\n\n')
+                pop(code, unionName, signature=unionSig)
                 code.write('co_await std::suspend_always();\n}\n')
             code.write('}\n')
-        code.write('item = item->parent();\n')
-        code.write('indexStack.pop_back();\n\n')
+        pop(code, name)
     else:
         signature: str = member['signature'].encode('unicode_escape').decode()
         if signature == 'VMAD':
             code.write('int ObjectFormat;\n')
-        code.write(('item = item->getOrInsertChild('
-                    'indexStack.back()++, "{}"_ts, u"{}"_s);\n'
-                    ).format(signature, name))
-        code.write('indexStack.push_back(0);\n')
+        push(code, name, signature=signature)
         code.write('if (signature == "{}"_ts) {{\n'.format(signature))
         define_type(code, member, defs)
         code.write('co_await std::suspend_always();\n}\n')
-        code.write('item = item->parent();\n')
-        code.write('indexStack.pop_back();\n\n')
+        pop(code, name, signature=signature)
 
 def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]) -> str:
     signature: str = definition['signature'].encode('unicode_escape').decode()
