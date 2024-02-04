@@ -52,6 +52,8 @@ private slots:
   void on_filterCombo_currentIndexChanged(int index);
 
 private:
+  void expandStructureConflicts(const QModelIndex& parent = QModelIndex());
+
   Ui::PluginRecordView* ui;
   MOBase::IOrganizer* m_Organizer           = nullptr;
   const TESData::FileEntry* m_ConflictEntry = nullptr;

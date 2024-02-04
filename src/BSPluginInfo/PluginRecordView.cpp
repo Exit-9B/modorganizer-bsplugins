@@ -85,6 +85,7 @@ void PluginRecordView::onRecordPicked(const QModelIndex& current)
 
   ui->recordStructureView->setModel(m_StructureModel);
   ui->recordStructureView->setVisible(m_StructureModel != nullptr);
+  expandStructureConflicts();
 
   if (oldModel) {
     delete oldModel;
@@ -205,6 +206,30 @@ void PluginRecordView::on_filterCombo_currentIndexChanged(int index)
   case Filter_LosingConflicts:
     m_FilterProxy->setFilterFlags(RecordFilterProxyModel::Filter_LosingConflicts);
     break;
+  }
+}
+
+void PluginRecordView::expandStructureConflicts(const QModelIndex& parent)
+{
+  if (!m_StructureModel) {
+    return;
+  }
+
+  const int count = m_StructureModel->rowCount(parent);
+  for (int i = 0; i < count; ++i) {
+    using Item          = TESData::DataItem;
+    const auto idx      = m_StructureModel->index(i, 0, parent);
+    const auto item     = idx.data(Qt::UserRole).value<const Item*>();
+    const int fileCount = m_StructureModel->columnCount(parent) - 1;
+
+    if (item->numChildren() > 0 && item->isConflicted(fileCount)) {
+      static constexpr int EXPAND_MAX_ROWS = 32;
+
+      if (item->numChildren() <= EXPAND_MAX_ROWS) {
+        ui->recordStructureView->expand(idx);
+        expandStructureConflicts(idx);
+      }
+    }
   }
 }
 

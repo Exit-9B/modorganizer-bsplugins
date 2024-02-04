@@ -134,6 +134,9 @@ QVariant RecordStructureModel::data(const QModelIndex& index, int role) const
 
     return QVariant();
   }
+
+  case Qt::UserRole:
+    return QVariant::fromValue(item);
   }
 
   return QVariant();
