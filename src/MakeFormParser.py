@@ -522,7 +522,7 @@ def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]
 
     code.write((
         'template <>\n'
-        'inline ParseTask FormParser<"{}">::parseForm('
+        'ParseTask FormParser<"{}">::parseForm('
         '    DataItem* root, int fileIndex, [[maybe_unused]] bool localized,\n'
         '    [[maybe_unused]] std::span<const std::string> masters,\n'
         '    [[maybe_unused]] const std::string& plugin, const TESFile::Type& signature,\n'
