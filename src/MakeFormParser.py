@@ -24,15 +24,12 @@ def pop(code: TextIO, name: str, signature: Optional[str] = None) -> None:
     code.write('item = item->parent();\n')
     code.write('indexStack.pop_back(); // {}\n\n'.format(comment))
 
-def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> None:
-    if 'id' in format:
-        format = defs[format['id']]
-
-    type: str = format['type']
-    if type == 'divide':
+class FormatValue:
+    def divide(code: TextIO, format: dict[str, Any]) -> None:
         value: int = int(format['value'])
         code.write('val = val.toInt() / {}.0f;\n'.format(value))
-    elif type == 'enum':
+
+    def enum(code: TextIO, format: dict[str, Any]) -> None:
         options: dict[str, str] = format['options']
         code.write('switch (val.toUInt()) {\n')
 
@@ -46,62 +43,175 @@ def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> No
             code.write('val = u"{}"_s;\n'.format(label))
             code.write('break;\n')
         code.write('}\n')
-    elif type == 'flags':
+
+    def flags(code: TextIO, format: dict[str, Any]) -> None:
         code.write('// TODO: flags\n')
-    elif type == 'AtxtPositionFormat':
-        code.write('// TODO\n')
-    elif type == 'ClmtMoonsPhaseLengthFormat':
-        code.write('// TODO\n')
-    elif type == 'ClmtTimeFormat':
-        code.write('// TODO\n')
-    elif type == 'CloudSpeedFormat':
-        code.write('// TODO\n')
-    elif type == 'CTDAFunctionFormat':
-        code.write('// TODO\n')
-    elif type == 'CtdaTypeFormat':
-        code.write('// TODO\n')
-    elif type == 'Edge0Format':
-        code.write('// TODO\n')
-    elif type == 'Edge1Format':
-        code.write('// TODO\n')
-    elif type == 'Edge2Format':
-        code.write('// TODO\n')
-    elif type == 'HideFFFF_Format':
-        code.write('// TODO\n')
-    elif type == 'NextObjectIDFormat':
-        code.write('// TODO\n')
-    elif type == 'QuestAliasFormat':
-        code.write('// TODO\n')
-    elif type == 'QuestExternalAliasFormat':
-        code.write('// TODO\n')
-    elif type == 'REFRNavmeshTriangleFormat':
-        code.write('// TODO\n')
-    elif type == 'ScriptObjectAliasFormat':
-        code.write('// TODO\n')
-    elif type == 'TintLayerFormat':
+
+    def AtxtPositionFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: AtxtPositionFormat\n')
+
+    def ClmtMoonsPhaseLengthFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: ClmtMoonsPhaseLengthFormat\n')
+
+    def ClmtTimeFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: ClmtTimeFormat\n')
+
+    def CloudSpeedFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: CloudSpeedFormat\n')
+
+    def CTDAFunctionFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: CTDAFunctionFormat\n')
+
+    def CtdaTypeFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: CtdaTypeFormat\n')
+
+    def Edge0Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Edge0Format\n')
+
+    def Edge1Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Edge1Format\n')
+
+    def Edge2Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Edge2Format\n')
+
+    def HideFFFF_Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: HideFFFF_Format\n')
+
+    def NextObjectIDFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: NextObjectIDFormat\n')
+
+    def QuestAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: QuestAliasFormat\n')
+
+    def QuestExternalAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: QuestExternalAliasFormat\n')
+
+    def REFRNavmeshTriangleFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: REFRNavmeshTriangleFormat\n')
+
+    def ScriptObjectAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: ScriptObjectAliasFormat\n')
+
+    def TintLayerFormat(code: TextIO, format: dict[str, Any]) -> None:
         code.write('// TODO: TintLayerFormat\n')
-    elif type == 'Vertex0Format':
-        code.write('// TODO\n')
-    elif type == 'Vertex1Format':
-        code.write('// TODO\n')
-    elif type == 'Vertex2Format':
-        code.write('// TODO\n')
-    else:
-        code.write('#pragma message("warning: unhandled format type {}")\n'.format(type))
 
-def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> None:
-    if 'id' in element:
-        element = defs[element['id']]
+    def Vertex0Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Vertex0Format\n')
 
-    type: str = element['type']
-    if type == 'int0':
+    def Vertex1Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Vertex1Format\n')
+
+    def Vertex2Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('// TODO: Vertex2Format\n')
+
+def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> None:
+    if 'id' in format:
+        format = defs[format['id']]
+
+    type: str = format['type']
+    getattr(FormatValue, type)(code, format)
+
+class UnionDecider:
+    def GMSTUnionDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('enum {Name, Int, Float, Bool};\n'
+                   'switch (root->childData("EDID"_ts, fileIndex)'
+                   '.toString()[0].unicode()) {\n'
+                   "case u'b': decider = Bool; break;\n"
+                   "case u'f': decider = Float; break;\n"
+                   "case u'i': decider = Int; break;\n"
+                   "case u'u': decider = Int; break;\n"
+                   "case u's': decider = Name; break;\n"
+                   '}\n')
+        return True
+    def CTDACompValueDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: CTDACompValueDecider\n')
+        return False
+    def CTDAParam1Decider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: CTDAParam1Decider\n')
+        return False
+    def CTDAParam2Decider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: CTDAParam1Decider\n')
+        return False
+    def CTDAReferenceDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: CTDAReferenceDecider\n')
+        return False
+    def ScriptPropertyDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('enum {Unused, ObjectUnion, String, Int32, Float, Bool, '
+                   'ArrayofObject, ArrayofString, ArrayofInt32, ArrayofFloat, '
+                   'ArrayofBool};\n'
+                   'const QString propertyType = '
+                   'item->parent()->childData(u"Type"_s, fileIndex).toString();\n'
+                   'if (propertyType == u"None"_s) {\n'
+                   'decider = Unused;\n'
+                   '} else if (propertyType == u"Object"_s) {\n'
+                   'decider = ObjectUnion;\n'
+                   '} else if (propertyType == u"String"_s) {\n'
+                   'decider = String;\n'
+                   '} else if (propertyType == u"Int32"_s) {\n'
+                   'decider = Int32;\n'
+                   '} else if (propertyType == u"Float"_s) {\n'
+                   'decider = Float;\n'
+                   '} else if (propertyType == u"Bool"_s) {\n'
+                   'decider = Bool;\n'
+                   '} else if (propertyType == u"Array of Object"_s) {\n'
+                   'decider = ArrayofObject;\n'
+                   '} else if (propertyType == u"Array of String"_s) {\n'
+                   'decider = ArrayofString;\n'
+                   '} else if (propertyType == u"Array of Int32"_s) {\n'
+                   'decider = ArrayofInt32;\n'
+                   '} else if (propertyType == u"Array of Float"_s) {\n'
+                   'decider = ArrayofFloat;\n'
+                   '} else if (propertyType == u"Array of Bool"_s) {\n'
+                   'decider = ArrayofBool;\n'
+                   '}\n')
+        return True
+    def ScriptObjFormatDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('enum {Objectv2, Objectv1};\n'
+                   'decider = ObjectFormat == 1 ? Objectv1 : Objectv2;')
+        return True
+    def TypeDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: TypeDecider\n')
+        return False
+    def BOOKTeachesDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: BOOKTeachesDecider\n')
+        return False
+    def COEDOwnerDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: COEDOwnerDecider\n')
+        return False
+    def MGEFAssocItemDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: MGEFAssocItemDecider\n')
+        return False
+    def NAVIIslandDataDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: NAVIIslandDataDecider\n')
+        return False
+    def NAVIParentDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: NAVIParentDecider\n')
+        return False
+    def NVNMParentDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: NVNMParentDecider\n')
+        return False
+    def NPCLevelDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: NPCLevelDecider\n')
+        return False
+    def PubPackCNAMDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: PubPackCNAMDecider\n')
+        return False
+    def PerkDATADecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: PerkDataDecider\n')
+        return False
+    def EPFDDecider(code: TextIO, element: dict[str, Any]) -> bool:
+        code.write('// TODO: EPFDDecider\n')
+        return False
+
+class DefineType:
+    def int0(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = 0;\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'int8':
+    def int8(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = '
                    'TESFile::readType<std::int8_t>(*stream);\n')
         if 'format' in element:
@@ -109,7 +219,7 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'int16':
+    def int16(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<std::int16_t>(*stream);\n')
         if 'name' in element and element['name'] == 'Object Format':
             code.write('ObjectFormat = val.toInt();\n')
@@ -118,39 +228,39 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'int32':
+    def int32(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<std::int32_t>(*stream);\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'uint8':
+    def uint8(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<std::uint8_t>(*stream);\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'uint16':
+    def uint16(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<std::uint16_t>(*stream);\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'uint32':
+    def uint32(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<std::uint32_t>(*stream);\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'float':
+    def float(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<float>(*stream);\n')
         code.write('item->setDisplayData(fileIndex, val);\n')
 
-    elif type == 'string':
+    def string(code: TextIO, element: dict[str, Any]) -> None:
         localized: bool = element.get('localized', False)
         if localized:
             code.write('item->setDisplayData('
@@ -176,14 +286,17 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
                 'std::string str;\n'
                 "std::getline(*stream, str, '\\0');\n"
                 'item->setDisplayData(fileIndex, QString::fromStdString(str));\n')
-    elif type == 'formId':
+
+    def formId(code: TextIO, element: dict[str, Any]) -> None:
         code.write('item->setDisplayData('
                    'fileIndex, readFormId(masters, plugin, *stream));\n')
-    elif type == 'bytes':
+
+    def bytes(code: TextIO, element: dict[str, Any]) -> None:
         size: int = element.get('size', 256)
         code.write('item->setDisplayData(fileIndex, readBytes(*stream, {}));\n'.format(
             size))
-    elif type == 'array':
+
+    def array(code: TextIO, element: dict[str, Any]) -> None:
         name: str = element['name']
         code.write('if (stream->peek() != std::char_traits<char>::eof()) {\n')
         if 'count' in element:
@@ -255,7 +368,8 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
         pop(code, elementName)
         code.write('}\n')
         code.write('}\n')
-    elif type == 'struct':
+
+    def struct(code: TextIO, element: dict[str, Any]) -> None:
         name: str = element['name']
 
         code.write('if (stream->peek() != std::char_traits<char>::eof()) {\n')
@@ -273,98 +387,11 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
             code.write('}\n')
             pop(code, elementName)
         code.write('}\n')
-    elif type == 'union':
+
+    def union(code: TextIO, element: dict[str, Any]) -> None:
         decider: str = element['decider']
         code.write('[[maybe_unused]] int decider = -1;\n')
-        if decider == 'GMSTUnionDecider':
-            code.write('enum {Name, Int, Float, Bool};\n'
-                       'switch (root->childData("EDID"_ts, fileIndex)'
-                       '.toString()[0].unicode()) {\n'
-                       "case u'b': decider = Bool; break;\n"
-                       "case u'f': decider = Float; break;\n"
-                       "case u'i': decider = Int; break;\n"
-                       "case u'u': decider = Int; break;\n"
-                       "case u's': decider = Name; break;\n"
-                       '}\n')
-        elif decider == 'CTDACompValueDecider':
-            code.write('// TODO: CTDACompValueDecider\n')
-            return
-        elif decider == 'CTDAParam1Decider':
-            code.write('// TODO: CTDAParam1Decider\n')
-            return
-        elif decider == 'CTDAParam2Decider':
-            code.write('// TODO: CTDAParam1Decider\n')
-            return
-        elif decider == 'CTDAReferenceDecider':
-            code.write('// TODO: CTDAReferenceDecider\n')
-            return
-        elif decider == 'ScriptPropertyDecider':
-            code.write('enum {Unused, ObjectUnion, String, Int32, Float, Bool, '
-                       'ArrayofObject, ArrayofString, ArrayofInt32, ArrayofFloat, '
-                       'ArrayofBool};\n'
-                       'const QString propertyType = '
-                       'item->parent()->childData(u"Type"_s, fileIndex).toString();\n'
-                       'if (propertyType == u"None"_s) {\n'
-                       'decider = Unused;\n'
-                       '} else if (propertyType == u"Object"_s) {\n'
-                       'decider = ObjectUnion;\n'
-                       '} else if (propertyType == u"String"_s) {\n'
-                       'decider = String;\n'
-                       '} else if (propertyType == u"Int32"_s) {\n'
-                       'decider = Int32;\n'
-                       '} else if (propertyType == u"Float"_s) {\n'
-                       'decider = Float;\n'
-                       '} else if (propertyType == u"Bool"_s) {\n'
-                       'decider = Bool;\n'
-                       '} else if (propertyType == u"Array of Object"_s) {\n'
-                       'decider = ArrayofObject;\n'
-                       '} else if (propertyType == u"Array of String"_s) {\n'
-                       'decider = ArrayofString;\n'
-                       '} else if (propertyType == u"Array of Int32"_s) {\n'
-                       'decider = ArrayofInt32;\n'
-                       '} else if (propertyType == u"Array of Float"_s) {\n'
-                       'decider = ArrayofFloat;\n'
-                       '} else if (propertyType == u"Array of Bool"_s) {\n'
-                       'decider = ArrayofBool;\n'
-                       '}\n')
-        elif decider == 'ScriptObjFormatDecider':
-            code.write('enum {Objectv2, Objectv1};\n'
-                       'decider = ObjectFormat == 1 ? Objectv1 : Objectv2;')
-        elif decider == 'TypeDecider':
-            code.write('// TODO: TypeDecider\n')
-            return
-        elif decider == 'BOOKTeachesDecider':
-            code.write('// TODO: BOOKTeachesDecider\n')
-            return
-        elif decider == 'COEDOwnerDecider':
-            code.write('// TODO: COEDOwnerDecider\n')
-            return
-        elif decider == 'MGEFAssocItemDecider':
-            code.write('// TODO: MGEFAssocItemDecider\n')
-            return
-        elif decider == 'NAVIIslandDataDecider':
-            code.write('// TODO: NAVIIslandDataDecider\n')
-            return
-        elif decider == 'NAVIParentDecider':
-            code.write('// TODO: NAVIParentDecider\n')
-            return
-        elif decider == 'NVNMParentDecider':
-            code.write('// TODO: NVNMParentDecider\n')
-            return
-        elif decider == 'NPCLevelDecider':
-            code.write('// TODO: NPCLevelDecider\n')
-            return
-        elif decider == 'PubPackCNAMDecider':
-            code.write('// TODO: PubPackCNAMDecider\n')
-            return
-        elif decider == 'PerkDATADecider':
-            code.write('// TODO: PerkDataDecider\n')
-            return
-        elif decider == 'EPFDDecider':
-            code.write('// TODO: EPFDDecider\n')
-            return
-        else:
-            code.write('// TODO: union decider {}\n'.format(decider))
+        if not getattr(UnionDecider, decider)(code, element):
             return
 
         unionElements: list[Any] = element['elements']
@@ -378,9 +405,11 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
             define_type(code, unionElement, defs)
             code.write('} break;\n')
         code.write('}\n')
-    elif type == 'empty':
+
+    def empty(code: TextIO, element: dict[str, Any]) -> None:
         code.write('// TODO: empty\n')
-    elif type == 'memberStruct':
+
+    def memberStruct(code: TextIO, element: dict[str, Any]) -> None:
         #define_member(code, element, defs)
         members: list[Any] = element['members']
         structMember: dict[str, Any]
@@ -399,39 +428,49 @@ def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> 
                 define_type(code, structMember, defs)
                 code.write('co_await std::suspend_always();\n}\n')
                 pop(code, structName, signature=structSig)
-    elif type == 'memberUnion':
+
+    def memberUnion(code: TextIO, element: dict[str, Any]) -> None:
         define_member(code, element, defs)
-    else:
-        code.write('#pragma message("warning: unhandled type {}")\n'.format(type))
+
+def define_type(code: TextIO, element: dict[str, Any], defs: dict[str, Any]) -> None:
+    if 'id' in element:
+        element = defs[element['id']]
+
+    type: str = element['type']
+    getattr(DefineType, type)(code, element)
+
+class MemberCondition:
+    def memberArray(member: dict[str, Any], defs: dict[str, Any]) -> str:
+        return member_condition(member['member'], defs)
+
+    def memberStruct(member: dict[str, Any], defs: dict[str, Any]) -> str:
+        return member_condition(member['members'][0], defs)
+
+    def memberUnion(member: dict[str, Any], defs: dict[str, Any]) -> str:
+        return ' || '.join(
+            (member_condition(unionMember, defs)
+             for unionMember in member['members']))
+
+    def default(member: dict[str, Any], defs: dict[str, Any]) -> str:
+        signature: str = member['signature'].encode('unicode_escape').decode()
+        return 'signature == "{}"_ts'.format(signature)
 
 def member_condition(member: dict[str, Any], defs: dict[str, Any]) -> str:
     if 'id' in member:
         member = defs[member['id']]
     memberType = member['type']
-    if memberType == 'memberArray':
-        return member_condition(member['member'], defs)
-    if memberType == 'memberStruct':
-        return member_condition(member['members'][0], defs)
-    elif memberType == 'memberUnion':
-        return ' || '.join(
-            (member_condition(unionMember, defs)
-             for unionMember in member['members']))
-    else:
-        signature: str = member['signature'].encode('unicode_escape').decode()
-        return 'signature == "{}"_ts'.format(signature)
+    return getattr(MemberCondition, memberType, MemberCondition.default)(member, defs)
 
-def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
-    name: str = member.get('name', 'Unknown')
-    conflictType: str = member.get('conflictType', 'Override')
+class DefineMember:
+    def memberArray(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
+        name: str = member.get('name', 'Unknown')
+        conflictType: str = member.get('conflictType', 'Override')
+        alignable: bool = True
+        if 'defFlags' in member:
+            defFlags: list[str] = member['defFlags']
+            if 'notAlignable' in defFlags:
+                alignable = False
 
-    alignable: bool = True
-    if 'defFlags' in member:
-        defFlags: list[str] = member['defFlags']
-        if 'notAlignable' in defFlags:
-            alignable = False
-
-    type: str = member['type']
-    if type == 'memberArray':
         arrayMember: dict[str, Any] = member['member']
         if 'id' in arrayMember:
             arrayMember = defs[arrayMember['id']]
@@ -458,7 +497,12 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
                 code.write('co_await std::suspend_always();\n')
         code.write('}\n')
         pop(code, name)
-    elif type == 'memberStruct':
+
+    def memberStruct(code: TextIO, member: dict[str, Any], defs: dict[str, Any]
+                     ) -> None:
+        name: str = member.get('name', 'Unknown')
+        conflictType: str = member.get('conflictType', 'Override')
+
         push(code, name, conflictType=conflictType)
         members: list[Any] = member['members']
 
@@ -481,7 +525,11 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
                 code.write('co_await std::suspend_always();\n}\n')
                 pop(code, structName, signature=structSig)
         pop(code, name)
-    elif type == 'memberUnion':
+
+    def memberUnion(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
+        name: str = member.get('name', 'Unknown')
+        conflictType: str = member.get('conflictType', 'Override')
+
         push(code, name)
         members: list[Any] = member['members']
 
@@ -505,7 +553,11 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
                 code.write('co_await std::suspend_always();\n}\n')
             code.write('}\n')
         pop(code, name)
-    else:
+
+    def default(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
+        name: str = member.get('name', 'Unknown')
+        conflictType: str = member.get('conflictType', 'Override')
+
         signature: str = member['signature'].encode('unicode_escape').decode()
         if signature == 'VMAD':
             code.write('int ObjectFormat;\n')
@@ -514,6 +566,10 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
         define_type(code, member, defs)
         code.write('co_await std::suspend_always();\n}\n')
         pop(code, name, signature=signature)
+
+def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) -> None:
+    type: str = member['type']
+    getattr(DefineMember, type, DefineMember.default)(code, member, defs)
 
 def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]) -> str:
     signature: str = definition['signature'].encode('unicode_escape').decode()
