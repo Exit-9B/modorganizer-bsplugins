@@ -50,6 +50,7 @@ private slots:
   void onSelectedOriginsChanged(const QList<QString>& origins);
 
   void toggleHideForceEnabled();
+  void toggleIgnoreMasterConflicts();
   void displayPluginInformation(const QModelIndex& index);
 
   void on_pluginList_customContextMenuRequested(const QPoint& pos);
@@ -77,8 +78,9 @@ private:
 
   Ui_PluginsWidget* ui;
 
-  QMenu* optionsMenu          = nullptr;
-  QAction* toggleForceEnabled = nullptr;
+  QMenu* optionsMenu           = nullptr;
+  QAction* toggleForceEnabled  = nullptr;
+  QAction* toggleIgnoreMasters = nullptr;
 
   TESData::PluginList* m_PluginList       = nullptr;
   PluginListModel* m_PluginListModel      = nullptr;

@@ -1,5 +1,6 @@
 #include "FileInfo.h"
 #include "FileEntry.h"
+#include "MOPlugin/Settings.h"
 #include "PluginList.h"
 
 using namespace Qt::Literals::StringLiterals;
@@ -79,6 +80,9 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
     return conflicts;
   }
 
+  const bool ignoreMasters =
+      Settings::instance()->get<bool>("ignore_master_conflicts", false);
+
   entry->forEachRecord([&](auto&& record) {
     if (record->ignored())
       return;
@@ -99,9 +103,13 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
       const int altIndex = m_PluginList->getIndex(altName);
 
       if (priority() > altInfo->priority()) {
-        conflicts.m_OverridingList.insert(altIndex);
+        if (!ignoreMasters || !masters().contains(altInfo->name())) {
+          conflicts.m_OverridingList.insert(altIndex);
+        }
       } else {
-        conflicts.m_OverriddenList.insert(altIndex);
+        if (!ignoreMasters || !altInfo->masters().contains(name())) {
+          conflicts.m_OverriddenList.insert(altIndex);
+        }
       }
     }
   });

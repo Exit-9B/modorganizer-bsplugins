@@ -363,6 +363,10 @@
         <source>Really disable all plugins?</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Ignore conflicts with masters</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>BSPlugins</name>
@@ -491,6 +495,10 @@
     </message>
     <message>
         <source>Losing conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ignore conflicts with masters</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

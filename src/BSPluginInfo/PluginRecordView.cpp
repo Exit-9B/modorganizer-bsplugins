@@ -1,4 +1,5 @@
 #include "PluginRecordView.h"
+#include "MOPlugin/Settings.h"
 #include "ui_pluginrecordview.h"
 
 #include <QMenu>
@@ -29,6 +30,11 @@ void PluginRecordView::setup(MOBase::IOrganizer* organizer,
 
   connect(ui->recordStructureView->header(), &QHeaderView::sectionMoved, this,
           &PluginRecordView::onFileHeaderMoved);
+
+  const bool ignoreMasters =
+      Settings::instance()->get<bool>("ignore_master_conflicts", false);
+
+  ui->ignoreMasterConflicts->setChecked(ignoreMasters);
 }
 
 QSplitter* PluginRecordView::splitter() const
@@ -230,6 +236,12 @@ void PluginRecordView::on_filterCombo_currentIndexChanged(int index)
     m_FilterProxy->setFilterFlags(RecordFilterProxyModel::Filter_LosingConflicts);
     break;
   }
+}
+
+void PluginRecordView::on_ignoreMasterConflicts_stateChanged(int state)
+{
+  Settings::instance()->set("ignore_master_conflicts", state == Qt::Checked);
+  m_RecordModel->emit dataChanged(QModelIndex(), QModelIndex());
 }
 
 void PluginRecordView::expandStructureConflicts(const QModelIndex& parent)

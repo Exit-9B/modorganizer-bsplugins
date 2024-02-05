@@ -251,6 +251,17 @@ void PluginsWidget::toggleHideForceEnabled()
   Settings::instance()->set("hide_force_enabled", doHide);
 }
 
+void PluginsWidget::toggleIgnoreMasterConflicts()
+{
+  const bool doIgnore = toggleIgnoreMasters->isChecked();
+  Settings::instance()->set("ignore_master_conflicts", doIgnore);
+
+  for (int i = 0, count = m_PluginList->pluginCount(); i < count; ++i) {
+    const auto plugin = m_PluginList->getPlugin(i);
+    plugin->invalidateConflicts();
+  }
+}
+
 constexpr auto PATTERN_BACKUP_GLOB  = R"/(.????_??_??_??_??_??)/";
 constexpr auto PATTERN_BACKUP_REGEX = R"/(\.(\d\d\d\d_\d\d_\d\d_\d\d_\d\d_\d\d))/";
 constexpr auto PATTERN_BACKUP_DATE  = R"/(yyyy_MM_dd_hh_mm_ss)/";
@@ -482,6 +493,10 @@ QMenu* PluginsWidget::listOptionsMenu()
                                        &PluginsWidget::toggleHideForceEnabled);
   toggleForceEnabled->setCheckable(true);
 
+  toggleIgnoreMasters = menu->addAction(tr("Ignore conflicts with masters"), this,
+                                        &PluginsWidget::toggleIgnoreMasterConflicts);
+  toggleIgnoreMasters->setCheckable(true);
+
   menu->addSeparator();
 
   menu->addAction(tr("Collapse all"), [this]() {
@@ -520,6 +535,11 @@ void PluginsWidget::restoreState()
   const bool doHide = Settings::instance()->get<bool>("hide_force_enabled", false);
   toggleForceEnabled->setChecked(doHide);
   toggleHideForceEnabled();
+
+  const bool doIgnore =
+      Settings::instance()->get<bool>("ignore_master_conflicts", false);
+  toggleIgnoreMasters->setChecked(doIgnore);
+  toggleIgnoreMasterConflicts();
 }
 
 static bool containsPlugin(const MOBase::IModInterface* mod)

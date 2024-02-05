@@ -1,4 +1,5 @@
 #include "RecordFilterProxyModel.h"
+#include "MOPlugin/Settings.h"
 
 #include <algorithm>
 
@@ -79,23 +80,15 @@ bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
     return false;
   }
 
-  if (m_FilterFlags == Filter_AllConflicts) {
-    return std::ranges::count_if(item->record->alternatives(), [this](auto handle) {
-             const auto entry = m_PluginList->findEntryByHandle(handle);
-             const auto info  = entry ? m_PluginList->getPluginByName(
-                                           QString::fromStdString(entry->name()))
-                                      : nullptr;
-             return info && info->enabled();
-           }) > 1;
-  } else if (m_FilterFlags == Filter_AllRecords) {
+  if (m_FilterFlags == Filter_AllRecords) {
     return true;
   }
 
-  if (sourceModel()->canFetchMore(index)) {
-    sourceModel()->fetchMore(index);
-  }
+  const bool ignoreMasters =
+      Settings::instance()->get<bool>("ignore_master_conflicts", false);
 
   bool isConflicted = false;
+  bool isLosing     = false;
   for (const auto alternative : item->record->alternatives()) {
     const auto altEntry = m_PluginList->findEntryByHandle(alternative);
     if (!altEntry || altEntry->name() == m_PluginName.toStdString())
@@ -106,16 +99,39 @@ bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
     if (!altInfo || !altInfo->enabled())
       continue;
 
-    isConflicted = true;
-    if (altInfo->priority() > info->priority()) {
-      return m_FilterFlags & Filter_LosingConflicts;
+    if (info->priority() > altInfo->priority()) {
+      if (!ignoreMasters || !info->masters().contains(altInfo->name())) {
+        isConflicted = true;
+      }
+    } else {
+      if (!ignoreMasters || !altInfo->masters().contains(info->name())) {
+        isConflicted = true;
+        isLosing     = true;
+        break;
+      }
     }
   }
 
-  if (isConflicted) {
+  if (isConflicted && !isLosing) {
     return m_FilterFlags & Filter_WinningConflicts;
-  } else {
+  }
+
+  if (!isConflicted) {
     return m_FilterFlags & Filter_NoConflicts;
+  } else {
+    if (!isLosing) {
+      return m_FilterFlags & Filter_WinningConflicts;
+    } else {
+      if (m_FilterFlags == Filter_AllConflicts) {
+        return true;
+      }
+
+      if (sourceModel()->canFetchMore(index)) {
+        sourceModel()->fetchMore(index);
+      }
+
+      return m_FilterFlags & Filter_LosingConflicts;
+    }
   }
 }
 

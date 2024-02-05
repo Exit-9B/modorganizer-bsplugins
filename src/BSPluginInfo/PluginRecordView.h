@@ -56,6 +56,7 @@ private slots:
   void on_pickRecordView_customContextMenuRequested(const QPoint& pos);
   void on_recordStructureView_expanded(const QModelIndex& index);
   void on_filterCombo_currentIndexChanged(int index);
+  void on_ignoreMasterConflicts_stateChanged(int state);
 
 private:
   void expandStructureConflicts(const QModelIndex& parent = QModelIndex());
