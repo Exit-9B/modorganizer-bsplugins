@@ -27,7 +27,8 @@ def pop(code: TextIO, name: str, signature: Optional[str] = None) -> None:
 class FormatValue:
     def divide(code: TextIO, format: dict[str, Any]) -> None:
         value: int = int(format['value'])
-        code.write('val = val.toInt() / {}.0f;\n'.format(value))
+        code.write('item->setDisplayData(fileIndex, val.toInt() / {}.0f);\n'
+                   .format(value))
 
     def enum(code: TextIO, format: dict[str, Any]) -> None:
         options: dict[str, str] = format['options']
@@ -40,69 +41,121 @@ class FormatValue:
                 code.write('case {}U:\n'.format(val))
             else:
                 code.write('case "{}"_ts.value:\n'.format(val))
-            code.write('val = u"{}"_s;\n'.format(label))
+            code.write('item->setDisplayData(fileIndex, u"{}"_s);\n'.format(label))
             code.write('break;\n')
         code.write('}\n')
 
     def flags(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: flags\n')
+        # TODO
+        pass
 
     def AtxtPositionFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: AtxtPositionFormat\n')
+        # TODO
+        pass
 
     def ClmtMoonsPhaseLengthFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: ClmtMoonsPhaseLengthFormat\n')
+        # TODO
+        pass
 
     def ClmtTimeFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: ClmtTimeFormat\n')
+        # TODO
+        pass
 
     def CloudSpeedFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: CloudSpeedFormat\n')
+        # TODO
+        pass
+
+    def ConditionAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
 
     def CTDAFunctionFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: CTDAFunctionFormat\n')
+        # TODO
+        pass
+
+    def CTDAParam1StringFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
+
+    def CTDAParam2QuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
+
+    def CTDAParam2StringFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
 
     def CtdaTypeFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: CtdaTypeFormat\n')
+        # TODO
+        pass
 
     def Edge0Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Edge0Format\n')
+        # TODO
+        pass
 
     def Edge1Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Edge1Format\n')
+        # TODO
+        pass
 
     def Edge2Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Edge2Format\n')
+        # TODO
+        pass
+
+    def EPFDActorValueFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
+
+    def EventFunctionAndMemberFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
 
     def HideFFFF_Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: HideFFFF_Format\n')
+        # TODO
+        pass
 
     def NextObjectIDFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: NextObjectIDFormat\n')
+        # TODO
+        pass
+
+    def PackageLocationAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
+
+    def PerkDATAQuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
 
     def QuestAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: QuestAliasFormat\n')
+        # TODO
+        pass
 
     def QuestExternalAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: QuestExternalAliasFormat\n')
+        # TODO
+        pass
 
     def REFRNavmeshTriangleFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: REFRNavmeshTriangleFormat\n')
+        # TODO
+        pass
 
     def ScriptObjectAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: ScriptObjectAliasFormat\n')
+        # TODO
+        pass
 
     def TintLayerFormat(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: TintLayerFormat\n')
+        # TODO
+        pass
 
     def Vertex0Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Vertex0Format\n')
+        # TODO
+        pass
 
     def Vertex1Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Vertex1Format\n')
+        # TODO
+        pass
 
     def Vertex2Format(code: TextIO, format: dict[str, Any]) -> None:
-        code.write('// TODO: Vertex2Format\n')
+        # TODO
+        pass
 
 def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> None:
     if 'id' in format:
@@ -112,158 +165,155 @@ def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> No
     getattr(FormatValue, type)(code, format)
 
 class UnionDecider:
-    def GMSTUnionDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('enum {Name, Int, Float, Bool};\n'
-                   'switch (root->childData("EDID"_ts, fileIndex)'
+    def CTDACompValueDecider(code: TextIO) -> None:
+        code.write('decider = (item->parent()->childData('
+                   'u"Type"_s, fileIndex).toInt() & 0x04) != 0;\n')
+
+    def CTDAParam1Decider(code: TextIO) -> None:
+        # TODO: Analyze functions from exe
+        code.write('decider = 0;\n')
+
+    def CTDAParam2Decider(code: TextIO) -> None:
+        # TODO: Analyze functions from exe
+        code.write('decider = 0;\n')
+
+    def CTDAParam2VATSValueParamDecider(code: TextIO) -> None:
+        # TODO: Analyze functions from exe
+        code.write('decider = 4;\n')
+
+    def CTDAReferenceDecider(code: TextIO) -> None:
+        # TODO: Analyze functions from exe
+        code.write('decider = 0;\n')
+
+    def ScriptPropertyDecider(code: TextIO) -> None:
+        code.write('decider = '
+                   'item->parent()->childData(u"Type"_s, fileIndex).toInt();\n')
+
+    def ScriptObjFormatDecider(code: TextIO) -> None:
+        code.write('decider = ObjectFormat == 1;\n')
+
+    # BOOK
+    def BOOKTeachesDecider(code: TextIO) -> None:
+        code.write('const int flags = '
+                   'item->parent()->childData(u"Flags"_s, fileIndex).toInt();\n')
+        code.write('decider = (flags & 0x04) ? 1 : 0;\n')
+
+    # FACT / PACK
+    def TypeDecider(code: TextIO) -> None:
+        code.write('decider = '
+                   'item->parent()->childData(u"Type"_s, fileIndex).toInt();\n')
+
+    # GMST
+    def GMSTUnionDecider(code: TextIO) -> None:
+        code.write('switch (root->childData("EDID"_ts, fileIndex)'
                    '.toString()[0].unicode()) {\n'
-                   "case u'b': decider = Bool; break;\n"
-                   "case u'f': decider = Float; break;\n"
-                   "case u'i': decider = Int; break;\n"
-                   "case u'u': decider = Int; break;\n"
-                   "case u's': decider = Name; break;\n"
+                   "case u'b': decider = 3; break;\n"
+                   "case u'f': decider = 2; break;\n"
+                   "case u'i': decider = 1; break;\n"
+                   "case u'u': decider = 1; break;\n"
+                   "case u's': decider = 0; break;\n"
                    '}\n')
-        return True
-    def CTDACompValueDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: CTDACompValueDecider\n')
-        return False
-    def CTDAParam1Decider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: CTDAParam1Decider\n')
-        return False
-    def CTDAParam2Decider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: CTDAParam1Decider\n')
-        return False
-    def CTDAReferenceDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: CTDAReferenceDecider\n')
-        return False
-    def ScriptPropertyDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('enum {Unused, ObjectUnion, String, Int32, Float, Bool, '
-                   'ArrayofObject, ArrayofString, ArrayofInt32, ArrayofFloat, '
-                   'ArrayofBool};\n'
-                   'const QString propertyType = '
-                   'item->parent()->childData(u"Type"_s, fileIndex).toString();\n'
-                   'if (propertyType == u"None"_s) {\n'
-                   'decider = Unused;\n'
-                   '} else if (propertyType == u"Object"_s) {\n'
-                   'decider = ObjectUnion;\n'
-                   '} else if (propertyType == u"String"_s) {\n'
-                   'decider = String;\n'
-                   '} else if (propertyType == u"Int32"_s) {\n'
-                   'decider = Int32;\n'
-                   '} else if (propertyType == u"Float"_s) {\n'
-                   'decider = Float;\n'
-                   '} else if (propertyType == u"Bool"_s) {\n'
-                   'decider = Bool;\n'
-                   '} else if (propertyType == u"Array of Object"_s) {\n'
-                   'decider = ArrayofObject;\n'
-                   '} else if (propertyType == u"Array of String"_s) {\n'
-                   'decider = ArrayofString;\n'
-                   '} else if (propertyType == u"Array of Int32"_s) {\n'
-                   'decider = ArrayofInt32;\n'
-                   '} else if (propertyType == u"Array of Float"_s) {\n'
-                   'decider = ArrayofFloat;\n'
-                   '} else if (propertyType == u"Array of Bool"_s) {\n'
-                   'decider = ArrayofBool;\n'
+
+    # LVLN
+    def COEDOwnerDecider(code: TextIO) -> None:
+        # TODO: Resolve "Owner" form type (NPC_ -> 0, FACT -> 1)
+        code.write('decider = 0;\n')
+
+    # MGEF
+    def MGEFAssocItemDecider(code: TextIO) -> None:
+        # TODO: Move streampos +0x38 to read "Archtype" early and map to assoc type
+        code.write('decider = 0;\n')
+
+    # NAVI
+    def NAVIIslandDataDecider(code: TextIO) -> None:
+        code.write('decider = '
+                   'item->parent()->childData(u"Is Island"_s, fileIndex).toBool();\n')
+
+    # NAVI
+    def NAVIParentDecider(code: TextIO) -> None:
+        code.write('const auto worldspace = item->parent()->childData('
+                   'u"Parent Worldspace"_s, fileIndex).toUInt();\n')
+        code.write('decider = worldspace == 0x0000003CU ? 0 : 1;\n')
+
+    # NAVM
+    def NVNMParentDecider(code: TextIO) -> None:
+        code.write('const auto worldspace = item->parent()->childData('
+                   'u"Parent Worldspace"_s, fileIndex).toUInt();\n')
+        code.write('decider = worldspace ? 0 : 1;\n')
+
+    # NPC_
+    def NPCLevelDecider(code: TextIO) -> None:
+        code.write('const int flags = '
+                   'item->parent()->childData(u"Flags"_s, fileIndex).toInt();\n')
+        code.write('decider = (flags & 0x80) ? 1 : 0;\n')
+
+    # PACK
+    def PubPackCNAMDecider(code: TextIO) -> None:
+        code.write('const QString activityType = '
+                   'root->childData("ANAM"_ts, fileIndex).toString();\n'
+                   'if (activityType == u"Bool"_s) {\n'
+                   'decider = 1;\n'
+                   '} else if (activityType == u"Int"_s) {\n'
+                   'decider = 2;\n'
+                   '} else if (activityType == u"Float"_s) {\n'
+                   'decider = 3;\n'
+                   '} else {\n'
+                   'decider = 0;\n'
                    '}\n')
-        return True
-    def ScriptObjFormatDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('enum {Objectv2, Objectv1};\n'
-                   'decider = ObjectFormat == 1 ? Objectv1 : Objectv2;')
-        return True
-    def TypeDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: TypeDecider\n')
-        return False
-    def BOOKTeachesDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: BOOKTeachesDecider\n')
-        return False
-    def COEDOwnerDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: COEDOwnerDecider\n')
-        return False
-    def MGEFAssocItemDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: MGEFAssocItemDecider\n')
-        return False
-    def NAVIIslandDataDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: NAVIIslandDataDecider\n')
-        return False
-    def NAVIParentDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: NAVIParentDecider\n')
-        return False
-    def NVNMParentDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: NVNMParentDecider\n')
-        return False
-    def NPCLevelDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: NPCLevelDecider\n')
-        return False
-    def PubPackCNAMDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: PubPackCNAMDecider\n')
-        return False
-    def PerkDATADecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: PerkDataDecider\n')
-        return False
-    def EPFDDecider(code: TextIO, element: dict[str, Any]) -> bool:
-        code.write('// TODO: EPFDDecider\n')
-        return False
+
+    # PERK
+    def PerkDATADecider(code: TextIO) -> None:
+        code.write('decider = item->parent()->findChild("PRKE"_ts)'
+                   '->childData(u"Type"_s, fileIndex).toInt();\n')
+
+    # PERK
+    def EPFDDecider(code: TextIO) -> None:
+        code.write('decider = item->parent()->childData('
+                   '"EPFT"_ts, fileIndex).toInt();\n')
 
 class DefineType:
+    def __integral(type: str, code: TextIO, element: dict[str, Any]) -> None:
+        code.write('QVariant val = TESFile::readType<{}>(*stream);\n'.format(type))
+        if element.get('name') == 'Object Format':
+            code.write('ObjectFormat = val.toInt();\n')
+        code.write('item->setData(fileIndex, val);\n')
+        if 'format' in element:
+            format: dict[str, Any] = element['format']
+            format_val(code, format, defs)
+
     def int0(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = 0;\n')
+        code.write('item->setData(fileIndex, val);\n')
         if 'format' in element:
             format: dict[str, Any] = element['format']
             format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
 
     def int8(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = '
-                   'TESFile::readType<std::int8_t>(*stream);\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::int8_t', code, element)
 
     def int16(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = TESFile::readType<std::int16_t>(*stream);\n')
-        if 'name' in element and element['name'] == 'Object Format':
-            code.write('ObjectFormat = val.toInt();\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::int16_t', code, element)
 
     def int32(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = TESFile::readType<std::int32_t>(*stream);\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::int32_t', code, element)
 
     def uint8(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = TESFile::readType<std::uint8_t>(*stream);\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::uint8_t', code, element)
 
     def uint16(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = TESFile::readType<std::uint16_t>(*stream);\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::uint16_t', code, element)
 
     def uint32(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('QVariant val = TESFile::readType<std::uint32_t>(*stream);\n')
-        if 'format' in element:
-            format: dict[str, Any] = element['format']
-            format_val(code, format, defs)
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        DefineType.__integral('std::uint32_t', code, element)
 
     def float(code: TextIO, element: dict[str, Any]) -> None:
         code.write('QVariant val = TESFile::readType<float>(*stream);\n')
-        code.write('item->setDisplayData(fileIndex, val);\n')
+        code.write('item->setData(fileIndex, val);\n')
 
     def string(code: TextIO, element: dict[str, Any]) -> None:
         localized: bool = element.get('localized', False)
         if localized:
-            code.write('item->setDisplayData('
+            code.write('item->setData('
                        'fileIndex, readLstring(localized, *stream));\n')
         elif 'prefix' in element:
             prefix: int = element['prefix']
@@ -279,25 +329,31 @@ class DefineType:
                 'std::string str;\n'
                 'str.resize(length);\n'
                 'stream->read(str.data(), length);\n'
-                'item->setDisplayData(fileIndex, QString::fromStdString(str));\n'
+                'item->setData(fileIndex, QString::fromStdString(str));\n'
                 ).format(lengthType))
         else:
             code.write(
                 'std::string str;\n'
                 "std::getline(*stream, str, '\\0');\n"
-                'item->setDisplayData(fileIndex, QString::fromStdString(str));\n')
+                'item->setData(fileIndex, QString::fromStdString(str));\n')
 
     def formId(code: TextIO, element: dict[str, Any]) -> None:
-        code.write('item->setDisplayData('
+        code.write('item->setData('
                    'fileIndex, readFormId(masters, plugin, *stream));\n')
 
     def bytes(code: TextIO, element: dict[str, Any]) -> None:
         size: int = element.get('size', 256)
-        code.write('item->setDisplayData(fileIndex, readBytes(*stream, {}));\n'.format(
+        code.write('item->setData(fileIndex, readBytes(*stream, {}));\n'.format(
             size))
 
     def array(code: TextIO, element: dict[str, Any]) -> None:
         name: str = element['name']
+        alignable: bool = True
+        if 'defFlags' in element:
+            defFlags: list[str] = element['defFlags']
+            if 'notAlignable' in defFlags:
+                alignable = False
+
         code.write('if (stream->peek() != std::char_traits<char>::eof()) {\n')
         if 'count' in element:
             count: int = element['count']
@@ -363,7 +419,7 @@ class DefineType:
         if 'id' in arrayElement:
             arrayElement = defs[arrayElement['id']]
         elementName: str = arrayElement['name']
-        push(code, elementName)
+        push(code, elementName, alignable=alignable)
         define_type(code, arrayElement, defs)
         pop(code, elementName)
         code.write('}\n')
@@ -377,7 +433,7 @@ class DefineType:
         structElement: dict[str, Any]
         for structElement in structElements:
             if 'id' in structElement:
-                structElement = {**structElement, **defs[structElement['id']]}
+                structElement = defs[structElement['id']] | structElement
                 del structElement['id']
             conflictType = structElement.get('conflictType', 'Override')
             elementName: str = structElement['name']
@@ -390,18 +446,19 @@ class DefineType:
 
     def union(code: TextIO, element: dict[str, Any]) -> None:
         decider: str = element['decider']
-        code.write('[[maybe_unused]] int decider = -1;\n')
-        if not getattr(UnionDecider, decider)(code, element):
-            return
+        code.write('[[maybe_unused]] int decider = 0;\n')
+        getattr(UnionDecider, decider)(code)
 
         unionElements: list[Any] = element['elements']
-        unionElement: dict[str, Any]
         code.write('switch (decider) {\n')
-        for unionElement in unionElements:
+
+        num: int
+        unionElement: dict[str, Any]
+        for num, unionElement in enumerate(unionElements):
             if 'id' in unionElement:
                 unionElement = defs[unionElement['id']]
-            name: str = unionElement['name'].replace(' ', '')
-            code.write('case {}: {{\n'.format(name))
+
+            code.write('case {}: {{\n'.format(num))
             define_type(code, unionElement, defs)
             code.write('} break;\n')
         code.write('}\n')
@@ -410,12 +467,11 @@ class DefineType:
         code.write('// TODO: empty\n')
 
     def memberStruct(code: TextIO, element: dict[str, Any]) -> None:
-        #define_member(code, element, defs)
         members: list[Any] = element['members']
         structMember: dict[str, Any]
         for structMember in members:
             if 'id' in structMember:
-                structMember = {**structMember, **defs[structMember['id']]}
+                structMember = defs[structMember['id']] | structMember
                 del structMember['id']
             structType: str = structMember['type']
             if structType.startswith('member'):
@@ -509,7 +565,7 @@ class DefineMember:
         structMember: dict[str, Any]
         for structMember in members:
             if 'id' in structMember:
-                structMember = {**structMember, **defs[structMember['id']]}
+                structMember = defs[structMember['id']] | structMember
                 del structMember['id']
             structType: str = structMember['type']
             if structType.startswith('member'):
@@ -574,7 +630,7 @@ def define_member(code: TextIO, member: dict[str, Any], defs: dict[str, Any]) ->
 def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]) -> str:
     signature: str = definition['signature'].encode('unicode_escape').decode()
     if 'id' in definition:
-        definition = {**definition, **defs[definition['id']]}
+        definition = defs[definition['id']] | definition
 
     code.write((
         'template <>\n'
@@ -592,7 +648,7 @@ def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]
     member: dict[str, Any]
     for member in members:
         if 'id' in member:
-            member = {**member, **defs[member['id']]}
+            member = defs[member['id']] | member
             del member['id']
         define_member(code, member, defs)
 

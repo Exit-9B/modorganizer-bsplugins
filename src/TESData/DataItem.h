@@ -55,12 +55,14 @@ public:
 
   [[nodiscard]] QVariant rowHeader() const { return name(); }
 
+  [[nodiscard]] QVariant data(int fileIndex) const;
   [[nodiscard]] QVariant displayData(int fileIndex) const;
 
   [[nodiscard]] bool isLosingConflict(int fileIndex, int fileCount) const;
   [[nodiscard]] bool isOverriding(int fileIndex) const;
   [[nodiscard]] bool isConflicted(int fileCount) const;
 
+  [[nodiscard]] DataItem* findChild(TESFile::Type signature) const;
   [[nodiscard]] QVariant childData(TESFile::Type signature, int fileIndex) const;
   [[nodiscard]] QVariant childData(const QString& name, int fileIndex) const;
   [[nodiscard]] int indexOf(const DataItem* child) const;
@@ -79,12 +81,14 @@ public:
   DataItem* getOrInsertChild(int index, TESFile::Type signature, const QString& name,
                              ConflictType conflictType = ConflictType::Override);
 
+  void setData(int fileIndex, const QVariant& data);
   void setDisplayData(int fileIndex, const QVariant& data);
 
 private:
   ConflictType m_ConflictType{ConflictType::Override};
   TESFile::Type m_Signature{};
   QString m_Name;
+  QList<QVariant> m_Data;
   QList<QVariant> m_DisplayData;
   DataItem* m_Parent;
   std::vector<std::shared_ptr<DataItem>> m_Children;

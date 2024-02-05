@@ -1,5 +1,9 @@
 #include "FormParser.h"
 
+#include <bit>
+#include <ranges>
+#include <utility>
+
 namespace TESData
 {
 
@@ -80,7 +84,7 @@ static void parseUnknown(DataItem* parent, int& index, int fileIndex,
                                DataItem::ConflictType::Override);
   }
 
-  item->setDisplayData(fileIndex, readBytes(stream, 256));
+  item->setData(fileIndex, readBytes(stream, 256));
 }
 
 template <>
@@ -97,7 +101,7 @@ ParseTask FormParser<>::parseForm(DataItem* root, int fileIndex,
       std::string editorId;
       std::getline(*stream, editorId, '\0');
       root->getOrInsertChild(index++, "EDID"_ts, u"Editor ID"_s)
-          ->setDisplayData(fileIndex, QString::fromStdString(editorId));
+          ->setData(fileIndex, QString::fromStdString(editorId));
     } else {
       parseUnknown(root, index, fileIndex, signature, *stream);
     }
@@ -107,10 +111,6 @@ ParseTask FormParser<>::parseForm(DataItem* root, int fileIndex,
 }
 
 }  // namespace TESData
-
-#include <bit>
-#include <ranges>
-#include <utility>
 
 #pragma warning(push)
 #pragma warning(disable : 4456)

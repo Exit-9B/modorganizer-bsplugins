@@ -231,7 +231,7 @@ void PluginRecordView::expandStructureConflicts(const QModelIndex& parent)
     const int fileCount = m_StructureModel->columnCount(parent) - 1;
 
     if (item->numChildren() > 0 && item->isConflicted(fileCount)) {
-      static constexpr int EXPAND_MAX_ROWS = 32;
+      static constexpr int EXPAND_MAX_ROWS = 80;
 
       if (item->numChildren() <= EXPAND_MAX_ROWS) {
         ui->recordStructureView->expand(idx);

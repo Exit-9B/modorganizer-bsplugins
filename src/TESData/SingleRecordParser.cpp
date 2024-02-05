@@ -140,10 +140,10 @@ void SingleRecordParser::Data(std::istream& stream)
       const auto& file = localIndex < m_Masters.size() ? m_Masters[localIndex] : m_File;
       if (name == m_Path.typeId()) {
         m_DataRoot->getOrInsertChild(0, name, u""_s)
-            ->setDisplayData(m_FileIndex,
-                             u"%2 | %1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
-                                 .toUpper()
-                                 .arg(QString::fromStdString(file)));
+            ->setData(m_FileIndex,
+                      u"%2 | %1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
+                          .toUpper()
+                          .arg(QString::fromStdString(file)));
         m_RecordFound = true;
         break;
       }
