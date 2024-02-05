@@ -69,7 +69,8 @@ bool SingleRecordParser::Group(TESFile::GroupData group)
 
 bool SingleRecordParser::Form(TESFile::FormData form)
 {
-  m_CurrentType = form.type();
+  m_CurrentType  = form.type();
+  m_CurrentFlags = form.flags();
 
   if (m_Depth == 0) {
     if (form.type() == "TES4"_ts) {
@@ -91,7 +92,10 @@ bool SingleRecordParser::Form(TESFile::FormData form)
       return false;
     }
 
-    m_RecordFound = true;
+    m_RecordFound   = true;
+    const auto game = gameIdentifier(m_GameName);
+    FormParserManager::getParser(game, m_CurrentType)
+        ->parseFlags(m_DataRoot, m_FileIndex, m_CurrentFlags);
     return true;
   } else {
     return !m_RecordFound;
@@ -129,6 +133,9 @@ void SingleRecordParser::Data(std::istream& stream)
     }
 
     m_RecordFound = true;
+    const auto game = gameIdentifier(m_GameName);
+    FormParserManager::getParser(game, m_CurrentType)
+        ->parseFlags(m_DataRoot, m_FileIndex, m_CurrentFlags);
     stream.seekg(std::ios::beg);
   }
 

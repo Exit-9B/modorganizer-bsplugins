@@ -45,6 +45,8 @@ using ParseTask = Parse::Task;
 class IFormParser
 {
 public:
+  virtual void parseFlags(DataItem* root, int fileIndex, std::uint32_t flags) const = 0;
+
   virtual ParseTask parseForm(DataItem* root, int fileIndex, bool localized,
                               std::span<const std::string> masters,
                               const std::string& plugin, const TESFile::Type& signature,
@@ -95,6 +97,8 @@ class FormParser : public IFormParser
   inline static RegisterFormParser<FormParser<Type>, Type> reg{};
 
 public:
+  void parseFlags(DataItem* root, int fileIndex, std::uint32_t flags) const override;
+
   ParseTask parseForm(DataItem* root, int fileIndex, bool localized,
                       std::span<const std::string> masters, const std::string& plugin,
                       const TESFile::Type& signature,

@@ -36,13 +36,14 @@ private:
   int m_FileIndex;
 
   TESFile::Type m_CurrentType;
+  std::uint32_t m_CurrentFlags = 0;
   std::coroutine_handle<> m_ParseTask;
   std::istream* m_ChunkStream;
 
   std::vector<std::string> m_Masters;
-  int m_Depth        = 0;
-  bool m_Localized   = false;
-  bool m_RecordFound = false;
+  int m_Depth           = 0;
+  bool m_Localized      = false;
+  bool m_RecordFound    = false;
   TESFile::Type m_CurrentChunk;
 };
 

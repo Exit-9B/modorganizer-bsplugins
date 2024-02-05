@@ -88,6 +88,17 @@ static void parseUnknown(DataItem* parent, int& index, int fileIndex,
 }
 
 template <>
+void FormParser<>::parseFlags(DataItem* root, int fileIndex, std::uint32_t flags) const
+{
+  DataItem* item = root->getOrInsertChild(0, u"Record Flags"_s);
+
+  item = item->getOrInsertChild(0, u"Compressed"_s);
+  if (flags & (TESFile::RecordFlags::Compressed)) {
+    item->setData(fileIndex, u"Compressed"_s);
+  }
+}
+
+template <>
 ParseTask FormParser<>::parseForm(DataItem* root, int fileIndex,
                                   [[maybe_unused]] bool localized,
                                   [[maybe_unused]] std::span<const std::string> masters,
@@ -95,7 +106,7 @@ ParseTask FormParser<>::parseForm(DataItem* root, int fileIndex,
                                   const TESFile::Type& signature,
                                   std::istream* const& stream) const
 {
-  int index = 0;
+  int index = 1;
   for (;;) {
     if (signature == "EDID"_ts) {
       std::string editorId;

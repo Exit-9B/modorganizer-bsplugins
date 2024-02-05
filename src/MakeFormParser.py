@@ -46,8 +46,18 @@ class FormatValue:
         code.write('}\n')
 
     def flags(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
+        code.write('item->setDisplayData(fileIndex, u""_s);\n')
+
+        i: int
+        bit: str
+        name: str
+        for i, (bit, name) in enumerate(format['flags'].items()):
+            name = name.replace('"', '\\"')
+            code.write('item = item->getOrInsertChild({}, u"{}"_s);\n'.format(i, name))
+            code.write('if (val.toUInt() & (1U << {})) {{\n'.format(bit))
+            code.write('item->setData(fileIndex, u"{}"_s);\n'.format(name))
+            code.write('}\n')
+            code.write('item = item->parent();\n')
 
     def AtxtPositionFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
@@ -250,7 +260,7 @@ class UnionDecider:
     # PACK
     def PubPackCNAMDecider(code: TextIO) -> None:
         code.write('const QString activityType = '
-                   'root->childData("ANAM"_ts, fileIndex).toString();\n'
+                   'item->parent()->childData("ANAM"_ts, fileIndex).toString();\n'
                    'if (activityType == u"Bool"_s) {\n'
                    'decider = 1;\n'
                    '} else if (activityType == u"Int"_s) {\n'
@@ -632,7 +642,43 @@ def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]
     if 'id' in definition:
         definition = defs[definition['id']] | definition
 
-    code.write((
+    code.write(
+        'template <>\n'
+        'void FormParser<"{}">::parseFlags(DataItem* root, [[maybe_unused]] int fileIndex, \n'
+        '    [[maybe_unused]] std::uint32_t flags) const\n'
+        '{{\n'
+        '[[maybe_unused]] DataItem* item = root->getOrInsertChild(0, u"Record Flags"_s);\n'
+        '\n'.format(signature))
+
+    if 'flags' in definition:
+        flags: dict[str, Any] = definition['flags']
+
+        flagsDict: dict[str, str] = {}
+        flagsType: str = flags['type']
+        if flagsType == 'flags':
+            flagsDict = flags['flags']
+        elif flagsType == 'formatUnion':
+            formats: list[Any] = flags['formats']
+
+            format: dict[str, Any]
+            for format in formats:
+                flagsDict |= format['flags']
+            i: int
+            bit: str
+            name: str
+        else:
+            code.write('#pragma message(warning: unknown flags type {}'.format(flagsType))
+
+        for i, (bit, name) in enumerate(flagsDict.items()):
+            code.write('item = item->getOrInsertChild({}, u"{}"_s);\n'.format(i, name))
+            code.write('if (flags & (1U << {})) {{\n'.format(bit))
+            code.write('item->setData(fileIndex, u"{}"_s);\n'.format(name))
+            code.write('}\n')
+            code.write('item = item->parent();\n')
+
+    code.write('}\n\n')
+
+    code.write(
         'template <>\n'
         'ParseTask FormParser<"{}">::parseForm('
         '    DataItem* root, int fileIndex, [[maybe_unused]] bool localized,\n'
@@ -642,9 +688,11 @@ def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]
         '{{\n'
         'using ConflictType = DataItem::ConflictType;'
         'DataItem* item = root;\n'
-        'std::vector<int> indexStack{{0}};\n'
-        '\n').format(signature))
+        'std::vector<int> indexStack{{1}};\n'
+        '\n'.format(signature))
+
     members: list[Any] = definition['members']
+
     member: dict[str, Any]
     for member in members:
         if 'id' in member:
