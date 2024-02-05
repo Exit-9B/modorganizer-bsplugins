@@ -1,5 +1,8 @@
 #include "DataItem.h"
 
+#include <algorithm>
+#include <iterator>
+
 using namespace Qt::Literals::StringLiterals;
 
 namespace TESData
@@ -47,7 +50,8 @@ bool DataItem::isLosingConflict(int fileIndex, int fileCount) const
   if (!m_Data.isEmpty()) {
     if (fileIndex >= m_Data.length()) {
       return false;
-    } else if (fileCount > m_Data.length()) {
+    } else if (fileCount > m_Data.length() &&
+               m_ConflictType != ConflictType::NormalIgnoreEmpty) {
       return true;
     }
 
@@ -74,11 +78,12 @@ bool DataItem::isOverriding(int fileIndex) const
   }
 
   if (!m_Data.isEmpty()) {
-    if (fileIndex >= m_Data.length()) {
+    if (fileIndex >= m_Data.length() &&
+        m_ConflictType != ConflictType::NormalIgnoreEmpty) {
       return true;
     }
 
-    for (int i = 0; i < fileIndex; ++i) {
+    for (int i = 0; i < std::min(fileIndex, static_cast<int>(m_Data.length())); ++i) {
       if (m_Data[i] != m_Data[fileIndex]) {
         return true;
       }
@@ -101,7 +106,8 @@ bool DataItem::isConflicted(int fileCount) const
   }
 
   if (!m_Data.isEmpty()) {
-    if (fileCount > m_Data.length()) {
+    if (fileCount > m_Data.length() &&
+        m_ConflictType != ConflictType::NormalIgnoreEmpty) {
       return true;
     }
 

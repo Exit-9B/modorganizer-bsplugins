@@ -59,23 +59,11 @@ class FormatValue:
             code.write('}\n')
             code.write('item = item->parent();\n')
 
-    def AtxtPositionFormat(code: TextIO, format: dict[str, Any]) -> None:
+    def ScriptObjectAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
         pass
 
-    def ClmtMoonsPhaseLengthFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def ClmtTimeFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def CloudSpeedFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def ConditionAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+    def CtdaTypeFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
         pass
 
@@ -87,31 +75,7 @@ class FormatValue:
         # TODO
         pass
 
-    def CTDAParam2QuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def CTDAParam2StringFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def CtdaTypeFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def Edge0Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def Edge1Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def Edge2Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def EPFDActorValueFormat(code: TextIO, format: dict[str, Any]) -> None:
+    def ConditionAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
         pass
 
@@ -119,53 +83,101 @@ class FormatValue:
         # TODO
         pass
 
-    def HideFFFF_Format(code: TextIO, format: dict[str, Any]) -> None:
+    def CTDAParam2StringFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
         pass
 
+    def CTDAParam2QuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO
+        pass
+
+    # TES4
     def NextObjectIDFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO
         pass
 
-    def PackageLocationAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
+    # CLMT
+    def ClmtMoonsPhaseLengthFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('const bool masser = (val.toUInt() & 0x40);\n')
+        code.write('const bool secunda = (val.toUInt() & 0x80);\n')
+        code.write('const QString moon = '
+                   'masser && secunda ? u"Masser, Secunda"_s '
+                   ': masser ? u"Masser"_s '
+                   ': secunda ? u"Secunda"_s '
+                   ': u"No Moon"_s;\n')
+        code.write('const int phaseLength = (val.toUInt() & 0x3F);\n')
+        code.write('item->setDisplayData(fileIndex, u"%1 / %2"_s'
+                   '.arg(moon).arg(phaseLength));\n')
+
+    # CLMT
+    def ClmtTimeFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('const int hours = val.toUInt() / 6;\n')
+        code.write('const int minutes = (val.toUInt() % 6) * 10;\n')
+        code.write('item->setDisplayData(fileIndex, u"%1:%2"_s'
+                   '.arg(hours, 2, 10, QChar(u\'0\'))'
+                   '.arg(minutes, 2, 10, QChar(u\'0\')));\n')
+
+    # LAND
+    def AtxtPositionFormat(code: TextIO, format: dict[str, Any]) -> None:
         pass
 
-    def PerkDATAQuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def QuestAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def QuestExternalAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def REFRNavmeshTriangleFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def ScriptObjectAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
-    def TintLayerFormat(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
-        pass
-
+    # NAVM
     def Vertex0Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
         pass
 
     def Vertex1Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
         pass
 
     def Vertex2Format(code: TextIO, format: dict[str, Any]) -> None:
-        # TODO
         pass
+
+    def Edge0Format(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    def Edge1Format(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    def Edge2Format(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # NPC_
+    def TintLayerFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # PACK / PLDT / PLVD
+    def PackageLocationAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # PERK
+    def PerkDATAQuestStageFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # PERK
+    def EPFDActorValueFormat(code: TextIO, format: dict[str, Any]) -> None:
+        # TODO: lookup actor value
+        pass
+
+    # QUST
+    def QuestAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # QUST
+    def QuestExternalAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # REFR
+    def REFRNavmeshTriangleFormat(code: TextIO, format: dict[str, Any]) -> None:
+        pass
+
+    # REGN
+    def HideFFFF_Format(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('if (val.toUInt() == 0xFFFF) {\n'
+                   'item->setDisplayData(fileIndex, u""_s);\n'
+                   '}\n')
+
+    # WTHR
+    def CloudSpeedFormat(code: TextIO, format: dict[str, Any]) -> None:
+        code.write('item->setDisplayData(fileIndex, (val.toInt() - 127) / 1270.0f);\n')
 
 def format_val(code: TextIO, format: dict[str, Any], defs: dict[str, Any]) -> None:
     if 'id' in format:
@@ -585,7 +597,7 @@ class DefineMember:
                 structName: str = ''
                 if 'name' in structMember:
                     structName: str = structMember['name']
-                push(code, structName, signature=structSig)
+                push(code, structName, signature=structSig, conflictType=conflictType)
                 code.write('if (signature == "{}"_ts) {{\n'.format(structSig))
                 define_type(code, structMember, defs)
                 code.write('co_await std::suspend_always();\n}\n')
@@ -596,7 +608,7 @@ class DefineMember:
         name: str = member.get('name', 'Unknown')
         conflictType: str = member.get('conflictType', 'Override')
 
-        push(code, name)
+        push(code, name, conflictType=conflictType)
         members: list[Any] = member['members']
 
         unionMember: dict[str, Any]
@@ -627,7 +639,7 @@ class DefineMember:
         signature: str = member['signature'].encode('unicode_escape').decode()
         if signature == 'VMAD':
             code.write('int ObjectFormat;\n')
-        push(code, name, signature=signature)
+        push(code, name, signature=signature, conflictType=conflictType)
         code.write('if (signature == "{}"_ts) {{\n'.format(signature))
         define_type(code, member, defs)
         code.write('co_await std::suspend_always();\n}\n')
@@ -663,12 +675,12 @@ def define_record(code: TextIO, definition: dict[str, Any], defs: dict[str, Any]
             format: dict[str, Any]
             for format in formats:
                 flagsDict |= format['flags']
-            i: int
-            bit: str
-            name: str
         else:
             code.write('#pragma message(warning: unknown flags type {}'.format(flagsType))
 
+        i: int
+        bit: str
+        name: str
         for i, (bit, name) in enumerate(flagsDict.items()):
             code.write('item = item->getOrInsertChild({}, u"{}"_s);\n'.format(i, name))
             code.write('if (flags & (1U << {})) {{\n'.format(bit))
@@ -716,6 +728,7 @@ if __name__ == '__main__':
         data: dict[str, Any] = json.load(dataFile)
         defs: dict[str, Any] = data['defs']
 
+        outFile: TextIO
         with open(outPath, 'w') as outFile:
             outFile.write('namespace TESData\n{\n\n')
 
