@@ -43,7 +43,8 @@ enum class GroupType : std::int32_t
   TopicChildren,
   CellPersistentChildren,
   CellTemporaryChildren,
-  CellVisibleDistantChildren,
+  QuestChildren,
+  CellVisibleDistantChildren = 10,
 };
 
 struct RecordFlags
@@ -150,21 +151,15 @@ public:
            groupType_ == GroupType::TopicChildren ||
            groupType_ == GroupType::CellPersistentChildren ||
            groupType_ == GroupType::CellTemporaryChildren ||
-           groupType_ == GroupType::CellVisibleDistantChildren;
+           groupType_ == GroupType::QuestChildren;
   }
 
   [[nodiscard]] constexpr bool hasDirectParent() const
   {
     return groupType_ == GroupType::WorldChildren ||
            groupType_ == GroupType::CellChildren ||
-           groupType_ == GroupType::TopicChildren;
-  }
-
-  [[nodiscard]] constexpr bool hasIndirectParent() const
-  {
-    return groupType_ == GroupType::CellPersistentChildren ||
-           groupType_ == GroupType::CellTemporaryChildren ||
-           groupType_ == GroupType::CellVisibleDistantChildren;
+           groupType_ == GroupType::TopicChildren ||
+           groupType_ == GroupType::QuestChildren;
   }
 
   [[nodiscard]] constexpr bool hasBlock() const

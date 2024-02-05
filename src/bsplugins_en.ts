@@ -40,11 +40,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Editor ID</source>
+        <source>Origin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Origin</source>
+        <source>Editor ID</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

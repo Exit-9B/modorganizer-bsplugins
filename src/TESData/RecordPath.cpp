@@ -13,25 +13,32 @@ std::string RecordPath::string() const
   std::ostringstream ss;
   ss << ":/";
 
-  for (const TESFile::GroupData group : m_Groups) {
+  for (int i = 0; i < m_Groups.size(); ++i) {
+    const TESFile::GroupData group = m_Groups[i];
+
     if (group.hasFormType()) {
       ss << group.formType().view() << "/";
     } else if (group.hasParent()) {
-      switch (group.type()) {
-      case TESFile::GroupType::CellPersistentChildren:
-        ss << "Persistent/";
-      case TESFile::GroupType::CellTemporaryChildren:
-        ss << "Temporary/";
-      case TESFile::GroupType::CellVisibleDistantChildren:
-        ss << "Visible Distant/";
-      default: {
+      if (i == 0 || !m_Groups[i - 1].hasParent() ||
+          m_Groups[i - 1].parent() != group.parent()) {
         const auto parentId           = group.parent();
         const std::uint8_t localIndex = parentId >> 24U;
         const std::string& owner      = m_Files.at(localIndex);
         ss << owner << "|";
         ss << std::hex << std::setfill('0') << std::setw(6) << (parentId & 0xFFFFFF);
         ss << "/";
-      }
+      } else {
+        switch (group.type()) {
+        case TESFile::GroupType::CellPersistentChildren:
+          ss << "Persistent/";
+          break;
+        case TESFile::GroupType::CellTemporaryChildren:
+          ss << "Temporary/";
+          break;
+        case TESFile::GroupType::CellVisibleDistantChildren:
+          ss << "Visible Distant/";
+          break;
+        }
       }
     } else if (group.hasBlock()) {
       ss << group.block() << "/";

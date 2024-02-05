@@ -281,9 +281,9 @@ QString PluginRecordModel::makeGroupName(TESFile::GroupData group)
     return tr("Temporary");
   case GroupType::CellVisibleDistantChildren:
     return tr("Visible Distant");
+  default:
+    return tr("Children");
   }
-
-  return tr("Children");
 }
 
 QVariant PluginRecordModel::headerData(int section, Qt::Orientation orientation,

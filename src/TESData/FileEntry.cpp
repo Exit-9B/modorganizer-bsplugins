@@ -104,7 +104,8 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path)
       group.setLocalIndex(newIndex);
     }
 
-    if (group.hasDirectParent()) {
+    if (group.hasDirectParent() &&
+        (!item->record || item->record->formId() != group.parent())) {
       if (const auto it = item->children.find(group.parent());
           it != item->children.end()) {
         item = it->second;
@@ -161,7 +162,8 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
       group.setLocalIndex(newIndex);
     }
 
-    if (group.hasDirectParent()) {
+    if (group.hasDirectParent() &&
+        (!item->record || item->record->formId() != group.parent())) {
       auto& nextItem = item->children[group.parent()];
       if (!nextItem) {
         nextItem         = std::make_shared<TreeItem>();
