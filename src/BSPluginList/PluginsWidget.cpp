@@ -1,5 +1,6 @@
 #include "PluginsWidget.h"
 
+#include "BSPluginInfo/PluginInfoDialog.h"
 #include "GUI/MessageDialog.h"
 #include "GUI/SelectionDialog.h"
 #include "MOPlugin/Settings.h"
@@ -290,6 +291,17 @@ static QString queryRestore(const QString& filePath, QWidget* parent = nullptr)
   }
 }
 
+void PluginsWidget::displayPluginInformation(const QModelIndex& index)
+{
+  const int id        = index.data(PluginListModel::IndexRole).toInt();
+  const auto fileName = m_PluginList->getPlugin(id)->name();
+  const auto parent   = topLevelWidget();
+  BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName, parent};
+  dialog.exec();
+
+  ui->pluginList->updateOverwriteMarkers();
+}
+
 void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 {
   PluginListContextMenu menu{ui->pluginList->indexAt(pos), m_PluginListModel,
@@ -297,9 +309,13 @@ void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 
   connect(&menu, &PluginListContextMenu::openModInformation,
           [this](const QModelIndex& index) {
-            const auto fileName = index.data(Qt::DisplayRole).toString();
+            const int id        = index.data(PluginListModel::IndexRole).toInt();
+            const auto fileName = m_PluginList->getPlugin(id)->name();
             m_PanelInterface->displayOriginInformation(fileName);
           });
+
+  connect(&menu, &PluginListContextMenu::openPluginInformation, this,
+          &PluginsWidget::displayPluginInformation);
 
   const QPoint p = ui->pluginList->viewport()->mapToGlobal(pos);
   menu.exec(p);
@@ -323,9 +339,7 @@ void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
 
     MOBase::shell::Explore(modInfo->absolutePath());
   } else {
-    const int id        = index.data(PluginListModel::IndexRole).toInt();
-    const auto fileName = m_PluginList->getPlugin(id)->name();
-    m_PanelInterface->displayOriginInformation(fileName);
+    displayPluginInformation(index);
   }
 }
 
@@ -576,7 +590,7 @@ void PluginsWidget::onFinishedRun(const QString& binary,
   m_Organizer->onNextRefresh([=, this]() {
     m_PluginList->refresh();
     checkLoadOrderChanged(binaryName);
-    m_IsRunningApp = false;
+    m_IsRunningApp          = false;
     m_ExternalStatesChanged = false;
   });
 }
@@ -621,7 +635,8 @@ void PluginsWidget::checkLoadOrderChanged(const QString& binaryName)
     return;
 
   // we just refreshed and rewrote loadorder.txt if plugins.txt changed
-  if (m_ExternalStatesChanged || hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
+  if (m_ExternalStatesChanged ||
+      hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
 
     if (binaryName.compare("Loot.exe", Qt::CaseInsensitive) == 0) {
       importLootGroups();

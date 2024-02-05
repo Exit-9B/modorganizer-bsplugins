@@ -1,74 +1,215 @@
 #include "FileEntry.h"
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 namespace TESData
 {
 
 FileEntry::FileEntry(TESFileHandle handle, const std::string& name)
-    : m_Handle{handle}, m_Name{name}
+    : m_Handle{handle}, m_Name{name}, m_Root{std::make_shared<TreeItem>()}
 {}
 
-TESFileHandle FileEntry::handle() const
+void FileEntry::forEachRecord(
+    std::function<void(const std::shared_ptr<const Record>&)> func) const
 {
-  return m_Handle;
+  std::vector<std::shared_ptr<TreeItem>> stack;
+  stack.push_back(m_Root);
+  while (!stack.empty()) {
+    const auto item = std::move(stack.back());
+    stack.pop_back();
+
+    if (item->record) {
+      func(item->record);
+    }
+
+    for (const auto& [identifier, child] : item->children) {
+      stack.push_back(child);
+    }
+  }
 }
 
-const std::string& FileEntry::name() const
+std::shared_ptr<Record> FileEntry::createRecord(const RecordPath& path,
+                                                const std::string& name,
+                                                TESFile::Type formType)
 {
-  return m_Name;
+  const auto item = createHierarchy(path);
+
+  if (!item->record) {
+    item->record = std::make_shared<Record>();
+    item->record->setIdentifier(path.identifier(), path.files());
+    item->record->addAlternative(m_Handle);
+    item->name     = name;
+    item->formType = formType;
+  }
+
+  return item->record;
 }
 
-std::vector<std::shared_ptr<Record>> FileEntry::records() const
+void FileEntry::addRecord(const RecordPath& path, const std::string& name,
+                          TESFile::Type formType, std::shared_ptr<Record> record)
 {
-  std::vector<std::shared_ptr<Record>> result;
+  record->addAlternative(m_Handle);
+  const auto item = createHierarchy(path);
+  item->record    = record;
+  item->name      = name;
+  item->formType  = formType;
+}
 
-  for (const auto& [master, forms] : m_Forms) {
-    for (const auto& [formId, record] : forms) {
-      result.push_back(record);
+void FileEntry::addChildGroup(const RecordPath& path)
+{
+  const auto item = findItem(path);
+  if (!item || !item->record) {
+    // no record to add children to
+    return;
+  }
+
+  TESFile::GroupData group = path.groups().back();
+  if (group.hasParent()) {
+    const auto& file            = path.files()[group.parent() >> 24];
+    const std::uint8_t newIndex = static_cast<std::uint8_t>(
+        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+
+    if (newIndex == m_Files.size()) {
+      m_Files.push_back(file);
+    }
+
+    group.setLocalIndex(newIndex);
+  }
+
+  item->group = group;
+}
+
+std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
+{
+  const auto item = findItem(path);
+  return item ? item->record : nullptr;
+}
+
+std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path) const
+{
+  const auto groups = path.groups();
+  auto item         = m_Root;
+  for (TESFile::GroupData group : groups) {
+    if (group.hasParent()) {
+      const auto& file            = path.files()[group.parent() >> 24];
+      const std::uint8_t newIndex = static_cast<std::uint8_t>(
+          std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+
+      if (newIndex == m_Files.size()) {
+        return nullptr;
+      }
+
+      group.setLocalIndex(newIndex);
+    }
+
+    if (group.hasDirectParent() &&
+        (!item->record || item->record->formId() != group.parent())) {
+      if (const auto it = item->children.find(group.parent());
+          it != item->children.end()) {
+        item = it->second;
+      } else {
+        return nullptr;
+      }
+    } else {
+      if (const auto it = item->children.find(group); it != item->children.end()) {
+        item = it->second;
+      } else {
+        return nullptr;
+      }
     }
   }
 
-  for (const auto& [setting, record] : m_Settings) {
-    result.push_back(record);
+  TreeItem::Key key;
+  if (path.hasFormId()) {
+    const auto& file            = path.files()[path.formId() >> 24];
+    const std::uint8_t newIndex = static_cast<std::uint8_t>(
+        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+
+    if (newIndex == m_Files.size()) {
+      return nullptr;
+    }
+
+    const std::uint32_t formId = (path.formId() & 0xFFFFFFU) | (newIndex << 24U);
+    key                        = formId;
+  } else if (path.hasEditorId()) {
+    key = path.editorId();
+  } else if (path.hasTypeId()) {
+    key = path.typeId();
+  } else {
+    return item;
   }
 
-  for (const auto& [type, record] : m_DefaultObjects) {
-    result.push_back(record);
+  const auto it = item->children.find(key);
+  return it != item->children.end() ? it->second : nullptr;
+}
+
+std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath& path)
+{
+  const auto groups = path.groups();
+  auto item         = m_Root;
+  for (TESFile::GroupData group : groups) {
+    if (group.hasParent()) {
+      const auto& file            = path.files()[group.parent() >> 24];
+      const std::uint8_t newIndex = static_cast<std::uint8_t>(
+          std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+
+      if (newIndex == m_Files.size()) {
+        m_Files.push_back(file);
+      }
+
+      group.setLocalIndex(newIndex);
+    }
+
+    if (group.hasDirectParent() &&
+        (!item->record || item->record->formId() != group.parent())) {
+      auto& nextItem = item->children[group.parent()];
+      if (!nextItem) {
+        nextItem         = std::make_shared<TreeItem>();
+        nextItem->parent = item.get();
+      }
+      nextItem->group = group;
+
+      item = nextItem;
+    } else {
+      auto& nextItem = item->children[group];
+      if (!nextItem) {
+        nextItem         = std::make_shared<TreeItem>();
+        nextItem->parent = item.get();
+        nextItem->group  = group;
+      }
+      item = nextItem;
+    }
   }
 
-  return result;
-}
+  TreeItem::Key key;
+  if (path.hasFormId()) {
+    const auto& file            = path.files()[path.formId() >> 24];
+    const std::uint8_t newIndex = static_cast<std::uint8_t>(
+        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
 
-std::shared_ptr<Record> FileEntry::createForm(std::uint32_t formId)
-{
-  auto& forms   = m_Forms[m_Name];
-  const auto it = forms.find(formId);
-  if (it != forms.end()) {
-    return it->second;
+    if (newIndex == m_Files.size()) {
+      m_Files.push_back(file);
+    }
+
+    const std::uint32_t formId = (path.formId() & 0xFFFFFFU) | (newIndex << 24U);
+    key                        = formId;
+  } else if (path.hasEditorId()) {
+    key = path.editorId();
+  } else if (path.hasTypeId()) {
+    key = path.typeId();
+  } else {
+    return item;
   }
 
-  const auto record = std::make_shared<Record>();
-  forms[formId]     = record;
-  record->addAlternative(m_Handle);
-  return record;
-}
+  auto& recordItem = item->children[key];
+  if (!recordItem) {
+    recordItem         = std::make_shared<TreeItem>();
+    recordItem->parent = item.get();
+  }
 
-void FileEntry::addForm(const std::string& master, std::uint32_t formId,
-                        std::shared_ptr<Record> record)
-{
-  m_Forms[master][formId] = record;
-  record->addAlternative(m_Handle);
-}
-
-void FileEntry::addSetting(const std::string& setting, std::shared_ptr<Record> record)
-{
-  m_Settings[setting] = record;
-  record->addAlternative(m_Handle);
-}
-
-void FileEntry::addDefaultObject(TESFile::Type type, std::shared_ptr<Record> record)
-{
-  m_DefaultObjects[type] = record;
-  record->addAlternative(m_Handle);
+  return recordItem;
 }
 
 }  // namespace TESData

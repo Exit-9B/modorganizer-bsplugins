@@ -11,16 +11,24 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(ryml)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/ParseTES.cmake)
+
 add_library(bsplugins SHARED)
 
 set_property(TARGET bsplugins PROPERTY CXX_STANDARD 20)
-target_include_directories(bsplugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_sources(bsplugins PRIVATE ${TES_INCLUDE_FILES})
+target_include_directories(
+	bsplugins
+	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+	PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/include
+)
 target_link_libraries(bsplugins PRIVATE ryml)
 
 if(MSVC)
 	target_compile_options(
 		bsplugins
 		PRIVATE
+			/bigobj # increase number of sections in .obj file
 			/W4     # level 4 warnings
 			/WX     # treat all compiler warnings as errors
 			/wd4201 # nonstandard extension used: nameless struct/union

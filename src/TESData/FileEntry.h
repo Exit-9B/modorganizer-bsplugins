@@ -2,13 +2,20 @@
 #define TESDATA_FILEENTRY_H
 
 #include "Record.h"
+#include "RecordPath.h"
 #include "TESFile/Type.h"
 
+#include <boost/container/flat_map.hpp>
+
 #include <cstdint>
-#include <map>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
+#include <variant>
 #include <vector>
+
+namespace cont = boost::container;
 
 namespace TESData
 {
@@ -18,25 +25,45 @@ using TESFileHandle = int;
 class FileEntry final
 {
 public:
+  struct TreeItem
+  {
+    using Key =
+        std::variant<TESFile::GroupData, std::uint32_t, std::string, TESFile::Type>;
+
+    const TreeItem* parent;
+    std::string name;
+    TESFile::Type formType;
+    std::optional<TESFile::GroupData> group;
+    std::shared_ptr<Record> record;
+    cont::flat_map<Key, std::shared_ptr<TreeItem>> children;
+  };
+
   FileEntry(TESFileHandle handle, const std::string& name);
 
-  [[nodiscard]] TESFileHandle handle() const;
-  [[nodiscard]] const std::string& name() const;
-  [[nodiscard]] std::vector<std::shared_ptr<Record>> records() const;
+  [[nodiscard]] TESFileHandle handle() const { return m_Handle; }
+  [[nodiscard]] const std::string& name() const { return m_Name; }
+  [[nodiscard]] TreeItem* dataRoot() const { return m_Root.get(); }
+  [[nodiscard]] const std::vector<std::string>& files() const { return m_Files; }
 
-  std::shared_ptr<Record> createForm(std::uint32_t formId);
+  void
+  forEachRecord(std::function<void(const std::shared_ptr<const Record>&)> func) const;
 
-  void addForm(const std::string& master, std::uint32_t formId,
-               std::shared_ptr<Record> record);
-  void addSetting(const std::string& setting, std::shared_ptr<Record> record);
-  void addDefaultObject(TESFile::Type type, std::shared_ptr<Record> record);
+  std::shared_ptr<Record> createRecord(const RecordPath& path, const std::string& name,
+                                       TESFile::Type formType);
+  void addRecord(const RecordPath& path, const std::string& name,
+                 TESFile::Type formType, std::shared_ptr<Record> record);
+  void addChildGroup(const RecordPath&);
+
+  [[nodiscard]] std::shared_ptr<Record> findRecord(const RecordPath& path) const;
+  [[nodiscard]] std::shared_ptr<TreeItem> findItem(const RecordPath& path) const;
 
 private:
+  std::shared_ptr<TreeItem> createHierarchy(const RecordPath& path);
+
   TESFileHandle m_Handle;
   std::string m_Name;
-  std::map<std::string, std::map<std::uint32_t, std::shared_ptr<Record>>> m_Forms;
-  std::map<std::string, std::shared_ptr<Record>> m_Settings;
-  std::map<TESFile::Type, std::shared_ptr<Record>> m_DefaultObjects;
+  std::shared_ptr<TreeItem> m_Root;
+  std::vector<std::string> m_Files;
 };
 
 }  // namespace TESData

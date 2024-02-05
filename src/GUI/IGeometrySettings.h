@@ -15,7 +15,7 @@ public:
 };
 
 template <class W>
-class GeometrySaver final
+class [[nodiscard]] GeometrySaver final
 {
 public:
   GeometrySaver(IGeometrySettings<W>& s, W* w) : m_Settings{s}, m_Widget{w}

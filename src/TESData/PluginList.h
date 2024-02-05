@@ -57,14 +57,13 @@ public:
   [[nodiscard]] int getIndexAtPriority(int priority) const;
   [[nodiscard]] QString getOriginName(int index) const;
 
-  [[nodiscard]] FileEntry* findEntryByName(const std::string& pluginName);
-  [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle);
+  [[nodiscard]] FileEntry* findEntryByName(const std::string& pluginName) const;
+  [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle) const;
 
   FileEntry* createEntry(const std::string& name);
-  void addSetting(const std::string& pluginName, const std::string& setting);
-  void addForm(const std::string& pluginName, TESFile::Type type,
-               const std::string& master, std::uint32_t formId);
-  void addDefaultObject(const std::string& pluginName, TESFile::Type type);
+  void addRecordConflict(const std::string& pluginName, const RecordPath& path,
+                         TESFile::Type type, const std::string& name);
+  void addGroupPlaceholder(const std::string& pluginName, const RecordPath& path);
 
   void refresh(bool invalidate = false);
 

@@ -12,6 +12,7 @@
 #include <QDialog>
 #include <QHeaderView>
 #include <QSettings>
+#include <QSplitter>
 
 class Settings final : public GUI::IGeometrySettings<QDialog>
 {
@@ -51,6 +52,9 @@ public:
 
   void saveState(const QHeaderView* header);
   void restoreState(QHeaderView* header) const;
+
+  void saveState(const QSplitter* splitter);
+  void restoreState(QSplitter* splitter) const;
 
   // IGeometrySettings<QDialog>
 

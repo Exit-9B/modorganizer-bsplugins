@@ -141,6 +141,10 @@ inline std::uint32_t Reader<Handler>::handleForm(std::istream& stream,
 
       dataSize -= fieldSize;
     }
+
+    if constexpr (requires { handler.EndForm(); }) {
+      handler.EndForm();
+    }
   } else {
     stream.seekg(dataSize, std::istream::cur);
     if (stream.fail()) {
@@ -169,6 +173,10 @@ inline std::uint32_t Reader<Handler>::handleGroup(std::istream& stream,
       }
 
       dataSize -= recordSize;
+    }
+
+    if constexpr (requires { handler.EndGroup(); }) {
+      handler.EndGroup();
     }
   } else {
     stream.seekg(dataSize, std::istream::cur);
@@ -210,7 +218,7 @@ inline std::uint32_t Reader<Handler>::parseChunk(std::istream& stream, Handler& 
       throw std::runtime_error("chunk data incomplete");
     }
     std::istringstream data(std::move(field));
-    handler.ChunkData(header.type, data);
+    handler.Data(data);
   } else {
     stream.seekg(dataSize, std::istream::cur);
     if (stream.fail()) {

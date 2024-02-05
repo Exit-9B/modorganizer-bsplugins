@@ -130,6 +130,26 @@ void Settings::restoreState(QHeaderView* header) const
   }
 }
 
+static QString stateSettingName(const QSplitter* splitter)
+{
+  return splitter->parentWidget()->objectName() + "_splitter";
+}
+
+void Settings::saveState(const QSplitter* splitter)
+{
+  Organizer->setPersistent(BSPlugins::NAME, stateSettingName(splitter),
+                           splitter->saveState());
+}
+
+void Settings::restoreState(QSplitter* splitter) const
+{
+  const auto state =
+      Organizer->persistent(BSPlugins::NAME, stateSettingName(splitter)).toByteArray();
+  if (!state.isEmpty()) {
+    splitter->restoreState(state);
+  }
+}
+
 static QString geometrySettingName(const QDialog* dialog)
 {
   return dialog->objectName() + "_geometry";

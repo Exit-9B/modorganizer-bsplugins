@@ -1,5 +1,5 @@
 #include "PluginList.h"
-#include "FileReaderHandler.h"
+#include "FileConflictParser.h"
 #include "TESFile/Reader.h"
 
 #include <gameplugins.h>
@@ -124,13 +124,13 @@ const FileInfo* PluginList::findPlugin(const QString& name) const
 #pragma endregion Plugin Access
 #pragma region Record Access
 
-FileEntry* PluginList::findEntryByName(const std::string& pluginName)
+FileEntry* PluginList::findEntryByName(const std::string& pluginName) const
 {
   const auto it = m_EntriesByName.find(pluginName);
   return it != m_EntriesByName.end() ? it->second.get() : nullptr;
 }
 
-FileEntry* PluginList::findEntryByHandle(TESFileHandle handle)
+FileEntry* PluginList::findEntryByHandle(TESFileHandle handle) const
 {
   const auto it = m_EntriesByHandle.find(handle);
   return it != m_EntriesByHandle.end() ? it->second.get() : nullptr;
@@ -149,44 +149,32 @@ FileEntry* PluginList::createEntry(const std::string& name)
   return entry.get();
 }
 
-void PluginList::addSetting(const std::string& pluginName, const std::string& setting)
+void PluginList::addRecordConflict(const std::string& pluginName,
+                                   const RecordPath& path, TESFile::Type type,
+                                   const std::string& name)
 {
-  std::shared_ptr<Record> record;
-  const auto it = m_Settings.find(setting);
-  if (it != m_Settings.end()) {
-    record = it->second;
-  } else {
-    record              = std::make_shared<Record>();
-    m_Settings[setting] = record;
-  }
-  const auto entry = createEntry(pluginName);
-  entry->addSetting(setting, record);
-}
-
-void PluginList::addForm(const std::string& pluginName,
-                         [[maybe_unused]] TESFile::Type type, const std::string& master,
-                         std::uint32_t formId)
-{
-  const auto masterEntry = createEntry(master);
-  const auto record      = masterEntry->createForm(formId & 0xFFFFFF);
+  const auto& master = path.hasFormId() ? path.files()[path.formId() >> 24] : "";
+  const auto owner   = createEntry(master);
+  const auto record  = owner->createRecord(path, name, type);
   if (pluginName != master) {
     const auto entry = createEntry(pluginName);
-    entry->addForm(master, formId & 0xFFFFFF, record);
+    entry->addRecord(path, name, type, record);
   }
 }
 
-void PluginList::addDefaultObject(const std::string& pluginName, TESFile::Type type)
+void PluginList::addGroupPlaceholder(const std::string& pluginName,
+                                     const RecordPath& path)
 {
-  std::shared_ptr<Record> record;
-  const auto it = m_DefaultObjects.find(type);
-  if (it != m_DefaultObjects.end()) {
-    record = it->second;
-  } else {
-    record                 = std::make_shared<Record>();
-    m_DefaultObjects[type] = record;
+  const auto group   = path.groups().back();
+  const auto& master = group.hasParent() ? path.files()[group.parent() >> 24] : "";
+  if (const auto owner = findEntryByName(master)) {
+    owner->addChildGroup(path);
   }
-  const auto entry = createEntry(pluginName);
-  entry->addDefaultObject(type, record);
+  if (pluginName != master) {
+    if (const auto entry = findEntryByName(pluginName)) {
+      entry->addChildGroup(path);
+    }
+  }
 }
 
 #pragma endregion Record Access
@@ -845,6 +833,10 @@ void PluginList::scanDataFiles(bool invalidate)
     m_Plugins.clear();
     m_PluginsByName.clear();
     m_PluginsByPriority.clear();
+
+    m_EntriesByName.clear();
+    m_EntriesByHandle.clear();
+    m_NextHandle = 0;
   }
 
   const auto managedGame = m_Organizer->managedGame();
@@ -900,9 +892,9 @@ void PluginList::scanDataFiles(bool invalidate)
     checkIni(*info, tree);
 
     try {
-      FileReaderHandler handler{this, info.get(), lightPluginsAreSupported,
-                                overridePluginsAreSupported};
-      TESFile::Reader<FileReaderHandler> reader{};
+      FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
+                                 overridePluginsAreSupported};
+      TESFile::Reader<FileConflictParser> reader{};
       reader.parse(std::filesystem::path(fullPath.toStdWString()), handler);
     } catch (std::exception& e) {
       MOBase::log::error("Error parsing \"{}\": {}", fullPath, e.what());
