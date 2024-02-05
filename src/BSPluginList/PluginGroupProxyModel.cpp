@@ -233,6 +233,9 @@ int PluginGroupProxyModel::mapLowerBoundToSourceRow(std::size_t id) const
     const auto& childItem = m_ProxyItems.at(child);
     return childItem.sourceRow;
   } else {
+    if (item.row + 1 == m_TopLevel.size()) {
+      return -1;
+    }
     const auto next = m_TopLevel.at(item.row + 1);
     return mapLowerBoundToSourceRow(next);
   }
@@ -508,7 +511,8 @@ void PluginGroupProxyModel::buildGroups()
       m_SourceMap.push_back(id);
     }
 
-    if (sorted && (i == primaryDivider || i == masterDivider)) {
+    if (sorted && (i == primaryDivider || i == masterDivider) &&
+        (i != 0 && i != count - 1)) {
       lastGroup = QString();
       groupId   = NO_ID;
 
