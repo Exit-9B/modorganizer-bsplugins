@@ -1,7 +1,10 @@
 #include "PluginInfoDialog.h"
+#include "GUI/IGeometrySettings.h"
+#include "MOPlugin/Settings.h"
 #include "PluginRecordView.h"
 #include "ui_plugininfodialog.h"
 
+#include <QTreeView>
 #include <QVBoxLayout>
 
 namespace BSPluginInfo
@@ -18,9 +21,23 @@ PluginInfoDialog::PluginInfoDialog(MOBase::IOrganizer* organizer,
   setWindowTitle(pluginName);
 }
 
-PluginInfoDialog::~PluginInfoDialog()
+PluginInfoDialog::~PluginInfoDialog() noexcept
 {
   delete ui;
+}
+
+int PluginInfoDialog::exec()
+{
+  const auto settings = Settings::instance();
+  GUI::GeometrySaver gs{*settings, this};
+  settings->restoreState(ui->pluginRecordView->splitter());
+  settings->restoreState(ui->pluginRecordView->pickRecordView()->header());
+
+  const int r = QDialog::exec();
+  settings->saveState(ui->pluginRecordView->splitter());
+  settings->saveState(ui->pluginRecordView->pickRecordView()->header());
+
+  return r;
 }
 
 void PluginInfoDialog::on_close_clicked()

@@ -163,7 +163,7 @@ void LootDialog::openReport()
 
 int LootDialog::exec()
 {
-  GUI::GeometrySaver{m_GeomSettings, this};
+  GUI::GeometrySaver gs{m_GeomSettings, this};
 
   const auto r = QDialog::exec();
 

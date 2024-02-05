@@ -31,6 +31,21 @@ void PluginRecordView::setup(MOBase::IOrganizer* organizer,
           &PluginRecordView::onFileHeaderMoved);
 }
 
+QSplitter* PluginRecordView::splitter() const
+{
+  return ui->splitter;
+}
+
+QTreeView* PluginRecordView::pickRecordView() const
+{
+  return ui->pickRecordView;
+}
+
+QTreeView* PluginRecordView::recordStructureView() const
+{
+  return ui->recordStructureView;
+}
+
 void PluginRecordView::setFile(const QString& pluginName)
 {
   const auto recordModel    = m_RecordModel;

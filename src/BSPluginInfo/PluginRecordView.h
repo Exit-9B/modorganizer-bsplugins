@@ -7,6 +7,8 @@
 
 #include <QWidget>
 
+class QSplitter;
+class QTreeView;
 namespace Ui
 {
 class PluginRecordView;
@@ -39,6 +41,10 @@ public:
 
   void setup(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
              const QString& pluginName);
+
+  [[nodiscard]] QSplitter* splitter() const;
+  [[nodiscard]] QTreeView* pickRecordView() const;
+  [[nodiscard]] QTreeView* recordStructureView() const;
 
   void setFile(const QString& pluginName);
 

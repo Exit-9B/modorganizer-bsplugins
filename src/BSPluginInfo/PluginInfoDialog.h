@@ -32,6 +32,8 @@ public:
   PluginInfoDialog& operator=(const PluginInfoDialog&) = delete;
   PluginInfoDialog& operator=(PluginInfoDialog&&) = delete;
 
+  int exec() override;
+
 private slots:
   void on_close_clicked();
   void on_nextFile_clicked();
