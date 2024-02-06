@@ -107,9 +107,11 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
   } else if (overriding) {
     return Settings::instance()->overwritingLooseFilesColor();
   } else if (overwrittenAux) {
-    return Settings::instance()->overwrittenArchiveFilesColor();
-  } else if (overwritingAux) {
+    // these are backwards in the mod list, so we're copying that for consistency
     return Settings::instance()->overwritingArchiveFilesColor();
+  } else if (overwritingAux) {
+    // "
+    return Settings::instance()->overwrittenArchiveFilesColor();
   }
 
   return QColor();

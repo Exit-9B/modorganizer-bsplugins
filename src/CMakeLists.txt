@@ -40,7 +40,7 @@ mo2_configure_plugin(
 	bsplugins
 	WARNINGS OFF
 	PRIVATE_DEPENDS
-		lootcli uibase
+		bsatk lootcli uibase
 		boost fmt zlib
 		Qt::WebEngineWidgets
 )

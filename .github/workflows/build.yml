@@ -23,8 +23,8 @@ jobs:
       - name: Build
         uses: ModOrganizer2/build-with-mob-action@master
         with:
-          mo2-third-parties: boost fmt libloot python zlib
-          mo2-dependencies: cmake_common lootcli uibase
+          mo2-third-parties: boost fmt libloot lz4 python zlib
+          mo2-dependencies: cmake_common uibase bsatk lootcli
           qt-modules: qtpositioning qtwebchannel qtwebengine
 
       - name: Install

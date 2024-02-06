@@ -33,8 +33,6 @@ public:
   struct FileSystemData
   {
     QString name;
-    QString fullPath;
-    QDateTime time;
 
     bool hasMasterExtension;
     bool hasLightExtension;
@@ -82,8 +80,7 @@ public:
   };
 
   FileInfo(PluginList* pluginList, const QString& name, bool forceLoaded,
-           bool forceEnabled, bool forceDisabled, const QString& fullPath,
-           bool lightSupported);
+           bool forceEnabled, bool forceDisabled, bool lightSupported);
 
   [[nodiscard]] const QString& name() const { return m_FileSystemData.name; }
 

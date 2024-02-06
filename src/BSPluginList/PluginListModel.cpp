@@ -51,6 +51,24 @@ Qt::ItemFlags PluginListModel::flags(const QModelIndex& index) const
   return result;
 }
 
+static QVariantList
+conflictListData(const TESData::PluginList* pluginList, const TESData::FileInfo* plugin,
+                 const QSet<int>& (TESData::FileInfo::*getConflicts)() const)
+{
+  if (!plugin || !plugin->enabled()) {
+    return QVariantList();
+  }
+
+  QVariantList list;
+  for (const int otherId : (plugin->*getConflicts)()) {
+    const auto other = pluginList->getPlugin(otherId);
+    if (other && other->enabled()) {
+      list.append(otherId);
+    }
+  }
+  return list;
+}
+
 QVariant PluginListModel::data(const QModelIndex& index, int role) const
 {
   switch (role) {
@@ -95,34 +113,24 @@ QVariant PluginListModel::data(const QModelIndex& index, int role) const
   case OverridingRole: {
     const int id      = index.row();
     const auto plugin = m_Plugins->getPlugin(id);
-    if (!plugin || !plugin->enabled()) {
-      return QVariantList();
-    }
-
-    QVariantList list;
-    for (const int otherId : plugin->getPluginOverriding()) {
-      const auto other = m_Plugins->getPlugin(otherId);
-      if (other && other->enabled()) {
-        list.append(otherId);
-      }
-    }
-    return list;
+    return conflictListData(m_Plugins, plugin, &TESData::FileInfo::getPluginOverriding);
   }
   case OverriddenRole: {
     const int id      = index.row();
     const auto plugin = m_Plugins->getPlugin(id);
-    if (!plugin || !plugin->enabled()) {
-      return QVariantList();
-    }
-
-    QVariantList list;
-    for (const int otherId : plugin->getPluginOverridden()) {
-      const auto other = m_Plugins->getPlugin(otherId);
-      if (other && other->enabled()) {
-        list.append(otherId);
-      }
-    }
-    return list;
+    return conflictListData(m_Plugins, plugin, &TESData::FileInfo::getPluginOverridden);
+  }
+  case OverwritingAuxRole: {
+    const int id      = index.row();
+    const auto plugin = m_Plugins->getPlugin(id);
+    return conflictListData(m_Plugins, plugin,
+                            &TESData::FileInfo::getPluginOverwritingArchive);
+  }
+  case OverwrittenAuxRole: {
+    const int id      = index.row();
+    const auto plugin = m_Plugins->getPlugin(id);
+    return conflictListData(m_Plugins, plugin,
+                            &TESData::FileInfo::getPluginOverwrittenArchive);
   }
   }
   return QVariant();
@@ -447,8 +455,10 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
 
 QVariant PluginListModel::conflictData(const QModelIndex& index) const
 {
-  const bool overriding = !data(index, OverridingRole).toList().empty();
-  const bool overridden = !data(index, OverriddenRole).toList().empty();
+  const bool overriding     = !data(index, OverridingRole).toList().empty();
+  const bool overridden     = !data(index, OverriddenRole).toList().empty();
+  const bool overwritingAux = !data(index, OverwritingAuxRole).toList().empty();
+  const bool overwrittenAux = !data(index, OverwrittenAuxRole).toList().empty();
 
   QVariantList result;
 
@@ -458,6 +468,14 @@ QVariant PluginListModel::conflictData(const QModelIndex& index) const
     result.append(":/MO/gui/emblem_conflict_overwrite");
   } else if (overridden) {
     result.append(":/MO/gui/emblem_conflict_overwritten");
+  }
+
+  if (overwritingAux && overwrittenAux) {
+    result.append(":/MO/gui/archive_conflict_mixed");
+  } else if (overwritingAux) {
+    result.append(":/MO/gui/archive_conflict_winner");
+  } else if (overwrittenAux) {
+    result.append(":/MO/gui/archive_conflict_loser");
   }
 
   return result;
