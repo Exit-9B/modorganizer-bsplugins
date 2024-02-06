@@ -70,9 +70,9 @@ bool PluginSortFilterProxyModel::dropMimeData(const QMimeData* data,
 }
 
 bool PluginSortFilterProxyModel::filterAcceptsRow(
-    int source_row, [[maybe_unused]] const QModelIndex& source_parent) const
+    int source_row, const QModelIndex& source_parent) const
 {
-  const auto source_index = sourceModel()->index(source_row, 0);
+  const auto source_index = sourceModel()->index(source_row, 0, source_parent);
   const auto plugin =
       source_index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
   if (m_HideForceEnabledFiles && plugin &&
