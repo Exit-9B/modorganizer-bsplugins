@@ -69,12 +69,6 @@ bool PluginSortFilterProxyModel::dropMimeData(const QMimeData* data,
                                      sourceIndex.column(), sourceIndex.parent());
 }
 
-void PluginSortFilterProxyModel::updateFilter(const QString& filter)
-{
-  m_CurrentFilter = filter;
-  invalidateRowsFilter();
-}
-
 bool PluginSortFilterProxyModel::filterAcceptsRow(
     int source_row, [[maybe_unused]] const QModelIndex& source_parent) const
 {
@@ -87,6 +81,45 @@ bool PluginSortFilterProxyModel::filterAcceptsRow(
   }
 
   return filterMatchesPlugin(sourceModel()->data(source_index).toString());
+}
+
+bool PluginSortFilterProxyModel::lessThan(const QModelIndex& source_left,
+                                          const QModelIndex& source_right) const
+{
+  switch (source_left.column()) {
+  case PluginListModel::COL_CONFLICTS: {
+    const auto left =
+        source_left.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+    const auto right =
+        source_right.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+
+    const auto leftState  = left ? left->conflictState() : 0;
+    const auto rightState = right ? right->conflictState() : 0;
+    return leftState < rightState;
+  }
+  case PluginListModel::COL_FLAGS: {
+    QVariantList lhsList = source_left.data(PluginListModel::FlagsIconRole).toList();
+    QVariantList rhsList = source_right.data(PluginListModel::FlagsIconRole).toList();
+    if (lhsList.length() != rhsList.length()) {
+      return lhsList.length() < rhsList.length();
+    } else {
+      for (int i = 0; i < lhsList.length(); ++i) {
+        if (lhsList.at(i) != rhsList.at(i)) {
+          return lhsList.at(i).toString() < rhsList.at(i).toString();
+        }
+      }
+      return false;
+    }
+  }
+  }
+
+  return QSortFilterProxyModel::lessThan(source_left, source_right);
+}
+
+void PluginSortFilterProxyModel::updateFilter(const QString& filter)
+{
+  m_CurrentFilter = filter;
+  invalidateRowsFilter();
 }
 
 }  // namespace BSPluginList

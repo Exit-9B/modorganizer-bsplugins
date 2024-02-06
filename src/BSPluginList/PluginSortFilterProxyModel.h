@@ -23,6 +23,10 @@ public:
   bool filterAcceptsRow(int source_row,
                         const QModelIndex& source_parent) const override;
 
+protected:
+  bool lessThan(const QModelIndex& source_left,
+                const QModelIndex& source_right) const override;
+
 public slots:
   void updateFilter(const QString& filter);
 
