@@ -561,13 +561,16 @@ static bool containsPlugin(const MOBase::IModInterface* mod)
 void PluginsWidget::onModStateChanged(
     const std::map<QString, MOBase::IModList::ModStates>& mods)
 {
-  // HACK: the virtual file tree won't update unless we tell it to refresh
-  if (std::ranges::any_of(mods, &containsPlugin,
-                          [modList = m_Organizer->modList()](auto&& modState) {
-                            return modList->getMod(modState.first);
-                          })) {
-    m_Organizer->refresh();
+  // HACK: the virtual file tree won't update until the next refresh, so keep track of
+  // any mods that might be newly activated
+  const auto modList = m_Organizer->modList();
+  for (const auto& [modName, modState] : mods) {
+    const auto mod = modList->getMod(modName);
+    if (containsPlugin(mod)) {
+      m_PluginList->notifyPendingState(modName, modState);
+    }
   }
+  m_PluginListModel->refresh();
 }
 
 bool PluginsWidget::onAboutToRun([[maybe_unused]] const QString& binary)
@@ -714,6 +717,7 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
 
   std::function<void()> startRefresh = [this] {
     m_OrganizerRefreshing = true;
+    m_PluginList->flushPendingStates();
     // if we just finished running an application, we want the vanilla plugin list to
     // finish reading and rewriting the load order files so that we don't end up
     // ignoring the change

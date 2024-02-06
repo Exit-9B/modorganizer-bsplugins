@@ -82,6 +82,9 @@ public:
 
   [[nodiscard]] bool isRefreshing() const { return m_Refreshing; }
 
+  void notifyPendingState(const QString& mod, MOBase::IModList::ModStates state);
+  void flushPendingStates();
+
   // IPluginList
 
   [[nodiscard]] QStringList pluginNames() const override;
@@ -162,6 +165,7 @@ private:
 
   bool m_Refreshing = true;
   std::map<QString, PluginStates> m_QueuedStateChanges;
+  std::set<QString> m_PendingActive;
 
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;

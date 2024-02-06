@@ -528,6 +528,21 @@ QStringList PluginList::loadOrder() const
   return result;
 }
 
+void PluginList::notifyPendingState(const QString& mod,
+                                    MOBase::IModList::ModStates state)
+{
+  if (state & MOBase::IModList::STATE_ACTIVE) {
+    m_PendingActive.insert(mod);
+  } else {
+    m_PendingActive.erase(mod);
+  }
+}
+
+void PluginList::flushPendingStates()
+{
+  m_PendingActive.clear();
+}
+
 #pragma endregion List Management
 #pragma region IPluginList
 
@@ -870,8 +885,29 @@ void PluginList::scanDataFiles(bool invalidate)
       continue;
     }
 
-    availablePlugins.append(filename);
+    if (m_Organizer->resolvePath(filename).isEmpty()) {
+      continue;
+    }
 
+    availablePlugins.append(filename);
+  }
+
+  for (const auto& modName : m_PendingActive) {
+    const auto modInterface = m_Organizer->modList()->getMod(modName);
+    const auto fileTree     = modInterface ? modInterface->fileTree() : nullptr;
+
+    if (!fileTree)
+      continue;
+
+    for (auto&& entry : *fileTree) {
+      if (entry && isPluginFile(entry->name()) &&
+          !availablePlugins.contains(entry->name(), Qt::CaseInsensitive)) {
+        availablePlugins.append(entry->name());
+      }
+    }
+  }
+
+  for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
       continue;
     }
