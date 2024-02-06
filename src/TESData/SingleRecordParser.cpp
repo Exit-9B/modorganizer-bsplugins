@@ -130,7 +130,7 @@ void SingleRecordParser::Data(std::istream& stream)
       return;
     }
 
-    m_RecordFound = true;
+    m_RecordFound   = true;
     const auto game = gameIdentifier(m_GameName);
     FormParserManager::getParser(game, m_CurrentType)
         ->parseFlags(m_DataRoot, m_FileIndex, m_CurrentFlags);
@@ -170,7 +170,9 @@ void SingleRecordParser::Data(std::istream& stream)
                                   m_File, m_CurrentChunk, m_ChunkStream);
   }
 
-  m_ParseTask.resume();
+  if (!m_ParseTask.done()) {
+    m_ParseTask.resume();
+  }
 }
 
 }  // namespace TESData

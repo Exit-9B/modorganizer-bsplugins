@@ -218,6 +218,7 @@ inline std::uint32_t Reader<Handler>::parseChunk(std::istream& stream, Handler& 
       throw std::runtime_error("chunk data incomplete");
     }
     std::istringstream data(std::move(field));
+    data.exceptions(std::ios_base::failbit);
     handler.Data(data);
   } else {
     stream.seekg(dataSize, std::istream::cur);
