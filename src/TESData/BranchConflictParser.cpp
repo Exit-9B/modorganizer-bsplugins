@@ -91,17 +91,15 @@ void BranchConflictParser::Data(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "MAST"_ts: {
-    std::string master;
-    std::getline(stream, master, '\0');
+    const std::string master = TESFile::readZstring(stream);
     if (!master.empty()) {
       m_Masters.push_back(master);
     }
   } break;
 
   case "EDID"_ts: {
-    std::string editorId;
-    std::getline(stream, editorId, '\0');
-    m_CurrentName = std::move(editorId);
+    const std::string editorId = TESFile::readZstring(stream);
+    m_CurrentName              = std::move(editorId);
   } break;
   }
 }

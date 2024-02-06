@@ -116,8 +116,7 @@ void SingleRecordParser::Data(std::istream& stream)
 
   if (m_Depth == 0) {
     if (m_CurrentChunk == "MAST"_ts) {
-      std::string master;
-      std::getline(stream, master, '\0');
+      const std::string master = TESFile::readZstring(stream);
       if (!master.empty()) {
         m_Masters.push_back(master);
       }
@@ -126,8 +125,7 @@ void SingleRecordParser::Data(std::istream& stream)
   }
 
   if (m_Path.hasEditorId() && m_CurrentChunk == "EDID"_ts) {
-    std::string editorId;
-    std::getline(stream, editorId, '\0');
+    const std::string editorId = TESFile::readZstring(stream);
     if (editorId != m_Path.editorId()) {
       return;
     }

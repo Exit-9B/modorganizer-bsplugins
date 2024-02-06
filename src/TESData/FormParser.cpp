@@ -87,6 +87,54 @@ static void parseUnknown(DataItem* parent, int& index, int fileIndex,
   item->setData(fileIndex, readBytes(stream, 256));
 }
 
+static void
+pushItem(DataItem*& item, std::vector<int>& indexStack, const QString& name,
+         DataItem::ConflictType conflictType = DataItem::ConflictType::Override,
+         bool alignable                      = true)
+{
+  if (alignable) {
+    item = item->getOrInsertChild(indexStack.back()++, name, conflictType);
+  } else {
+    item = item->insertChild(indexStack.back()++, name, conflictType);
+  }
+  indexStack.push_back(0);
+}
+
+static void
+pushItem(DataItem*& item, std::vector<int>& indexStack, TESFile::Type signature,
+         const QString& name,
+         DataItem::ConflictType conflictType = DataItem::ConflictType::Override,
+         bool alignable                      = true)
+{
+  if (alignable) {
+    item = item->getOrInsertChild(indexStack.back()++, signature, name, conflictType);
+  } else {
+    item = item->insertChild(indexStack.back()++, signature, name, conflictType);
+  }
+  indexStack.push_back(0);
+}
+
+static void popItem(DataItem*& item, std::vector<int>& indexStack)
+{
+  item = item->parent();
+  indexStack.pop_back();
+}
+
+[[nodiscard]] static QString readZstring(std::istream& stream)
+{
+  return QString::fromStdString(TESFile::readZstring(stream));
+}
+
+template <std::integral T>
+[[nodiscard]] static QString readWstring(std::istream& stream)
+{
+  const T length = TESFile::readType<T>(stream);
+  std::string str;
+  str.resize(length);
+  stream.read(str.data(), length);
+  return QString::fromStdString(str);
+}
+
 template <>
 void FormParser<>::parseFlags(DataItem* root, int fileIndex, std::uint32_t flags) const
 {

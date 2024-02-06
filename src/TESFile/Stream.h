@@ -24,6 +24,13 @@ inline T readType(std::istream& stream)
   return value;
 }
 
+inline std::string readZstring(std::istream& stream)
+{
+  std::string value;
+  std::getline(stream, value, '\0');
+  return value;
+}
+
 enum class TESFormat
 {
   Standard,

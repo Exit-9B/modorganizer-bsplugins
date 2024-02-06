@@ -155,8 +155,7 @@ void FileConflictParser::MainRecordData(std::istream& stream)
   } break;
 
   case "MAST"_ts: {
-    std::string master;
-    std::getline(stream, master, '\0');
+    const std::string master = TESFile::readZstring(stream);
     if (!master.empty()) {
       m_Plugin->addMaster(QString::fromStdString(master.c_str()));
       m_Masters.push_back(master);
@@ -164,16 +163,14 @@ void FileConflictParser::MainRecordData(std::istream& stream)
   } break;
 
   case "CNAM"_ts: {
-    std::string author;
-    std::getline(stream, author, '\0');
+    const std::string author = TESFile::readZstring(stream);
     if (!author.empty()) {
       m_Plugin->setAuthor(QString::fromLatin1(author.data()));
     }
   } break;
 
   case "SNAM"_ts: {
-    std::string desc;
-    std::getline(stream, desc, '\0');
+    const std::string desc = TESFile::readZstring(stream);
     if (!desc.empty()) {
       m_Plugin->setDescription(QString::fromLatin1(desc.data()));
     }
@@ -206,8 +203,7 @@ void FileConflictParser::GameSettingData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "EDID"_ts: {
-    std::string editorId;
-    std::getline(stream, editorId, '\0');
+    const std::string editorId = TESFile::readZstring(stream);
     m_CurrentPath.setEditorId(editorId);
     m_PluginList->addRecordConflict(m_PluginName, m_CurrentPath, "GMST"_ts, "");
   } break;
@@ -218,9 +214,8 @@ void FileConflictParser::StandardData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "EDID"_ts: {
-    std::string editorId;
-    std::getline(stream, editorId, '\0');
-    m_CurrentName = std::move(editorId);
+    const std::string editorId = TESFile::readZstring(stream);
+    m_CurrentName              = std::move(editorId);
   } break;
   }
 }

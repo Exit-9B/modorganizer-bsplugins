@@ -4,16 +4,14 @@ import sys
 
 def push(code: TextIO, name: str, signature: Optional[str] = None,
          conflictType: str = 'Override', alignable: bool = True) -> None:
-    func: str = 'getOrInsertChild' if alignable else 'insertChild'
     if signature:
-        code.write(('item = item->{}('
-                    'indexStack.back()++, "{}"_ts, u"{}"_s, ConflictType::{});\n'
-                    ).format(func, signature, name, conflictType))
+        code.write(
+            'pushItem(item, indexStack, "{}"_ts, u"{}"_s, ConflictType::{}, {});\n'
+            .format(signature, name, conflictType, 'true' if alignable else 'false'))
     else:
-        code.write(('item = item->{}('
-                    'indexStack.back()++, u"{}"_s, ConflictType::{});\n'
-                    ).format(func, name, conflictType))
-    code.write('indexStack.push_back(0);\n')
+        code.write(
+            'pushItem(item, indexStack, u"{}"_s, ConflictType::{}, {});\n'
+            .format(name, conflictType, 'true' if alignable else 'false'))
 
 def pop(code: TextIO, name: str, signature: Optional[str] = None) -> None:
     comment: str
@@ -21,8 +19,7 @@ def pop(code: TextIO, name: str, signature: Optional[str] = None) -> None:
         comment = signature + ' - ' + name
     else:
         comment = name
-    code.write('item = item->parent();\n')
-    code.write('indexStack.pop_back(); // {}\n\n'.format(comment))
+    code.write('popItem(item, indexStack); // {}\n\n'.format(comment))
 
 class FormatValue:
     def divide(code: TextIO, format: dict[str, Any]) -> None:
@@ -346,18 +343,12 @@ class DefineType:
                 lengthType = 'std::uint16_t'
             elif prefix == 4:
                 lengthType = 'std::uint32_t'
-            code.write((
-                'const auto length = TESFile::readType<{}>(*stream);\n'
-                'std::string str;\n'
-                'str.resize(length);\n'
-                'stream->read(str.data(), length);\n'
-                'item->setData(fileIndex, QString::fromStdString(str));\n'
-                ).format(lengthType))
+            code.write(
+                'item->setData(fileIndex, readWstring<{}>(*stream));\n'
+                .format(lengthType))
         else:
             code.write(
-                'std::string str;\n'
-                "std::getline(*stream, str, '\\0');\n"
-                'item->setData(fileIndex, QString::fromStdString(str));\n')
+                'item->setData(fileIndex, readZstring(*stream));\n')
 
     def formId(code: TextIO, element: dict[str, Any]) -> None:
         code.write('item->setData('
