@@ -182,7 +182,7 @@ void FileConflictParser::DefaultObjectData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "DNAM"_ts:
-    while (!stream.eof()) {
+    while (stream.peek() != std::char_traits<char>::eof()) {
       const TESFile::Type name = TESFile::readType<TESFile::Type>(stream);
       [[maybe_unused]] const std::uint32_t formId =
           TESFile::readType<std::uint32_t>(stream);

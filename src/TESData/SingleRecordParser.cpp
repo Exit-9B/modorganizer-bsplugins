@@ -138,7 +138,7 @@ void SingleRecordParser::Data(std::istream& stream)
   }
 
   if (m_Path.hasTypeId() && m_CurrentChunk == "DNAM"_ts) {
-    while (!stream.eof()) {
+    while (stream.peek() != std::char_traits<char>::eof()) {
       const TESFile::Type name      = TESFile::readType<TESFile::Type>(stream);
       const std::uint32_t formId    = TESFile::readType<std::uint32_t>(stream);
       const std::uint8_t localIndex = formId >> 24U;
