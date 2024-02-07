@@ -46,6 +46,226 @@
          <property name="currentIndex">
           <number>0</number>
          </property>
+         <widget class="QWidget" name="tabConflictsGeneral">
+          <attribute name="title">
+           <string>Conflicts</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,1,0,1,0,1">
+           <item>
+            <layout class="QVBoxLayout" name="winningRoot">
+             <item>
+              <layout class="QHBoxLayout" name="winningHeader" stretch="1,0,0">
+               <item>
+                <widget class="QToolButton" name="winningExpander">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Files that exist in other mods but are overwritten by this mod</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border: none;
+text-align: left;</string>
+                 </property>
+                 <property name="text">
+                  <string>Winning file conflicts:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="MOBase::LineEditClear" name="winningLineEdit">
+                 <property name="placeholderText">
+                  <string>Filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="winningCount">
+                 <property name="frameShadow">
+                  <enum>QFrame::Sunken</enum>
+                 </property>
+                 <property name="lineWidth">
+                  <number>1</number>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QTreeView" name="winningTree">
+             <property name="contextMenuPolicy">
+              <enum>Qt::CustomContextMenu</enum>
+             </property>
+             <property name="toolTip">
+              <string>Files that exist in other mods but are overwritten by this mod</string>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::ExtendedSelection</enum>
+             </property>
+             <property name="textElideMode">
+              <enum>Qt::ElideLeft</enum>
+             </property>
+             <property name="uniformRowHeights">
+              <bool>true</bool>
+             </property>
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="losingRoot">
+             <item>
+              <layout class="QHBoxLayout" name="losingHeader" stretch="1,0,0">
+               <item>
+                <widget class="QToolButton" name="losingExpander">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Files that are unused because they are overwritten by other mods</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border: none;
+text-align: left;</string>
+                 </property>
+                 <property name="text">
+                  <string>Losing file conflicts:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="MOBase::LineEditClear" name="losingLineEdit">
+                 <property name="placeholderText">
+                  <string>Filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="losingCount">
+                 <property name="frameShadow">
+                  <enum>QFrame::Sunken</enum>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QTreeView" name="losingTree">
+             <property name="contextMenuPolicy">
+              <enum>Qt::CustomContextMenu</enum>
+             </property>
+             <property name="toolTip">
+              <string>Files that are unused because they are overwritten by other mods</string>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::ExtendedSelection</enum>
+             </property>
+             <property name="textElideMode">
+              <enum>Qt::ElideLeft</enum>
+             </property>
+             <property name="uniformRowHeights">
+              <bool>true</bool>
+             </property>
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="noConflictRoot">
+             <item>
+              <layout class="QHBoxLayout" name="noConflictHeader" stretch="1,0,0">
+               <item>
+                <widget class="QToolButton" name="noConflictExpander">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Files that have no conflicts</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border: none;
+text-align: left;</string>
+                 </property>
+                 <property name="text">
+                  <string>The following files have no conflicts:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="MOBase::LineEditClear" name="noConflictLineEdit">
+                 <property name="placeholderText">
+                  <string>Filter</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLCDNumber" name="noConflictCount">
+                 <property name="frameShadow">
+                  <enum>QFrame::Sunken</enum>
+                 </property>
+                 <property name="segmentStyle">
+                  <enum>QLCDNumber::Flat</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QTreeView" name="noConflictTree">
+             <property name="contextMenuPolicy">
+              <enum>Qt::CustomContextMenu</enum>
+             </property>
+             <property name="toolTip">
+              <string>Files that have no conflicts</string>
+             </property>
+             <property name="alternatingRowColors">
+              <bool>true</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::ExtendedSelection</enum>
+             </property>
+             <property name="textElideMode">
+              <enum>Qt::ElideLeft</enum>
+             </property>
+             <property name="uniformRowHeights">
+              <bool>true</bool>
+             </property>
+             <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QWidget" name="tabArchivesTree">
           <attribute name="title">
            <string>Tree</string>

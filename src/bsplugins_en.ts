@@ -2,9 +2,38 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>BSPluginInfo::AuxLoserModel</name>
+    <message>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Providing Mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BSPluginInfo::AuxNonConflictModel</name>
+    <message>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BSPluginInfo::AuxTreeModel</name>
     <message>
         <source>File Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>BSPluginInfo::AuxWinnerModel</name>
+    <message>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overwritten Mods</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -499,6 +528,34 @@
     </message>
     <message>
         <source>Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that exist in other mods but are overwritten by this mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Winning file conflicts:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that are unused because they are overwritten by other mods</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Losing file conflicts:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that have no conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The following files have no conflicts:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

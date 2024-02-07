@@ -4,6 +4,8 @@
 #include "AuxTreeModel.h"
 #include "TESData/PluginList.h"
 
+#include <expanderwidget.h>
+#include <filterwidget.h>
 #include <imoinfo.h>
 
 #include <QDialog>
@@ -54,6 +56,12 @@ private:
   QString m_PluginName;
 
   QStringList m_Archives;
+  MOBase::ExpanderWidget m_WinningExpander;
+  MOBase::ExpanderWidget m_LosingExpander;
+  MOBase::ExpanderWidget m_NoConflictExpander;
+  MOBase::FilterWidget m_FilterWinning;
+  MOBase::FilterWidget m_FilterLosing;
+  MOBase::FilterWidget m_FilterNoConflicts;
 };
 
 }  // namespace BSPluginInfo

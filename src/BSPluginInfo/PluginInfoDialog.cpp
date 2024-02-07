@@ -1,4 +1,5 @@
 #include "PluginInfoDialog.h"
+#include "AuxConflictModel.h"
 #include "GUI/IGeometrySettings.h"
 #include "MOPlugin/Settings.h"
 #include "PluginRecordView.h"
@@ -21,11 +22,52 @@ PluginInfoDialog::PluginInfoDialog(MOBase::IOrganizer* organizer,
 
   ui->pluginRecordView->setup(organizer, pluginList, pluginName);
 
+  const auto winnerModel      = new AuxWinnerModel(pluginList, ui->winningTree);
+  const auto loserModel       = new AuxLoserModel(pluginList, ui->losingTree);
+  const auto nonConflictModel = new AuxNonConflictModel(pluginList, ui->noConflictTree);
+
+  const auto entry  = pluginList->findEntryByName(pluginName.toStdString());
+  const auto handle = entry ? entry->handle() : -1;
+
   if (const auto plugin = pluginList->getPluginByName(pluginName)) {
     for (const auto& archive : plugin->archives()) {
       const auto archiveEntry = m_PluginList->findArchive(archive);
       if (archiveEntry) {
         m_Archives.append(archive);
+
+        int winningCount = 0;
+        int losingCount = 0;
+        int noConflictCount = 0;
+
+        archiveEntry->forEachMember([&](auto&& member) {
+          QList<TESData::TESFileHandle> handles;
+          std::ranges::copy(member->alternatives, std::back_inserter(handles));
+          std::ranges::sort(handles, std::less<int>(), [&](auto altHandle) {
+            const auto altEntry = pluginList->findEntryByHandle(altHandle);
+            const auto info     = altEntry ? pluginList->getPluginByName(
+                                             QString::fromStdString(altEntry->name()))
+                                           : nullptr;
+            return info ? info->priority() : -1;
+          });
+
+          if (handles.length() <= 1) {
+            ++noConflictCount;
+            nonConflictModel->appendItem(QString::fromStdString(member->path),
+                                         std::move(handles));
+          } else if (handles.last() == handle) {
+            ++winningCount;
+            winnerModel->appendItem(QString::fromStdString(member->path),
+                                    std::move(handles));
+          } else {
+            ++losingCount;
+            loserModel->appendItem(QString::fromStdString(member->path),
+                                   std::move(handles));
+          }
+        });
+
+        ui->winningCount->display(winningCount);
+        ui->losingCount->display(losingCount);
+        ui->noConflictCount->display(noConflictCount);
 
         const auto dataTree = new QTreeView(ui->archivesTreeStack);
 
@@ -40,6 +82,26 @@ PluginInfoDialog::PluginInfoDialog(MOBase::IOrganizer* organizer,
       }
     }
   }
+
+  ui->winningTree->setModel(winnerModel);
+  ui->losingTree->setModel(loserModel);
+  ui->noConflictTree->setModel(nonConflictModel);
+
+  m_WinningExpander.set(ui->winningExpander, ui->winningTree, true);
+  m_LosingExpander.set(ui->losingExpander, ui->losingTree, true);
+  m_NoConflictExpander.set(ui->noConflictExpander, ui->noConflictTree, true);
+
+  m_FilterWinning.setEdit(ui->winningLineEdit);
+  m_FilterWinning.setList(ui->winningTree);
+  m_FilterWinning.setUseSourceSort(true);
+
+  m_FilterLosing.setEdit(ui->losingLineEdit);
+  m_FilterLosing.setList(ui->losingTree);
+  m_FilterLosing.setUseSourceSort(true);
+
+  m_FilterNoConflicts.setEdit(ui->noConflictLineEdit);
+  m_FilterNoConflicts.setList(ui->noConflictTree);
+  m_FilterNoConflicts.setUseSourceSort(true);
 }
 
 PluginInfoDialog::~PluginInfoDialog() noexcept
