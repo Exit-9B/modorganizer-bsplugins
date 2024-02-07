@@ -17,32 +17,32 @@ namespace TESData
 
 using TESFileHandle = int;
 
-struct AuxConflictItem
+struct AuxMember
 {
+  std::string path;
   std::set<TESFileHandle> alternatives;
 };
 
-class AuxGroupItem final
+class AuxItem final
 {
 public:
-  AuxGroupItem(const std::string& name, AuxGroupItem* parent = nullptr);
-
-  std::shared_ptr<AuxGroupItem> insert(const std::string& name);
-  std::shared_ptr<AuxConflictItem> createConflictItem(const std::string& name);
-  void addConflictItem(const std::string& name, std::shared_ptr<AuxConflictItem> item);
-
-  [[nodiscard]] int numChildren() const { return static_cast<int>(m_Children.size()); }
-  [[nodiscard]] std::shared_ptr<AuxGroupItem> getByIndex(int index) const;
-  [[nodiscard]] std::shared_ptr<AuxGroupItem> getByName(const std::string& name) const;
+  explicit AuxItem(const std::string& name, AuxItem* parent = nullptr);
 
   [[nodiscard]] const auto& children() const { return m_Children; }
-  [[nodiscard]] const auto& items() const { return m_Items; }
+  [[nodiscard]] int numChildren() const { return static_cast<int>(m_Children.size()); }
+  [[nodiscard]] std::shared_ptr<AuxItem> getByIndex(int index) const;
+  [[nodiscard]] std::shared_ptr<AuxItem> getByName(const std::string& name) const;
+  std::shared_ptr<AuxItem> insert(const std::string& name);
+
+  [[nodiscard]] const auto& member() const { return m_Member; }
+  std::shared_ptr<AuxMember> createMember(const std::string& path);
+  void setMember(std::shared_ptr<AuxMember> item);
 
 private:
   std::string m_Name;
-  AuxGroupItem* m_Parent;
-  cont::flat_map<std::string, std::shared_ptr<AuxGroupItem>> m_Children;
-  cont::flat_map<std::string, std::shared_ptr<AuxConflictItem>> m_Items;
+  AuxItem* m_Parent;
+  cont::flat_map<std::string, std::shared_ptr<AuxItem>> m_Children;
+  std::shared_ptr<AuxMember> m_Member;
 };
 
 class AssociatedEntry final
@@ -50,14 +50,14 @@ class AssociatedEntry final
 public:
   explicit AssociatedEntry(const std::string& rootName = {});
 
-  [[nodiscard]] std::shared_ptr<AuxGroupItem> root() { return m_Root; }
-  [[nodiscard]] std::shared_ptr<const AuxGroupItem> root() const { return m_Root; }
+  [[nodiscard]] std::shared_ptr<AuxItem> root() { return m_Root; }
+  [[nodiscard]] std::shared_ptr<const AuxItem> root() const { return m_Root; }
 
-  void forEachConflictItem(
-      std::function<void(const std::shared_ptr<const AuxConflictItem>&)> func) const;
+  void forEachMember(
+      std::function<void(const std::shared_ptr<const AuxMember>&)> func) const;
 
 private:
-  std::shared_ptr<AuxGroupItem> m_Root;
+  std::shared_ptr<AuxItem> m_Root;
 };
 
 }  // namespace TESData

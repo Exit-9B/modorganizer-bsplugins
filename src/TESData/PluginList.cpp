@@ -1006,17 +1006,18 @@ void PluginList::readPluginLists()
   enforcePluginRelationships();
 }
 
-static void populateArchiveFiles(const std::shared_ptr<AuxGroupItem>& master,
-                                 const std::shared_ptr<AuxGroupItem>& entry,
+static void populateArchiveFiles(const std::shared_ptr<AuxItem>& master,
+                                 const std::shared_ptr<AuxItem>& entry,
                                  const BSA::Folder::Ptr& archiveFolder,
                                  TESFileHandle handle)
 {
   for (unsigned int i = 0, num = archiveFolder->getNumFiles(); i < num; ++i) {
     const auto file = archiveFolder->getFile(i);
 
-    const auto conflictItem = master->createConflictItem(file->getName());
+    const auto conflictItem =
+        master->insert(file->getName())->createMember(file->getFilePath());
     conflictItem->alternatives.insert(handle);
-    entry->addConflictItem(file->getName(), conflictItem);
+    entry->insert(file->getName())->setMember(conflictItem);
   }
 
   for (unsigned int i = 0, num = archiveFolder->getNumSubFolders(); i < num; ++i) {

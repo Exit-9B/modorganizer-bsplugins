@@ -127,7 +127,7 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
       continue;
     }
 
-    archiveEntry->forEachConflictItem([&](auto&& item) {
+    archiveEntry->forEachMember([&](auto&& item) {
       for (const auto alternative : item->alternatives) {
         checkConflict(conflicts.m_OverwritingArchiveList,
                       conflicts.m_OverwrittenArchiveList, *this, m_PluginList,
