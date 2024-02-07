@@ -840,10 +840,10 @@ void PluginList::checkBsa(TESData::FileInfo& info,
 {
   const auto managedGame = m_Organizer->managedGame();
   const auto gameName    = managedGame ? managedGame->gameName() : QString();
-  const Game game        = gameName.startsWith(u"Skyrim"_s) ? Game::Skyrim
-                           : gameName == "Fallout 4"        ? Game::Fallout4
-                           : gameName == "Starfield"        ? Game::Starfield
-                                                            : Game::Other;
+  const Game game        = gameName.startsWith(u"Skyrim"_s)      ? Game::Skyrim
+                           : gameName.startsWith(u"Fallout 4"_s) ? Game::Fallout4
+                           : gameName == u"Starfield"_s          ? Game::Starfield
+                                                                 : Game::Other;
 
   const QString baseName = QFileInfo(info.name()).completeBaseName();
   for (const auto entry : *fileTree) {

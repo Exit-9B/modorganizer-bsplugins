@@ -2,6 +2,13 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>BSPluginInfo::AuxTreeModel</name>
+    <message>
+        <source>File Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>BSPluginInfo::PluginRecordModel</name>
     <message>
         <source>Children</source>
@@ -480,6 +487,18 @@
     </message>
     <message>
         <source>Records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archives</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

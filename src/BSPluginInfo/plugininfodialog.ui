@@ -15,22 +15,97 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Records</string>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="BSPluginInfo::PluginRecordView" name="pluginRecordView" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-     </layout>
+     <widget class="QWidget" name="tabRecords">
+      <attribute name="title">
+       <string>Records</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="BSPluginInfo::PluginRecordView" name="pluginRecordView" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabArchives">
+      <attribute name="title">
+       <string>Archives</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QTabWidget" name="tabArchivesTabs">
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="tabArchivesTree">
+          <attribute name="title">
+           <string>Tree</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,0,0">
+             <item>
+              <widget class="QLabel" name="currentArchiveLabel">
+               <property name="text">
+                <string notr="true"/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="previousArchiveButton">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../../modorganizer/src/resources.qrc">
+                 <normaloff>:/MO/gui/previous</normaloff>:/MO/gui/previous</iconset>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="nextArchiveButton">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../../modorganizer/src/resources.qrc">
+                 <normaloff>:/MO/gui/next</normaloff>:/MO/gui/next</iconset>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QStackedWidget" name="archivesTreeStack"/>
+           </item>
+           <item>
+            <widget class="MOBase::LineEditClear" name="archiveFilterEdit">
+             <property name="baseSize">
+              <size>
+               <width>220</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="placeholderText">
+              <string>Filter</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item>
@@ -83,6 +158,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>MOBase::LineEditClear</class>
+   <extends>QLineEdit</extends>
+   <header>lineeditclear.h</header>
+  </customwidget>
   <customwidget>
    <class>BSPluginInfo::PluginRecordView</class>
    <extends>QWidget</extends>

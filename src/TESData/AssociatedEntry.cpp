@@ -5,7 +5,7 @@
 namespace TESData
 {
 
-AuxItem::AuxItem(const std::string& name, AuxItem* parent)
+AuxItem::AuxItem(const std::string& name, const AuxItem* parent)
     : m_Name{name}, m_Parent{parent}
 {}
 

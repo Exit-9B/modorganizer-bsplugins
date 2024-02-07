@@ -44,13 +44,13 @@ MOBase::VersionInfo BSPlugins::version() const
 QList<MOBase::PluginSetting> BSPlugins::settings() const
 {
   return {
+      {u"enable_sort_button"_s, u"Enable the Sort button in the Plugins panel"_s, true},
       {u"loot_show_dirty"_s,
        u"LOOT: Show information about plugins that can be cleaned"_s, true},
       {u"loot_show_messages"_s,
        u"LOOT: Show general information and warning messages"_s, true},
       {u"loot_show_problems"_s,
        u"LOOT: Show information about incompatibilities and missing masters"_s, true},
-      {u"enable_sort_button"_s, u"Enable the Sort button in the Plugins panel"_s, true},
   };
 }
 

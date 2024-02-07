@@ -26,7 +26,10 @@ struct AuxMember
 class AuxItem final
 {
 public:
-  explicit AuxItem(const std::string& name, AuxItem* parent = nullptr);
+  explicit AuxItem(const std::string& name, const AuxItem* parent = nullptr);
+
+  [[nodiscard]] const std::string& name() const { return m_Name; }
+  [[nodiscard]] const AuxItem* parent() const { return m_Parent; }
 
   [[nodiscard]] const auto& children() const { return m_Children; }
   [[nodiscard]] int numChildren() const { return static_cast<int>(m_Children.size()); }
@@ -40,7 +43,7 @@ public:
 
 private:
   std::string m_Name;
-  AuxItem* m_Parent;
+  const AuxItem* m_Parent;
   cont::flat_map<std::string, std::shared_ptr<AuxItem>> m_Children;
   std::shared_ptr<AuxMember> m_Member;
 };
