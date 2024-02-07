@@ -100,17 +100,16 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
   const bool overwritingAux = m_Markers.overwritingAux.contains(pluginIndex);
   const bool overwrittenAux = m_Markers.overwrittenAux.contains(pluginIndex);
 
+  // the color logic looks backwards but this is what the mod list does
   if (highlight) {
     return Settings::instance()->containedColor();
   } else if (overridden) {
-    return Settings::instance()->overwrittenLooseFilesColor();
-  } else if (overriding) {
     return Settings::instance()->overwritingLooseFilesColor();
+  } else if (overriding) {
+    return Settings::instance()->overwrittenLooseFilesColor();
   } else if (overwrittenAux) {
-    // these are backwards in the mod list, so we're copying that for consistency
     return Settings::instance()->overwritingArchiveFilesColor();
   } else if (overwritingAux) {
-    // "
     return Settings::instance()->overwrittenArchiveFilesColor();
   }
 
