@@ -3,6 +3,8 @@
 #include "TESData/TypeStringNames.h"
 #include "TESFile/Reader.h"
 
+#include <algorithm>
+#include <iterator>
 #include <ranges>
 
 using namespace Qt::Literals::StringLiterals;
@@ -12,9 +14,9 @@ namespace BSPluginInfo
 
 PluginRecordModel::PluginRecordModel(MOBase::IOrganizer* organizer,
                                      TESData::PluginList* pluginList,
-                                     const std::string& pluginName)
+                                     const QString& pluginName)
     : m_PluginName{pluginName}, m_Organizer{organizer}, m_PluginList{pluginList},
-      m_FileEntry{pluginList->findEntryByName(pluginName)}
+      m_FileEntry{pluginList->findEntryByName(pluginName.toStdString())}
 {
   if (m_FileEntry) {
     m_DataRoot = m_FileEntry->dataRoot();
@@ -33,7 +35,7 @@ TESData::RecordPath PluginRecordModel::getPath(const QModelIndex& index) const
 
   for (const auto& item : std::ranges::reverse_view(parents)) {
     if (item->group.has_value()) {
-      path.push(item->group.value(), m_FileEntry->files(), m_PluginName);
+      path.push(item->group.value(), m_FileEntry->files(), m_PluginName.toStdString());
     }
   }
 
@@ -132,7 +134,7 @@ void PluginRecordModel::fetchMore(const QModelIndex& parent)
       names.append(QString::fromStdString(entry->name()));
     }
   } else {
-    names.append(QString::fromStdString(m_PluginName));
+    names.append(m_PluginName);
   }
 
   for (const auto& name : names) {
@@ -169,13 +171,40 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
     case COL_ID: {
       if (item->record) {
         if (item->record->hasFormId()) {
-          const auto formId = item->record->formId();
-          return u"%2:%1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
-              .toUpper()
-              .arg(
-                  QString::fromLocal8Bit(item->formType.data(), item->formType.size()));
+          std::uint32_t formId = item->record->formId() & 0xFFFFFFU;
+
+          const auto plugin =
+              m_PluginList ? m_PluginList->getPluginByName(m_PluginName) : nullptr;
+
+          if (plugin) {
+            const auto file = QString::fromStdString(item->record->file());
+            const auto localIndex =
+                std::distance(std::begin(plugin->masters()),
+                              std::ranges::find(plugin->masters(), file));
+            formId |= ((localIndex & 0xFF) << 24U);
+          }
+
+          QString str = u"%1"_s.arg(formId, 8, 16, QChar(u'0')).toUpper();
+
+          for (const Item* p = item->parent; p; p = p->parent) {
+            if (p->group && p->group->hasFormType()) {
+              if (item->formType != p->group->formType()) {
+                QString suffix = TESData::getFormName(item->formType).toString();
+                if (suffix.isEmpty()) {
+                  suffix = QString::fromLocal8Bit(item->formType.data(),
+                                                  item->formType.size());
+                }
+                str = u"%1 %2"_s.arg(str).arg(suffix);
+              }
+              break;
+            }
+          }
+
+          return str;
+
         } else if (item->record->hasEditorId()) {
           return QString::fromStdString(item->record->editorId());
+
         } else if (item->record->hasTypeId()) {
           const auto type    = item->record->typeId();
           const auto typestr = QString::fromLocal8Bit(type.data(), type.size());
@@ -219,8 +248,7 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
       return QVariant();
     }
 
-    const auto info =
-        m_PluginList->getPluginByName(QString::fromStdString(m_PluginName));
+    const auto info = m_PluginList->getPluginByName(m_PluginName);
     if (!info) {
       return QVariant();
     }

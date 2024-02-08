@@ -67,7 +67,7 @@ public:
     bool isOverlayFlagged;
     bool hasNoRecords;
 
-    boost::container::flat_set<QString, MOBase::FileNameComparator> masters;
+    std::vector<QString> masters;
     mutable boost::container::flat_set<QString, MOBase::FileNameComparator> masterUnset;
   };
 
@@ -129,7 +129,7 @@ public:
   void setHasNoRecords(bool value) { m_Metadata.hasNoRecords = value; }
 
   [[nodiscard]] const auto& masters() const { return m_Metadata.masters; }
-  void addMaster(const QString& master) { m_Metadata.masters.insert(master); }
+  void addMaster(const QString& master) { m_Metadata.masters.push_back(master); }
 
   [[nodiscard]] bool hasMissingMasters() const
   {
@@ -142,8 +142,7 @@ public:
   void setMissingMasters(R&& range) const
   {
     m_Metadata.masterUnset.clear();
-    m_Metadata.masterUnset.insert(boost::container::ordered_unique_range,
-                                  std::begin(range), std::end(range));
+    m_Metadata.masterUnset.insert(std::begin(range), std::end(range));
   }
 
   [[nodiscard]] bool enabled() const { return m_State.enabled; }

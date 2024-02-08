@@ -98,11 +98,13 @@ bool RecordFilterProxyModel::filterAcceptsRow(int source_row,
       continue;
 
     if (info->priority() > altInfo->priority()) {
-      if (!ignoreMasters || !info->masters().contains(altInfo->name())) {
+      if (!ignoreMasters || std::ranges::find(info->masters(), altInfo->name()) ==
+                                std::end(info->masters())) {
         isConflicted = true;
       }
     } else {
-      if (!ignoreMasters || !altInfo->masters().contains(info->name())) {
+      if (!ignoreMasters || std::ranges::find(altInfo->masters(), info->name()) ==
+                                std::end(altInfo->masters())) {
         isConflicted = true;
         isLosing     = true;
         break;

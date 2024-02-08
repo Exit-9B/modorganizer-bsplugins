@@ -1221,9 +1221,10 @@ void PluginList::testMasters()
 
   for (auto& plugin : m_Plugins) {
     std::vector<QString> missingMasters;
-    std::ranges::set_difference(plugin->masters(), enabledMasters,
-                                std::back_inserter(missingMasters),
-                                MOBase::FileNameComparator{});
+    std::ranges::remove_copy_if(plugin->masters(), std::back_inserter(missingMasters),
+                                [&](auto&& file) {
+                                  return enabledMasters.contains(file);
+                                });
     plugin->setMissingMasters(missingMasters);
   }
 }

@@ -3,6 +3,8 @@
 #include "MOPlugin/Settings.h"
 #include "PluginList.h"
 
+#include <algorithm>
+
 using namespace Qt::Literals::StringLiterals;
 
 namespace TESData
@@ -49,8 +51,10 @@ bool FileInfo::canBeToggled() const
 
 bool FileInfo::mustLoadAfter(const FileInfo& other) const
 {
-  const bool hasMaster = this->masters().contains(other.name());
-  const bool isMaster  = other.masters().contains(this->name());
+  const bool hasMaster =
+      std::ranges::find(this->masters(), other.name()) != std::end(this->masters());
+  const bool isMaster =
+      std::ranges::find(other.masters(), this->name()) != std::end(other.masters());
 
   if (hasMaster && !isMaster) {
     return true;
@@ -89,11 +93,13 @@ static void checkConflict(QSet<int>& winning, QSet<int>& losing, const FileInfo&
   const int otherIndex    = pluginList->getIndex(otherName);
 
   if (file.priority() > otherFile->priority()) {
-    if (!ignoreMasters || !file.masters().contains(otherFile->name())) {
+    if (!ignoreMasters || std::ranges::find(file.masters(), otherFile->name()) ==
+                              std::end(file.masters())) {
       winning.insert(otherIndex);
     }
   } else {
-    if (!ignoreMasters || !otherFile->masters().contains(file.name())) {
+    if (!ignoreMasters || std::ranges::find(otherFile->masters(), file.name()) ==
+                              std::end(otherFile->masters())) {
       losing.insert(otherIndex);
     }
   }

@@ -25,7 +25,7 @@ public:
   };
 
   PluginRecordModel(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
-                    const std::string& pluginName);
+                    const QString& pluginName);
 
   [[nodiscard]] TESData::RecordPath getPath(const QModelIndex& index) const;
 
@@ -48,7 +48,7 @@ private:
 
   static QString makeGroupName(TESFile::GroupData group);
 
-  std::string m_PluginName;
+  QString m_PluginName;
   MOBase::IOrganizer* m_Organizer   = nullptr;
   TESData::PluginList* m_PluginList = nullptr;
   TESData::FileEntry* m_FileEntry   = nullptr;
