@@ -45,6 +45,8 @@ QList<MOBase::PluginSetting> BSPlugins::settings() const
 {
   return {
       {u"enable_sort_button"_s, u"Enable the Sort button in the Plugins panel"_s, true},
+      {u"external_change_warning"_s,
+       u"Warn if load order changes while running an executable"_s, true},
       {u"loot_show_dirty"_s,
        u"LOOT: Show information about plugins that can be cleaned"_s, true},
       {u"loot_show_messages"_s,

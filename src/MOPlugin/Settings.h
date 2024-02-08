@@ -50,6 +50,7 @@ public:
   [[nodiscard]] bool offlineMode() const;
   [[nodiscard]] lootcli::LogLevels lootLogLevel() const;
 
+  [[nodiscard]] bool externalChangeWarning() const;
   [[nodiscard]] bool enableSortButton() const;
   [[nodiscard]] bool lootShowDirty() const;
   [[nodiscard]] bool lootShowMessages() const;

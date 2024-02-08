@@ -90,6 +90,12 @@ lootcli::LogLevels Settings::lootLogLevel() const
       .value<lootcli::LogLevels>();
 }
 
+bool Settings::externalChangeWarning() const
+{
+  return Organizer->pluginSetting(BSPlugins::NAME, "external_change_warning")
+      .value<bool>();
+}
+
 bool Settings::enableSortButton() const
 {
   return Organizer->pluginSetting(BSPlugins::NAME, "enable_sort_button").value<bool>();

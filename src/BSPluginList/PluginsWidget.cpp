@@ -657,9 +657,11 @@ void PluginsWidget::checkLoadOrderChanged(const QString& binaryName)
   if (!QFileInfo(loadOrderSnapshot).exists())
     return;
 
+  const bool enableWarning = Settings::instance()->externalChangeWarning();
+
   // we just refreshed and rewrote loadorder.txt if plugins.txt changed
-  if (m_ExternalStatesChanged ||
-      hashFile(loadOrderName) != hashFile(loadOrderSnapshot)) {
+  if (enableWarning && (m_ExternalStatesChanged ||
+                        hashFile(loadOrderName) != hashFile(loadOrderSnapshot))) {
 
     if (binaryName.compare("Loot.exe", Qt::CaseInsensitive) == 0) {
       importLootGroups();
