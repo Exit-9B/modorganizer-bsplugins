@@ -1,7 +1,8 @@
 #include "PluginListView.h"
 
+#include "ConflictIconDelegate.h"
+#include "FlagIconDelegate.h"
 #include "GUI/CopyEventFilter.h"
-#include "GUI/GenericIconDelegate.h"
 #include "MOPlugin/Settings.h"
 #include "PluginGroupProxyModel.h"
 #include "PluginListModel.h"
@@ -30,13 +31,9 @@ PluginListView::PluginListView(QWidget* parent) : QTreeView(parent)
 
 void PluginListView::setup()
 {
-  // sortByColumn(PluginListModel::COL_PRIORITY, Qt::AscendingOrder);
-  setItemDelegateForColumn(
-      PluginListModel::COL_CONFLICTS,
-      new GUI::GenericIconDelegate(this, PluginListModel::ConflictsIconRole));
-  setItemDelegateForColumn(
-      PluginListModel::COL_FLAGS,
-      new GUI::GenericIconDelegate(this, PluginListModel::FlagsIconRole));
+  setItemDelegateForColumn(PluginListModel::COL_CONFLICTS,
+                           new ConflictIconDelegate(this));
+  setItemDelegateForColumn(PluginListModel::COL_FLAGS, new FlagIconDelegate(this));
 
   header()->resizeSection(PluginListModel::COL_NAME, 332);
   header()->resizeSection(PluginListModel::COL_CONFLICTS, 71);
@@ -143,6 +140,34 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
   }
 
   return QColor();
+}
+
+uint PluginListView::fileFlags(const QModelIndex& index) const
+{
+  uint flags = index.data(PluginListModel::FlagsIconRole).toUInt();
+
+  if (model()->hasChildren(index) && !isExpanded(index.siblingAtColumn(0))) {
+    for (int i = 0, count = model()->rowCount(index); i < count; ++i) {
+      const auto child = model()->index(i, 0, index);
+      flags |= child.data(PluginListModel::FlagsIconRole).toUInt();
+    }
+  }
+
+  return flags;
+}
+
+uint PluginListView::conflictFlags(const QModelIndex& index) const
+{
+  uint flags = index.data(PluginListModel::ConflictsIconRole).toUInt();
+
+  if (model()->hasChildren(index) && !isExpanded(index.siblingAtColumn(0))) {
+    for (int i = 0, count = model()->rowCount(index); i < count; ++i) {
+      const auto child = model()->index(i, 0, index);
+      flags |= child.data(PluginListModel::ConflictsIconRole).toUInt();
+    }
+  }
+
+  return flags;
 }
 
 static void visitRows(const QAbstractItemModel* model,

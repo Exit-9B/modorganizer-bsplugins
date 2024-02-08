@@ -455,30 +455,9 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
 
 QVariant PluginListModel::conflictData(const QModelIndex& index) const
 {
-  const bool overriding     = !data(index, OverridingRole).toList().empty();
-  const bool overridden     = !data(index, OverriddenRole).toList().empty();
-  const bool overwritingAux = !data(index, OverwritingAuxRole).toList().empty();
-  const bool overwrittenAux = !data(index, OverwrittenAuxRole).toList().empty();
-
-  QVariantList result;
-
-  if (overriding && overridden) {
-    result.append(":/MO/gui/emblem_conflict_mixed");
-  } else if (overriding) {
-    result.append(":/MO/gui/emblem_conflict_overwrite");
-  } else if (overridden) {
-    result.append(":/MO/gui/emblem_conflict_overwritten");
-  }
-
-  if (overwritingAux && overwrittenAux) {
-    result.append(":/MO/gui/archive_conflict_mixed");
-  } else if (overwritingAux) {
-    result.append(":/MO/gui/archive_conflict_winner");
-  } else if (overwrittenAux) {
-    result.append(":/MO/gui/archive_conflict_loser");
-  }
-
-  return result;
+  const int id      = index.row();
+  const auto plugin = m_Plugins->getPlugin(id);
+  return plugin->conflictState();
 }
 
 static bool isProblematic(const TESData::FileInfo* plugin,
@@ -511,38 +490,39 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     return QVariant();
   }
 
-  QVariantList result;
+  using enum TESData::FileInfo::EFlag;
+  uint flag = 0;
 
   if (isProblematic(plugin, lootInfo)) {
-    result.append(":/MO/gui/warning");
+    flag |= FLAG_PROBLEMATIC;
   }
 
   if (lootInfo && !lootInfo->messages.empty() &&
       Settings::instance()->lootShowMessages()) {
-    result.append(":/MO/gui/information");
+    flag |= FLAG_INFORMATION;
   }
 
   if (plugin->hasIni()) {
-    result.append(":/MO/gui/attachment");
+    flag |= FLAG_INI;
   }
 
   if (!plugin->archives().empty()) {
-    result.append(":/MO/gui/archive_conflict_neutral");
+    flag |= FLAG_BSA;
   }
 
-  if (plugin->isLightFlagged() || plugin->hasLightExtension()) {
-    result.append(":/bsplugins/feather");
+  if (plugin->isSmallFile()) {
+    flag |= FLAG_LIGHT;
   }
 
   if (plugin->isOverlayFlagged()) {
-    result.append(":/MO/gui/instance_switch");
+    flag |= FLAG_OVERLAY;
   }
 
   if (lootInfo && !lootInfo->dirty.empty() && Settings::instance()->lootShowDirty()) {
-    result.append(":/MO/gui/edit_clear");
+    flag |= FLAG_CLEAN;
   }
 
-  return result;
+  return flag;
 }
 
 QVariant PluginListModel::headerData(int section, Qt::Orientation orientation,

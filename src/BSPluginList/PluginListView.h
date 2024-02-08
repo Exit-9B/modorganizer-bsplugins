@@ -32,6 +32,8 @@ public:
   QRect visualRect(const QModelIndex& index) const override;
 
   [[nodiscard]] QColor markerColor(const QModelIndex& index) const;
+  [[nodiscard]] uint fileFlags(const QModelIndex& index) const;
+  [[nodiscard]] uint conflictFlags(const QModelIndex& index) const;
 
 public slots:
   void setHighlightedOrigins(const QStringList& origins);

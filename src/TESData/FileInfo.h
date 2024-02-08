@@ -30,6 +30,18 @@ public:
     CONFLICT_ARCHIVE_MIXED = CONFLICT_ARCHIVE_OVERWRITE | CONFLICT_ARCHIVE_OVERWRITTEN,
   };
 
+  enum EFlag : uint
+  {
+    FLAG_NONE        = 0x00,
+    FLAG_PROBLEMATIC = 0x01,
+    FLAG_INFORMATION = 0x02,
+    FLAG_INI         = 0x04,
+    FLAG_BSA         = 0x08,
+    FLAG_LIGHT       = 0x10,
+    FLAG_OVERLAY     = 0x20,
+    FLAG_CLEAN       = 0x40,
+  };
+
   struct FileSystemData
   {
     QString name;
