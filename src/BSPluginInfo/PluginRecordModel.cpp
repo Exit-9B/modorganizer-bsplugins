@@ -1,5 +1,6 @@
 #include "PluginRecordModel.h"
 #include "TESData/BranchConflictParser.h"
+#include "TESData/TypeStringNames.h"
 #include "TESFile/Reader.h"
 
 #include <ranges>
@@ -255,8 +256,16 @@ QString PluginRecordModel::makeGroupName(TESFile::GroupData group)
   using GroupType = TESFile::GroupType;
 
   switch (group.type()) {
-  case GroupType::Top:
-    return QString::fromStdString(group.formType().string());
+  case GroupType::Top: {
+    const auto type    = group.formType();
+    const auto typestr = QString::fromLocal8Bit(type.data(), type.size());
+    const auto name    = TESData::getFormName(type);
+    if (!name.isEmpty()) {
+      return u"%1 - %2"_s.arg(typestr).arg(name);
+    } else {
+      return typestr;
+    }
+  }
   case GroupType::WorldChildren:
     return tr("Children");
   case GroupType::InteriorCellBlock:
