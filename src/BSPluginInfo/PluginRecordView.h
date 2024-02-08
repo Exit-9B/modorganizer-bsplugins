@@ -42,6 +42,8 @@ public:
   void setup(MOBase::IOrganizer* organizer, TESData::PluginList* pluginList,
              const QString& pluginName);
 
+  [[nodiscard]] bool hasData() const;
+
   [[nodiscard]] QSplitter* splitter() const;
   [[nodiscard]] QTreeView* pickRecordView() const;
   [[nodiscard]] QTreeView* recordStructureView() const;

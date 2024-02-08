@@ -102,6 +102,18 @@ PluginInfoDialog::PluginInfoDialog(MOBase::IOrganizer* organizer,
   m_FilterNoConflicts.setEdit(ui->noConflictLineEdit);
   m_FilterNoConflicts.setList(ui->noConflictTree);
   m_FilterNoConflicts.setUseSourceSort(true);
+
+  const auto p = palette();
+  if (!ui->pluginRecordView->hasData()) {
+    const auto index = ui->tabWidget->indexOf(ui->tabRecords);
+    ui->tabWidget->tabBar()->setTabTextColor(
+        index, p.color(QPalette::Disabled, QPalette::WindowText));
+  }
+  if (m_Archives.isEmpty()) {
+    const auto index = ui->tabWidget->indexOf(ui->tabArchives);
+    ui->tabWidget->tabBar()->setTabTextColor(
+        index, p.color(QPalette::Disabled, QPalette::WindowText));
+  }
 }
 
 PluginInfoDialog::~PluginInfoDialog() noexcept

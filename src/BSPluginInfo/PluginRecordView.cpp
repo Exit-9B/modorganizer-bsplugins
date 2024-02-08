@@ -37,6 +37,11 @@ void PluginRecordView::setup(MOBase::IOrganizer* organizer,
   ui->ignoreMasterConflicts->setChecked(ignoreMasters);
 }
 
+bool PluginRecordView::hasData() const
+{
+  return m_RecordModel->hasChildren();
+}
+
 QSplitter* PluginRecordView::splitter() const
 {
   return ui->splitter;
