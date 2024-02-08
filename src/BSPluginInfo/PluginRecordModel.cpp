@@ -177,8 +177,14 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
         } else if (item->record->hasEditorId()) {
           return QString::fromStdString(item->record->editorId());
         } else if (item->record->hasTypeId()) {
-          return QString::fromLocal8Bit(item->record->typeId().data(),
-                                        item->record->typeId().size());
+          const auto type    = item->record->typeId();
+          const auto typestr = QString::fromLocal8Bit(type.data(), type.size());
+          const auto name    = TESData::getDefaultObjectName(type);
+          if (!name.isEmpty()) {
+            return u"%1 - %2"_s.arg(typestr).arg(name);
+          } else {
+            return typestr;
+          }
         }
       }
 
