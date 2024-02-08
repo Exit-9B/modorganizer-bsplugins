@@ -45,6 +45,8 @@ void PluginListView::setup()
   header()->resizeSection(PluginListModel::COL_MODINDEX, 79);
   header()->setSectionResizeMode(0, QHeaderView::Stretch);
 
+  connect(this, &QTreeView::collapsed, this, &PluginListView::updateOverwriteMarkers);
+  connect(this, &QTreeView::expanded, this, &PluginListView::updateOverwriteMarkers);
   connect(selectionModel(), &QItemSelectionModel::selectionChanged, this,
           &PluginListView::updateOverwriteMarkers);
 }
@@ -91,26 +93,53 @@ QColor PluginListView::markerColor(const QModelIndex& index) const
 {
   bool ok;
   const uint pluginIndex = index.data(PluginListModel::IndexRole).toUInt(&ok);
-  if (!ok) {
-    return QColor();
-  }
-  const bool highlight      = m_Markers.highlight.contains(pluginIndex);
-  const bool overriding     = m_Markers.overriding.contains(pluginIndex);
-  const bool overridden     = m_Markers.overridden.contains(pluginIndex);
-  const bool overwritingAux = m_Markers.overwritingAux.contains(pluginIndex);
-  const bool overwrittenAux = m_Markers.overwrittenAux.contains(pluginIndex);
+  if (ok) {
+    const bool highlight      = m_Markers.highlight.contains(pluginIndex);
+    const bool overriding     = m_Markers.overriding.contains(pluginIndex);
+    const bool overridden     = m_Markers.overridden.contains(pluginIndex);
+    const bool overwritingAux = m_Markers.overwritingAux.contains(pluginIndex);
+    const bool overwrittenAux = m_Markers.overwrittenAux.contains(pluginIndex);
 
-  // the color logic looks backwards but this is what the mod list does
-  if (highlight) {
-    return Settings::instance()->containedColor();
-  } else if (overridden) {
-    return Settings::instance()->overwritingLooseFilesColor();
-  } else if (overriding) {
-    return Settings::instance()->overwrittenLooseFilesColor();
-  } else if (overwrittenAux) {
-    return Settings::instance()->overwritingArchiveFilesColor();
-  } else if (overwritingAux) {
-    return Settings::instance()->overwrittenArchiveFilesColor();
+    // the color logic looks backwards but this is what the mod list does
+    if (highlight) {
+      return Settings::instance()->containedColor();
+    } else if (overridden) {
+      return Settings::instance()->overwritingLooseFilesColor();
+    } else if (overriding) {
+      return Settings::instance()->overwrittenLooseFilesColor();
+    } else if (overwrittenAux) {
+      return Settings::instance()->overwritingArchiveFilesColor();
+    } else if (overwritingAux) {
+      return Settings::instance()->overwrittenArchiveFilesColor();
+    }
+  }
+
+  const auto rowIndex = index.siblingAtColumn(0);
+  if (model()->hasChildren(rowIndex) && !isExpanded(rowIndex)) {
+    std::vector<QColor> colors;
+    for (int i = 0; i < model()->rowCount(rowIndex); ++i) {
+      const auto childIndex = model()->index(i, index.column(), rowIndex);
+      const auto childColor = markerColor(childIndex);
+      if (childColor.isValid()) {
+        colors.push_back(childColor);
+      }
+    }
+
+    if (colors.empty()) {
+      return QColor();
+    }
+
+    int r = 0, g = 0, b = 0, a = 0;
+    for (const auto& color : colors) {
+      r += color.red();
+      g += color.green();
+      b += color.blue();
+      a += color.alpha();
+    }
+
+    return QColor(
+        static_cast<int>(r / colors.size()), static_cast<int>(g / colors.size()),
+        static_cast<int>(b / colors.size()), static_cast<int>(a / colors.size()));
   }
 
   return QColor();
@@ -154,7 +183,14 @@ void PluginListView::clearOverwriteMarkers()
 
 void PluginListView::updateOverwriteMarkers()
 {
-  const QModelIndexList indexes = selectionModel()->selectedRows();
+  QModelIndexList indexes = selectionModel()->selectedRows();
+  for (const auto& idx : selectionModel()->selectedRows()) {
+    if (model()->hasChildren(idx) && !isExpanded(idx)) {
+      for (int i = 0, count = model()->rowCount(idx); i < count; ++i) {
+        indexes.append(model()->index(i, idx.column(), idx));
+      }
+    }
+  }
 
   const auto insert = [](auto& dest, const auto& from) {
     for (const QVariant& elem : from) {
