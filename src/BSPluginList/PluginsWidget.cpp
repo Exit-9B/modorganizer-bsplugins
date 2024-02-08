@@ -334,23 +334,22 @@ void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)
 
 void PluginsWidget::on_pluginList_doubleClicked(const QModelIndex& index)
 {
-  if (!index.data(PluginListModel::IndexRole).isValid()) {
-    return;
-  }
+  bool ok;
+  const int id = index.data(PluginListModel::IndexRole).toInt(&ok);
+  if (ok) {
+    Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+    if (modifiers.testFlag(Qt::ControlModifier)) {
+      const auto origin  = m_PluginList->getOriginName(id);
+      const auto modInfo = m_Organizer->modList()->getMod(origin);
 
-  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
-  if (modifiers.testFlag(Qt::ControlModifier)) {
-    const int id       = index.data(PluginListModel::IndexRole).toInt();
-    const auto origin  = m_PluginList->getOriginName(id);
-    const auto modInfo = m_Organizer->modList()->getMod(origin);
-
-    if (modInfo == nullptr) {
-      return;
+      if (modInfo) {
+        MOBase::shell::Explore(modInfo->absolutePath());
+      }
+    } else {
+      displayPluginInformation(index);
     }
-
-    MOBase::shell::Explore(modInfo->absolutePath());
-  } else {
-    displayPluginInformation(index);
+  } else if (ui->pluginList->model()->hasChildren(index)) {
+    ui->pluginList->setExpanded(index, !ui->pluginList->isExpanded(index));
   }
 }
 
