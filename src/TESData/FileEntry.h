@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <variant>
 #include <vector>
@@ -64,6 +65,7 @@ private:
   std::string m_Name;
   std::shared_ptr<TreeItem> m_Root;
   std::vector<std::string> m_Files;
+  mutable std::shared_mutex m_Mutex;
 };
 
 }  // namespace TESData

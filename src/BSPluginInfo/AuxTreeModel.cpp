@@ -32,11 +32,7 @@ QModelIndex AuxTreeModel::parent(const QModelIndex& index) const
     return QModelIndex();
   }
 
-  const auto& siblings = parent->parent()->children();
-  const int row        = static_cast<int>(
-      siblings.index_of(std::ranges::find(siblings, parent, [&](auto&& pair) {
-        return pair.second.get();
-      })));
+  const int row = parent->parent()->indexOf(parent);
 
   return createIndex(row, 0, parent);
 }

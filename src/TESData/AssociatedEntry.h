@@ -8,6 +8,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <shared_mutex>
 #include <string>
 
 namespace cont = boost::container;
@@ -31,10 +32,10 @@ public:
   [[nodiscard]] const std::string& name() const { return m_Name; }
   [[nodiscard]] const AuxItem* parent() const { return m_Parent; }
 
-  [[nodiscard]] const auto& children() const { return m_Children; }
   [[nodiscard]] int numChildren() const { return static_cast<int>(m_Children.size()); }
   [[nodiscard]] std::shared_ptr<AuxItem> getByIndex(int index) const;
   [[nodiscard]] std::shared_ptr<AuxItem> getByName(const std::string& name) const;
+  [[nodiscard]] int indexOf(const AuxItem* item) const;
   std::shared_ptr<AuxItem> insert(const std::string& name);
 
   [[nodiscard]] const auto& member() const { return m_Member; }
@@ -46,6 +47,7 @@ private:
   const AuxItem* m_Parent;
   cont::flat_map<std::string, std::shared_ptr<AuxItem>> m_Children;
   std::shared_ptr<AuxMember> m_Member;
+  mutable std::shared_mutex m_Mutex;
 };
 
 class AssociatedEntry final

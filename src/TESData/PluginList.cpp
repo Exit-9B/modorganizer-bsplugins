@@ -11,6 +11,7 @@
 
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
+#include <boost/thread/future.hpp>
 
 #include <QDir>
 #include <QFile>
@@ -18,6 +19,7 @@
 #include <QTextStream>
 
 #include <algorithm>
+#include <future>
 #include <iterator>
 #include <ranges>
 #include <tuple>
@@ -127,24 +129,29 @@ const FileInfo* PluginList::findPlugin(const QString& name) const
 
 FileEntry* PluginList::findEntryByName(const std::string& pluginName) const
 {
+  std::shared_lock lk{m_FileEntryMutex};
   const auto it = m_EntriesByName.find(pluginName);
   return it != m_EntriesByName.end() ? it->second.get() : nullptr;
 }
 
 FileEntry* PluginList::findEntryByHandle(TESFileHandle handle) const
 {
+  std::shared_lock lk{m_FileEntryMutex};
   const auto it = m_EntriesByHandle.find(handle);
   return it != m_EntriesByHandle.end() ? it->second.get() : nullptr;
 }
 
 AssociatedEntry* PluginList::findArchive(const QString& name) const
 {
+  std::shared_lock lk{m_ArchiveEntryMutex};
   const auto it = m_Archives.find(name);
   return it != m_Archives.end() ? it->second.get() : nullptr;
 }
 
 FileEntry* PluginList::createEntry(const std::string& name)
 {
+  std::unique_lock lk{m_FileEntryMutex};
+
   const auto it = m_EntriesByName.find(name);
   if (it != m_EntriesByName.end()) {
     return it->second.get();
@@ -955,6 +962,7 @@ void PluginList::scanDataFiles(bool invalidate)
     }
   }
 
+  std::vector<std::shared_future<void>> futures;
   for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
       continue;
@@ -972,18 +980,27 @@ void PluginList::scanDataFiles(bool invalidate)
         std::make_shared<FileInfo>(this, filename, forceLoaded, forceEnabled,
                                    forceDisabled, lightPluginsAreSupported));
 
-    checkBsa(*info, tree);
-    checkIni(*info, tree);
+    auto assocTask = std::async([=] {
+      checkBsa(*info, tree);
+      checkIni(*info, tree);
+    });
 
-    try {
-      FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
-                                 overridePluginsAreSupported};
-      TESFile::Reader<FileConflictParser> reader{};
-      reader.parse(std::filesystem::path(fullPath.toStdWString()), handler);
-    } catch (const std::exception& e) {
-      MOBase::log::error("Error parsing \"{}\": {}", fullPath, e.what());
-    }
+    auto fileTask = std::async([=, this, path = fullPath.toStdWString()] {
+      try {
+        FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
+                                   overridePluginsAreSupported};
+        TESFile::Reader<FileConflictParser> reader{};
+        reader.parse(std::filesystem::path(path), handler);
+      } catch (const std::exception& e) {
+        MOBase::log::error("Error parsing \"{}\": {}", path, e.what());
+      }
+    });
+
+    futures.push_back(assocTask.share());
+    futures.push_back(fileTask.share());
   }
+
+  boost::wait_for_all(futures.begin(), futures.end());
 
   if (!invalidate) {
     std::erase_if(m_Plugins, [&](auto&& plugin) {
@@ -1031,10 +1048,14 @@ static void populateArchiveFiles(const std::shared_ptr<AuxItem>& master,
 void PluginList::associateArchive(const TESData::FileInfo& info,
                                   const QString& archiveName)
 {
-  auto& archiveEntry = m_Archives[archiveName];
-  if (archiveEntry != nullptr) {
-    return;
-  }
+  const auto archiveEntry = [this, &archiveName] {
+    std::unique_lock lk{m_ArchiveEntryMutex};
+    auto& entry = m_Archives[archiveName];
+    if (entry == nullptr) {
+      entry = std::make_shared<AssociatedEntry>();
+    }
+    return entry;
+  }();
 
   const QString archivePath = m_Organizer->resolvePath(archiveName);
   if (archivePath.isEmpty()) {
@@ -1056,7 +1077,6 @@ void PluginList::associateArchive(const TESData::FileInfo& info,
     return;
   }
 
-  archiveEntry      = std::make_shared<AssociatedEntry>();
   const auto handle = createEntry(info.name().toStdString())->handle();
   populateArchiveFiles(m_MasterArchiveEntry->root(), archiveEntry->root(),
                        archive.getRoot(), handle);

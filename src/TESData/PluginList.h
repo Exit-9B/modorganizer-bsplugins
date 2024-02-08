@@ -20,6 +20,7 @@
 
 #include <map>
 #include <memory>
+#include <shared_mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -170,6 +171,9 @@ private:
 
   std::shared_ptr<AssociatedEntry> m_MasterArchiveEntry;
   std::map<QString, std::shared_ptr<AssociatedEntry>> m_Archives;
+
+  mutable std::shared_mutex m_FileEntryMutex;
+  mutable std::shared_mutex m_ArchiveEntryMutex;
 
   bool m_Refreshing = true;
   std::map<QString, PluginStates> m_QueuedStateChanges;

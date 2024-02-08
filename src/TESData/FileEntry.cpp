@@ -36,6 +36,8 @@ std::shared_ptr<Record> FileEntry::createRecord(const RecordPath& path,
 {
   const auto item = createHierarchy(path);
 
+  std::unique_lock lk{m_Mutex};
+
   if (!item->record) {
     item->record = std::make_shared<Record>();
     item->record->setIdentifier(path.identifier(), path.files());
@@ -89,6 +91,8 @@ std::shared_ptr<Record> FileEntry::findRecord(const RecordPath& path) const
 
 std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path) const
 {
+  std::shared_lock lk{m_Mutex};
+
   const auto groups = path.groups();
   auto item         = m_Root;
   for (TESFile::GroupData group : groups) {
@@ -147,6 +151,8 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path)
 
 std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath& path)
 {
+  std::unique_lock lk{m_Mutex};
+
   const auto groups = path.groups();
   auto item         = m_Root;
   for (TESFile::GroupData group : groups) {
