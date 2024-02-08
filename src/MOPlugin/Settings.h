@@ -2,7 +2,9 @@
 #define SETTINGS_H
 
 #include "GUI/IGeometrySettings.h"
+#include "GUI/IStateSettings.h"
 
+#include <expanderwidget.h>
 #include <imoinfo.h>
 #include <lootcli/lootcli.h>
 
@@ -14,7 +16,10 @@
 #include <QSettings>
 #include <QSplitter>
 
-class Settings final : public GUI::IGeometrySettings<QDialog>
+class Settings final : public GUI::IGeometrySettings<QDialog>,
+                       public GUI::IStateSettings<QHeaderView>,
+                       public GUI::IStateSettings<QSplitter>,
+                       public GUI::IStateSettings<MOBase::ExpanderWidget>
 {
 public:
   using SignalSettingChanged =
@@ -50,16 +55,19 @@ public:
   [[nodiscard]] bool lootShowMessages() const;
   [[nodiscard]] bool lootShowProblems() const;
 
-  void saveState(const QHeaderView* header);
-  void restoreState(QHeaderView* header) const;
+  void saveState(const QHeaderView* header) override;
+  void restoreState(QHeaderView* header) const override;
 
-  void saveState(const QSplitter* splitter);
-  void restoreState(QSplitter* splitter) const;
+  void saveState(const QSplitter* splitter) override;
+  void restoreState(QSplitter* splitter) const override;
+
+  void saveState(const MOBase::ExpanderWidget* expander) override;
+  void restoreState(MOBase::ExpanderWidget* expander) const override;
 
   // IGeometrySettings<QDialog>
 
   void saveGeometry(const QDialog* dialog) override;
-  void restoreGeometry(QDialog* dialog) override;
+  void restoreGeometry(QDialog* dialog) const override;
 
 private:
   void onPluginSettingChanged(const QString& pluginName, const QString& key,

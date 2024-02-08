@@ -35,8 +35,8 @@ PluginInfoDialog::PluginInfoDialog(MOBase::IOrganizer* organizer,
       if (archiveEntry) {
         m_Archives.append(archive);
 
-        int winningCount = 0;
-        int losingCount = 0;
+        int winningCount    = 0;
+        int losingCount     = 0;
         int noConflictCount = 0;
 
         archiveEntry->forEachMember([&](auto&& member) {
@@ -113,12 +113,19 @@ int PluginInfoDialog::exec()
 {
   const auto settings = Settings::instance();
   GUI::GeometrySaver gs{*settings, this};
-  settings->restoreState(ui->pluginRecordView->splitter());
-  settings->restoreState(ui->pluginRecordView->pickRecordView()->header());
+
+  GUI::StateSaver ssRecordSplitter{*settings, ui->pluginRecordView->splitter()};
+  GUI::StateSaver ssRecordPickHeader{*settings,
+                                     ui->pluginRecordView->pickRecordView()->header()};
+
+  GUI::StateSaver ssArchiveWinningExpander{*settings, &m_WinningExpander};
+  GUI::StateSaver ssArchiveLosingExpander{*settings, &m_LosingExpander};
+  GUI::StateSaver ssArchiveNoConflictExpander{*settings, &m_NoConflictExpander};
+  GUI::StateSaver ssArchiveWinningHeader{*settings, ui->winningTree->header()};
+  GUI::StateSaver ssArchiveLosingHeader{*settings, ui->losingTree->header()};
+  GUI::StateSaver ssArchiveNoConflictHeader{*settings, ui->noConflictTree->header()};
 
   const int r = QDialog::exec();
-  settings->saveState(ui->pluginRecordView->splitter());
-  settings->saveState(ui->pluginRecordView->pickRecordView()->header());
 
   return r;
 }
