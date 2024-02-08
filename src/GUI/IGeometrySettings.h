@@ -10,8 +10,8 @@ template <class W>
 class IGeometrySettings
 {
 public:
-  virtual void saveGeometry(const W* widget) = 0;
-  virtual void restoreGeometry(W* widget)    = 0;
+  virtual void saveGeometry(const W* widget)    = 0;
+  virtual void restoreGeometry(W* widget) const = 0;
 };
 
 template <class W>

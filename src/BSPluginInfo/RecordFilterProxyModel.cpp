@@ -50,14 +50,12 @@ void RecordFilterProxyModel::onSourceDataChanged()
   }
 }
 
-void RecordFilterProxyModel::onSourceRowsRemoved(const QModelIndex& parent, int first,
-                                                 int last)
+void RecordFilterProxyModel::onSourceRowsRemoved(const QModelIndex& parent,
+                                                 [[maybe_unused]] int first,
+                                                 [[maybe_unused]] int last)
 {
-  const auto proxyParent = mapFromSource(parent);
-  const int proxyFirst   = mapFromSource(sourceModel()->index(first, 0, parent)).row();
-  const int proxyLast    = mapFromSource(sourceModel()->index(last, 0, parent)).row();
-  beginRemoveRows(proxyParent, std::max(proxyFirst, 0), std::max(proxyLast, 0));
-  endRemoveRows();
+  emit layoutAboutToBeChanged({parent});
+  emit layoutChanged({parent});
 }
 
 bool RecordFilterProxyModel::filterAcceptsRow(int source_row,

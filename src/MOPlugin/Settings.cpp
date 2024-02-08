@@ -150,6 +150,26 @@ void Settings::restoreState(QSplitter* splitter) const
   }
 }
 
+static QString stateSettingName(const MOBase::ExpanderWidget* expander)
+{
+  return expander->button()->objectName() + "_state";
+}
+
+void Settings::saveState(const MOBase::ExpanderWidget* expander)
+{
+  Organizer->setPersistent(BSPlugins::NAME, stateSettingName(expander),
+                           expander->saveState());
+}
+
+void Settings::restoreState(MOBase::ExpanderWidget* expander) const
+{
+  const auto state =
+      Organizer->persistent(BSPlugins::NAME, stateSettingName(expander)).toByteArray();
+  if (!state.isEmpty()) {
+    expander->restoreState(state);
+  }
+}
+
 static QString geometrySettingName(const QDialog* dialog)
 {
   return dialog->objectName() + "_geometry";
@@ -161,7 +181,7 @@ void Settings::saveGeometry(const QDialog* dialog)
                            dialog->saveGeometry());
 }
 
-void Settings::restoreGeometry(QDialog* dialog)
+void Settings::restoreGeometry(QDialog* dialog) const
 {
   const auto geometry =
       Organizer->persistent(BSPlugins::NAME, geometrySettingName(dialog)).toByteArray();

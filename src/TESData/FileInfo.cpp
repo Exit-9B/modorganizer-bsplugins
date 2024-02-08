@@ -9,12 +9,10 @@ namespace TESData
 {
 
 FileInfo::FileInfo(PluginList* pluginList, const QString& name, bool forceLoaded,
-                   bool forceEnabled, bool forceDisabled, const QString& fullPath,
-                   bool lightSupported)
+                   bool forceEnabled, bool forceDisabled, bool lightSupported)
     : m_PluginList{pluginList},
       m_FileSystemData{
           .name               = name,
-          .fullPath           = fullPath,
           .hasMasterExtension = name.endsWith(u".esm"_s, Qt::CaseInsensitive),
           .hasLightExtension =
               lightSupported && name.endsWith(u".esl"_s, Qt::CaseInsensitive),
@@ -71,6 +69,36 @@ bool FileInfo::mustLoadAfter(const FileInfo& other) const
   return false;
 }
 
+static void checkConflict(QSet<int>& winning, QSet<int>& losing, const FileInfo& file,
+                          const TESData::PluginList* pluginList,
+                          TESFileHandle alternative, bool ignoreMasters)
+{
+  const auto entry      = pluginList->findEntryByName(file.name().toStdString());
+  const auto otherEntry = pluginList->findEntryByHandle(alternative);
+  if (otherEntry == nullptr || otherEntry == entry) {
+    return;
+  }
+
+  const auto otherFile =
+      pluginList->getPluginByName(QString::fromStdString(otherEntry->name()));
+  if (otherFile == nullptr) {
+    return;
+  }
+
+  const QString otherName = QString::fromStdString(otherEntry->name());
+  const int otherIndex    = pluginList->getIndex(otherName);
+
+  if (file.priority() > otherFile->priority()) {
+    if (!ignoreMasters || !file.masters().contains(otherFile->name())) {
+      winning.insert(otherIndex);
+    }
+  } else {
+    if (!ignoreMasters || !otherFile->masters().contains(file.name())) {
+      losing.insert(otherIndex);
+    }
+  }
+}
+
 FileInfo::Conflicts FileInfo::doConflictCheck() const
 {
   Conflicts conflicts;
@@ -87,32 +115,26 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
     if (record->ignored())
       return;
 
-    for (const auto& alternative : record->alternatives()) {
-      const auto altEntry = m_PluginList->findEntryByHandle(alternative);
-
-      if (altEntry == nullptr || altEntry == entry) {
-        continue;
-      }
-
-      const auto altInfo = m_PluginList->getPluginByName(altEntry->name().c_str());
-      if (altInfo == nullptr) {
-        continue;
-      }
-
-      QString altName{altEntry->name().c_str()};
-      const int altIndex = m_PluginList->getIndex(altName);
-
-      if (priority() > altInfo->priority()) {
-        if (!ignoreMasters || !masters().contains(altInfo->name())) {
-          conflicts.m_OverridingList.insert(altIndex);
-        }
-      } else {
-        if (!ignoreMasters || !altInfo->masters().contains(name())) {
-          conflicts.m_OverriddenList.insert(altIndex);
-        }
-      }
+    for (const auto alternative : record->alternatives()) {
+      checkConflict(conflicts.m_OverridingList, conflicts.m_OverriddenList, *this,
+                    m_PluginList, alternative, ignoreMasters);
     }
   });
+
+  for (const auto& archive : m_FileSystemData.archives) {
+    const auto archiveEntry = m_PluginList->findArchive(archive);
+    if (!archiveEntry) {
+      continue;
+    }
+
+    archiveEntry->forEachMember([&](auto&& item) {
+      for (const auto alternative : item->alternatives) {
+        checkConflict(conflicts.m_OverwritingArchiveList,
+                      conflicts.m_OverwrittenArchiveList, *this, m_PluginList,
+                      alternative, ignoreMasters);
+      }
+    });
+  }
 
   uint conflictState = CONFLICT_NONE;
   if (!conflicts.m_OverridingList.empty()) {
@@ -120,6 +142,12 @@ FileInfo::Conflicts FileInfo::doConflictCheck() const
   }
   if (!conflicts.m_OverriddenList.empty()) {
     conflictState |= CONFLICT_OVERRIDDEN;
+  }
+  if (!conflicts.m_OverwritingArchiveList.empty()) {
+    conflictState |= CONFLICT_ARCHIVE_OVERWRITE;
+  }
+  if (!conflicts.m_OverwrittenArchiveList.empty()) {
+    conflictState |= CONFLICT_ARCHIVE_OVERWRITTEN;
   }
   conflicts.m_CurrentConflictState = static_cast<EConflictFlag>(conflictState);
 

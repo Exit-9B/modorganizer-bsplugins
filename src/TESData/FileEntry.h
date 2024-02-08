@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <shared_mutex>
 #include <string>
 #include <variant>
 #include <vector>
@@ -30,9 +31,9 @@ public:
     using Key =
         std::variant<TESFile::GroupData, std::uint32_t, std::string, TESFile::Type>;
 
-    const TreeItem* parent;
+    const TreeItem* parent{nullptr};
     std::string name;
-    TESFile::Type formType;
+    TESFile::Type formType{};
     std::optional<TESFile::GroupData> group;
     std::shared_ptr<Record> record;
     cont::flat_map<Key, std::shared_ptr<TreeItem>> children;
@@ -64,6 +65,7 @@ private:
   std::string m_Name;
   std::shared_ptr<TreeItem> m_Root;
   std::vector<std::string> m_Files;
+  mutable std::shared_mutex m_Mutex;
 };
 
 }  // namespace TESData

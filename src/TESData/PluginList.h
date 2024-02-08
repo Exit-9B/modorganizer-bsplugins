@@ -1,6 +1,7 @@
 #ifndef TESDATA_PLUGINLIST_H
 #define TESDATA_PLUGINLIST_H
 
+#include "AssociatedEntry.h"
 #include "FileEntry.h"
 #include "FileInfo.h"
 #include "MOTools/ILootCache.h"
@@ -19,6 +20,7 @@
 
 #include <map>
 #include <memory>
+#include <shared_mutex>
 #include <set>
 #include <string>
 #include <vector>
@@ -59,6 +61,7 @@ public:
 
   [[nodiscard]] FileEntry* findEntryByName(const std::string& pluginName) const;
   [[nodiscard]] FileEntry* findEntryByHandle(TESFileHandle handle) const;
+  [[nodiscard]] AssociatedEntry* findArchive(const QString& name) const;
 
   FileEntry* createEntry(const std::string& name);
   void addRecordConflict(const std::string& pluginName, const RecordPath& path,
@@ -129,6 +132,9 @@ private:
 
   void scanDataFiles(bool invalidate);
   void readPluginLists();
+  void checkBsa(TESData::FileInfo& info,
+                const std::shared_ptr<const MOBase::IFileTree>& fileTree);
+  void associateArchive(const TESData::FileInfo& info, const QString& archiveName);
 
   [[nodiscard]] QString groupsPath() const;
   void clearGroups();
@@ -162,6 +168,12 @@ private:
   std::map<TESFileHandle, std::shared_ptr<FileEntry>> m_EntriesByHandle;
   std::map<std::string, std::shared_ptr<Record>> m_Settings;
   std::map<TESFile::Type, std::shared_ptr<Record>> m_DefaultObjects;
+
+  std::shared_ptr<AssociatedEntry> m_MasterArchiveEntry;
+  std::map<QString, std::shared_ptr<AssociatedEntry>> m_Archives;
+
+  mutable std::shared_mutex m_FileEntryMutex;
+  mutable std::shared_mutex m_ArchiveEntryMutex;
 
   bool m_Refreshing = true;
   std::map<QString, PluginStates> m_QueuedStateChanges;

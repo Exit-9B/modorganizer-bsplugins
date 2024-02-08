@@ -44,17 +44,22 @@ class FormatValue:
 
     def flags(code: TextIO, format: dict[str, Any]) -> None:
         code.write('item->setDisplayData(fileIndex, u""_s);\n')
+        mask: int = 0
 
         i: int
         bit: str
         name: str
         for i, (bit, name) in enumerate(format['flags'].items()):
+            mask |= (1 << int(bit))
             name = name.replace('"', '\\"')
             code.write('item = item->getOrInsertChild({}, u"{}"_s);\n'.format(i, name))
             code.write('if (val.toUInt() & (1U << {})) {{\n'.format(bit))
             code.write('item->setData(fileIndex, u"{}"_s);\n'.format(name))
             code.write('}\n')
             code.write('item = item->parent();\n')
+            if not format['flags'].get('showUnknown', False):
+                code.write('item->setData('
+                           'fileIndex, val.toUInt() & {}U);\n'.format(mask))
 
     def ScriptObjectAliasFormat(code: TextIO, format: dict[str, Any]) -> None:
         # TODO

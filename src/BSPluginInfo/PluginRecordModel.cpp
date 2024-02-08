@@ -145,7 +145,7 @@ void PluginRecordModel::fetchMore(const QModelIndex& parent)
                                             getPath(parent)};
       TESFile::Reader<TESData::BranchConflictParser> reader{};
       reader.parse(std::filesystem::path(filePath.toStdWString()), handler);
-    } catch (std::exception& e) {
+    } catch (const std::exception& e) {
       MOBase::log::error("Error parsing \"{}\": {}", filePath, e.what());
     }
   }

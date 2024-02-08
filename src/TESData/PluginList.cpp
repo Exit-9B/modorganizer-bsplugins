@@ -2,6 +2,7 @@
 #include "FileConflictParser.h"
 #include "TESFile/Reader.h"
 
+#include <bsatk.h>
 #include <gameplugins.h>
 #include <iplugingame.h>
 #include <log.h>
@@ -10,6 +11,7 @@
 
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
+#include <boost/thread/future.hpp>
 
 #include <QDir>
 #include <QFile>
@@ -17,6 +19,7 @@
 #include <QTextStream>
 
 #include <algorithm>
+#include <future>
 #include <iterator>
 #include <ranges>
 #include <tuple>
@@ -31,7 +34,7 @@ namespace TESData
 
 PluginList::PluginList(const MOBase::IOrganizer* moInfo) : m_Organizer{moInfo}
 {
-  refresh();
+  refresh(true);
 }
 
 PluginList::~PluginList() noexcept
@@ -126,18 +129,29 @@ const FileInfo* PluginList::findPlugin(const QString& name) const
 
 FileEntry* PluginList::findEntryByName(const std::string& pluginName) const
 {
+  std::shared_lock lk{m_FileEntryMutex};
   const auto it = m_EntriesByName.find(pluginName);
   return it != m_EntriesByName.end() ? it->second.get() : nullptr;
 }
 
 FileEntry* PluginList::findEntryByHandle(TESFileHandle handle) const
 {
+  std::shared_lock lk{m_FileEntryMutex};
   const auto it = m_EntriesByHandle.find(handle);
   return it != m_EntriesByHandle.end() ? it->second.get() : nullptr;
 }
 
+AssociatedEntry* PluginList::findArchive(const QString& name) const
+{
+  std::shared_lock lk{m_ArchiveEntryMutex};
+  const auto it = m_Archives.find(name);
+  return it != m_Archives.end() ? it->second.get() : nullptr;
+}
+
 FileEntry* PluginList::createEntry(const std::string& name)
 {
+  std::unique_lock lk{m_FileEntryMutex};
+
   const auto it = m_EntriesByName.find(name);
   if (it != m_EntriesByName.end()) {
     return it->second.get();
@@ -784,9 +798,61 @@ static bool isPluginFile(const QString& filename)
          filename.endsWith(u".esl"_s, Qt::CaseInsensitive);
 }
 
-static void checkBsa(TESData::FileInfo& info,
-                     const std::shared_ptr<const MOBase::IFileTree>& fileTree)
+enum class Game
 {
+  Skyrim,
+  Fallout4,
+  Starfield,
+  Other
+};
+
+static bool isAssociatedArchive(TESData::FileInfo& info, const QString& candidate,
+                                Game game)
+{
+  const QString baseName = QFileInfo(info.name()).completeBaseName();
+  if (!candidate.startsWith(baseName)) {
+    return false;
+  }
+
+  switch (game) {
+  case Game::Skyrim:
+    if (candidate.endsWith(u".bsa"_s)) {
+      if (candidate.compare(baseName + u".bsa"_s, Qt::CaseInsensitive) == 0 ||
+          candidate.compare(baseName + u" - Textures.bsa"_s, Qt::CaseInsensitive) ==
+              0) {
+        return true;
+      }
+    }
+    return false;
+
+  case Game::Fallout4:
+  case Game::Starfield:
+    if (candidate.endsWith(u".ba2"_s)) {
+      if (candidate.compare(baseName + u" - Main.ba2"_s, Qt::CaseInsensitive) == 0 ||
+          candidate.compare(baseName + u" - Textures.ba2"_s, Qt::CaseInsensitive) ==
+              0 ||
+          candidate.startsWith(baseName + u" - Voices_"_s, Qt::CaseInsensitive)) {
+        return true;
+      }
+    }
+    return false;
+
+  default:
+    return true;
+  }
+}
+
+void PluginList::checkBsa(TESData::FileInfo& info,
+                          const std::shared_ptr<const MOBase::IFileTree>& fileTree)
+{
+  const auto managedGame = m_Organizer->managedGame();
+  const auto gameName    = managedGame ? managedGame->gameName() : QString();
+  const Game game        = gameName.startsWith(u"Skyrim"_s)      ? Game::Skyrim
+                           : gameName.startsWith(u"Enderal"_s)   ? Game::Skyrim
+                           : gameName.startsWith(u"Fallout 4"_s) ? Game::Fallout4
+                           : gameName == u"Starfield"_s          ? Game::Starfield
+                                                                 : Game::Other;
+
   const QString baseName = QFileInfo(info.name()).completeBaseName();
   for (const auto entry : *fileTree) {
     if (!entry) {
@@ -794,23 +860,9 @@ static void checkBsa(TESData::FileInfo& info,
     }
 
     const auto candidate = entry->name();
-    if (!candidate.startsWith(baseName)) {
-      continue;
-    }
-
-    if (candidate.endsWith(u".bsa"_s)) {
-      if (candidate.compare(baseName + u".bsa"_s, Qt::CaseInsensitive) == 0 ||
-          candidate.compare(baseName + u" - Textures.bsa"_s, Qt::CaseInsensitive) ==
-              0) {
-        info.addArchive(candidate);
-      }
-    } else if (candidate.endsWith(u".ba2"_s)) {
-      if (candidate.compare(baseName + u" - Main.ba2"_s, Qt::CaseInsensitive) == 0 ||
-          candidate.compare(baseName + u" - Textures.ba2"_s, Qt::CaseInsensitive) ==
-              0 ||
-          candidate.startsWith(baseName + u" - Voices_"_s, Qt::CaseInsensitive)) {
-        info.addArchive(candidate);
-      }
+    if (isAssociatedArchive(info, candidate, game)) {
+      info.addArchive(candidate);
+      associateArchive(info, candidate);
     }
   }
 }
@@ -852,6 +904,9 @@ void PluginList::scanDataFiles(bool invalidate)
     m_EntriesByName.clear();
     m_EntriesByHandle.clear();
     m_NextHandle = 0;
+
+    m_MasterArchiveEntry = std::make_shared<AssociatedEntry>();
+    m_Archives.clear();
   }
 
   const auto managedGame = m_Organizer->managedGame();
@@ -907,6 +962,7 @@ void PluginList::scanDataFiles(bool invalidate)
     }
   }
 
+  std::vector<std::shared_future<void>> futures;
   for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
       continue;
@@ -922,20 +978,29 @@ void PluginList::scanDataFiles(bool invalidate)
 
     const auto& info = m_Plugins.emplace_back(
         std::make_shared<FileInfo>(this, filename, forceLoaded, forceEnabled,
-                                   forceDisabled, fullPath, lightPluginsAreSupported));
+                                   forceDisabled, lightPluginsAreSupported));
 
-    checkBsa(*info, tree);
-    checkIni(*info, tree);
+    auto assocTask = std::async([=] {
+      checkBsa(*info, tree);
+      checkIni(*info, tree);
+    });
 
-    try {
-      FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
-                                 overridePluginsAreSupported};
-      TESFile::Reader<FileConflictParser> reader{};
-      reader.parse(std::filesystem::path(fullPath.toStdWString()), handler);
-    } catch (std::exception& e) {
-      MOBase::log::error("Error parsing \"{}\": {}", fullPath, e.what());
-    }
+    auto fileTask = std::async([=, this, path = fullPath.toStdWString()] {
+      try {
+        FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
+                                   overridePluginsAreSupported};
+        TESFile::Reader<FileConflictParser> reader{};
+        reader.parse(std::filesystem::path(path), handler);
+      } catch (const std::exception& e) {
+        MOBase::log::error("Error parsing \"{}\": {}", path, e.what());
+      }
+    });
+
+    futures.push_back(assocTask.share());
+    futures.push_back(fileTask.share());
   }
+
+  boost::wait_for_all(futures.begin(), futures.end());
 
   if (!invalidate) {
     std::erase_if(m_Plugins, [&](auto&& plugin) {
@@ -957,6 +1022,64 @@ void PluginList::readPluginLists()
   }
 
   enforcePluginRelationships();
+}
+
+static void populateArchiveFiles(const std::shared_ptr<AuxItem>& master,
+                                 const std::shared_ptr<AuxItem>& entry,
+                                 const BSA::Folder::Ptr& archiveFolder,
+                                 TESFileHandle handle)
+{
+  for (unsigned int i = 0, num = archiveFolder->getNumFiles(); i < num; ++i) {
+    const auto file = archiveFolder->getFile(i);
+
+    const auto conflictItem =
+        master->insert(file->getName())->createMember(file->getFilePath());
+    conflictItem->alternatives.insert(handle);
+    entry->insert(file->getName())->setMember(conflictItem);
+  }
+
+  for (unsigned int i = 0, num = archiveFolder->getNumSubFolders(); i < num; ++i) {
+    const auto folder = archiveFolder->getSubFolder(i);
+    populateArchiveFiles(master->insert(folder->getName()),
+                         entry->insert(folder->getName()), folder, handle);
+  }
+}
+
+void PluginList::associateArchive(const TESData::FileInfo& info,
+                                  const QString& archiveName)
+{
+  const auto archiveEntry = [this, &archiveName] {
+    std::unique_lock lk{m_ArchiveEntryMutex};
+    auto& entry = m_Archives[archiveName];
+    if (entry == nullptr) {
+      entry = std::make_shared<AssociatedEntry>();
+    }
+    return entry;
+  }();
+
+  const QString archivePath = m_Organizer->resolvePath(archiveName);
+  if (archivePath.isEmpty()) {
+    return;
+  }
+
+  BSA::Archive archive;
+  BSA::EErrorCode result = BSA::ERROR_NONE;
+
+  try {
+    result = archive.read(qPrintable(archivePath), false);
+  } catch (const std::exception& e) {
+    MOBase::log::error("invalid bsa '{}', error {}", archivePath, e.what());
+    return;
+  }
+
+  if (result != BSA::ERROR_NONE && result != BSA::ERROR_INVALIDHASHES) {
+    MOBase::log::error("invalid bsa '{}', error {}", archivePath, result);
+    return;
+  }
+
+  const auto handle = createEntry(info.name().toStdString())->handle();
+  populateArchiveFiles(m_MasterArchiveEntry->root(), archiveEntry->root(),
+                       archive.getRoot(), handle);
 }
 
 void PluginList::clearGroups()
