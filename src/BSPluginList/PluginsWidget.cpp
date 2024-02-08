@@ -64,16 +64,11 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
           &PluginsWidget::updatePluginCount);
 
   connect(m_GroupProxy, &QAbstractItemModel::modelReset, [this]() {
-    ui->pluginList->expandAll();
     ui->pluginList->scrollToTop();
   });
 
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
           this, &PluginsWidget::onSelectionChanged);
-
-  connect(ui->pluginList->header(), &QHeaderView::geometriesChanged, [this]() {
-    Settings::instance()->saveState(ui->pluginList->header());
-  });
 
   panelInterface->onPanelActivated(
       std::bind_front(&PluginsWidget::onPanelActivated, this));
@@ -201,6 +196,7 @@ void PluginsWidget::on_espFilterEdit_textChanged(const QString& filter)
 bool PluginsWidget::eventFilter(QObject* watched, QEvent* event)
 {
   if (event->type() == QEvent::Close) {
+    saveState();
     m_PluginList->writePluginLists();
   }
 
@@ -527,16 +523,24 @@ QMenu* PluginsWidget::listOptionsMenu()
   return menu;
 }
 
+void PluginsWidget::saveState()
+{
+  auto* const settings = Settings::instance();
+  settings->saveState(ui->pluginList->header());
+  settings->saveTreeExpandState(ui->pluginList);
+}
+
 void PluginsWidget::restoreState()
 {
-  Settings::instance()->restoreState(ui->pluginList->header());
+  const auto* const settings = Settings::instance();
+  settings->restoreState(ui->pluginList->header());
+  settings->restoreTreeExpandState(ui->pluginList);
 
-  const bool doHide = Settings::instance()->get<bool>("hide_force_enabled", false);
+  const bool doHide = settings->get<bool>("hide_force_enabled", false);
   toggleForceEnabled->setChecked(doHide);
   toggleHideForceEnabled();
 
-  const bool doIgnore =
-      Settings::instance()->get<bool>("ignore_master_conflicts", false);
+  const bool doIgnore = settings->get<bool>("ignore_master_conflicts", false);
   toggleIgnoreMasters->setChecked(doIgnore);
   toggleIgnoreMasterConflicts();
 }

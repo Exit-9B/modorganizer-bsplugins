@@ -3,6 +3,7 @@
 
 #include <QDir>
 #include <QStandardPaths>
+#include <QTreeView>
 
 Settings* Instance = nullptr;
 
@@ -119,6 +120,53 @@ bool Settings::lootShowProblems() const
 static QString stateSettingName(const QHeaderView* header)
 {
   return header->parent()->objectName() + "_header";
+}
+
+static void visitRows(const QAbstractItemModel* model,
+                      std::function<void(const QModelIndex&)> visit,
+                      const QModelIndex& root = QModelIndex())
+{
+  if (root.isValid()) {
+    visit(root);
+  }
+
+  for (int i = 0, count = model->rowCount(root); i < count; ++i) {
+    const auto idx = model->index(i, 0, root);
+    visitRows(model, visit, idx);
+  }
+}
+
+void Settings::saveTreeExpandState(const QTreeView* view)
+{
+  QVariantList expanded;
+  visitRows(view->model(), [&expanded, view](const QModelIndex& index) {
+    if (view->isExpanded(index)) {
+      expanded.append(index.data());
+    }
+  });
+
+  Organizer->setPersistent(BSPlugins::NAME, view->objectName() + "_expanded", expanded);
+}
+
+void Settings::restoreTreeExpandState(QTreeView* view) const
+{
+  // empty is serialized as invalid
+  const QVariant state = Organizer->persistent(
+      BSPlugins::NAME, view->objectName() + "_expanded", QVariantList());
+
+  if (!state.isValid()) {
+    view->collapseAll();
+  } else {
+    const auto expanded = state.toList();
+    if (!expanded.isEmpty()) {
+      view->collapseAll();
+      visitRows(view->model(), [&expanded, view](const QModelIndex& index) {
+        if (expanded.contains(index.data())) {
+          view->expand(index);
+        }
+      });
+    }
+  }
 }
 
 void Settings::saveState(const QHeaderView* header)

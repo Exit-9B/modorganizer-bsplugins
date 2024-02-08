@@ -56,6 +56,9 @@ public:
   [[nodiscard]] bool lootShowMessages() const;
   [[nodiscard]] bool lootShowProblems() const;
 
+  void saveTreeExpandState(const QTreeView* view);
+  void restoreTreeExpandState(QTreeView* view) const;
+
   void saveState(const QHeaderView* header) override;
   void restoreState(QHeaderView* header) const override;
 

@@ -63,6 +63,7 @@ private slots:
 
 private:
   [[nodiscard]] QMenu* listOptionsMenu();
+  void saveState();
   void restoreState();
 
   void onModStateChanged(const std::map<QString, MOBase::IModList::ModStates>& mods);
