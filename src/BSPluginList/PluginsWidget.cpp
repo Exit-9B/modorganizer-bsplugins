@@ -252,10 +252,7 @@ void PluginsWidget::toggleIgnoreMasterConflicts()
   const bool doIgnore = toggleIgnoreMasters->isChecked();
   Settings::instance()->set("ignore_master_conflicts", doIgnore);
 
-  for (int i = 0, count = m_PluginList->pluginCount(); i < count; ++i) {
-    const auto plugin = m_PluginList->getPlugin(i);
-    plugin->invalidateConflicts();
-  }
+  m_PluginListModel->invalidateConflicts();
 }
 
 constexpr auto PATTERN_BACKUP_GLOB  = R"/(.????_??_??_??_??_??)/";
@@ -306,7 +303,7 @@ void PluginsWidget::displayPluginInformation(const QModelIndex& index)
   BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName, parent};
   dialog.exec();
 
-  ui->pluginList->updateOverwriteMarkers();
+  m_PluginListModel->invalidateConflicts();
 }
 
 void PluginsWidget::on_pluginList_customContextMenuRequested(const QPoint& pos)

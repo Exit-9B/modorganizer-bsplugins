@@ -690,6 +690,17 @@ void PluginListModel::invalidate()
   emit endResetModel();
 }
 
+void PluginListModel::invalidateConflicts()
+{
+  for (int i = 0, count = m_Plugins->pluginCount(); i < count; ++i) {
+    const auto plugin = m_Plugins->getPlugin(i);
+    plugin->invalidateConflicts();
+  }
+
+  emit dataChanged(index(0, COL_CONFLICTS), index(rowCount() - 1, COL_CONFLICTS),
+                   {PluginListModel::ConflictsIconRole});
+}
+
 void PluginListModel::movePlugin(const QString& name, [[maybe_unused]] int oldPriority,
                                  int newPriority)
 {

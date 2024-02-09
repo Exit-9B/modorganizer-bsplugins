@@ -74,6 +74,7 @@ public slots:
   void refresh();
 
   void invalidate();
+  void invalidateConflicts();
 
   void movePlugin(const QString& name, int oldPriority, int newPriority);
 
