@@ -91,7 +91,8 @@ public slots:
 
   // send plugins to the given priority
   //
-  void sendToPriority(const QModelIndexList& indices, int priority);
+  void sendToPriority(const QModelIndexList& indices, int priority,
+                      bool disjoint = false);
 
   // shift the priority of mods at the given indices by the given offset
   //

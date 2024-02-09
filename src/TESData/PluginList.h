@@ -76,7 +76,7 @@ public:
 
   [[nodiscard]] bool canMoveToPriority(const std::vector<int>& ids,
                                        int newPriority) const;
-  void moveToPriority(std::vector<int> ids, int destination);
+  void moveToPriority(std::vector<int> ids, int destination, bool disjoint = false);
   void shiftPriority(const std::vector<int>& ids, int offset);
 
   void setGroup(const std::vector<int>& ids, const QString& group);

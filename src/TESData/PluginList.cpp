@@ -403,7 +403,7 @@ QString PluginList::destinationGroup(
   return QString();
 }
 
-void PluginList::moveToPriority(std::vector<int> ids, int destination)
+void PluginList::moveToPriority(std::vector<int> ids, int destination, bool disjoint)
 {
   if (ids.empty()) {
     return;
@@ -426,40 +426,41 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
     return m_Plugins[lhs]->priority() > m_Plugins[rhs]->priority();
   });
 
+  int nextDestination = destination;
   for (const int id : ids) {
     const auto& pluginToMove = m_Plugins[id];
     const int priority       = pluginToMove->priority();
 
-    if (destination < priority) {
-      for (int i = priority - 1; i >= destination; --i) {
+    if (nextDestination < priority) {
+      for (int i = priority - 1; i >= nextDestination; --i) {
         const auto& plugin = m_Plugins.at(m_PluginsByPriority.at(i));
         if (!names.contains(plugin->name()) && pluginToMove->mustLoadAfter(*plugin)) {
-          destination = i + 1;
+          nextDestination = i + 1;
           break;
         }
       }
 
-      const int newPriority = destination;
+      const int newPriority = nextDestination;
       pluginToMove->setGroup(destinationGroup(priority, newPriority,
                                               pluginToMove->group(),
                                               pluginToMove->isMasterFile(), names));
-      for (int i = priority; i > destination; --i) {
+      for (int i = priority; i > nextDestination; --i) {
         m_PluginsByPriority[i] = m_PluginsByPriority[i - 1];
         m_Plugins[m_PluginsByPriority[i]]->setPriority(i);
       }
 
       m_PluginsByPriority[newPriority] = id;
       pluginToMove->setPriority(newPriority);
-    } else if (destination > priority) {
-      for (int i = priority + 1; i < destination; ++i) {
+    } else if (nextDestination > priority) {
+      for (int i = priority + 1; i < nextDestination; ++i) {
         const auto& plugin = m_Plugins.at(m_PluginsByPriority.at(i));
         if (!names.contains(plugin->name()) && plugin->mustLoadAfter(*pluginToMove)) {
-          destination = i;
+          nextDestination = i;
           break;
         }
       }
 
-      const int newPriority = --destination;
+      const int newPriority = --nextDestination;
       pluginToMove->setGroup(destinationGroup(priority, newPriority,
                                               pluginToMove->group(),
                                               pluginToMove->isMasterFile(), names));
@@ -470,6 +471,10 @@ void PluginList::moveToPriority(std::vector<int> ids, int destination)
 
       m_PluginsByPriority[newPriority] = id;
       pluginToMove->setPriority(newPriority);
+    }
+
+    if (disjoint) {
+      nextDestination = destination;
     }
   }
 

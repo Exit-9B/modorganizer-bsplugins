@@ -754,7 +754,8 @@ void PluginListModel::setEnabled(const QModelIndexList& indices, bool enabled)
   emit pluginStatesChanged(indices);
 }
 
-void PluginListModel::sendToPriority(const QModelIndexList& indices, int priority)
+void PluginListModel::sendToPriority(const QModelIndexList& indices, int priority,
+                                     bool disjoint)
 {
   if (indices.empty()) {
     return;
@@ -765,7 +766,7 @@ void PluginListModel::sendToPriority(const QModelIndexList& indices, int priorit
   std::ranges::transform(indices, std::back_inserter(ids), [](auto&& idx) {
     return idx.row();
   });
-  m_Plugins->moveToPriority(std::move(ids), priority);
+  m_Plugins->moveToPriority(std::move(ids), priority, disjoint);
   emit dataChanged(index(0, COL_PRIORITY), index(rowCount() - 1, COL_MODINDEX),
                    {Qt::DisplayRole});
   emit pluginOrderChanged();

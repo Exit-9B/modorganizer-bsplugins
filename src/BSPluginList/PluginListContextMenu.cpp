@@ -235,13 +235,13 @@ void PluginListContextMenu::addSendToMenu()
   sendToMenu->addAction(tr("Top"), [this]() {
     const auto selectedIndex   = m_ViewSelected.first();
     const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-    m_Model->sendToPriority(m_ModelSelected, 0);
+    m_Model->sendToPriority(m_ModelSelected, 0, true);
     m_View->scrollTo(persistentIndex);
   });
   sendToMenu->addAction(tr("Bottom"), [this]() {
     const auto selectedIndex   = m_ViewSelected.first();
     const auto persistentIndex = QPersistentModelIndex(selectedIndex);
-    m_Model->sendToPriority(m_ModelSelected, std::numeric_limits<int>::max());
+    m_Model->sendToPriority(m_ModelSelected, std::numeric_limits<int>::max(), true);
     m_View->scrollTo(persistentIndex);
   });
   sendToMenu->addAction(tr("Priority..."), [this]() {
