@@ -289,8 +289,8 @@ bool PluginGroupProxyModel::canDropMimeData(const QMimeData* data,
     row    = 0;
   }
 
-  const bool draggedOntoGroup = row == -1;
-  const bool draggedToBottom  = row == rowCount(parent);
+  const bool draggedOntoGroup = parent.isValid() && row == -1;
+  const bool draggedToBottom  = parent.isValid() && row == rowCount(parent);
   const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
                                                             : index(row, column, parent);
   const int sourceRow = idx.isValid() ? mapLowerBoundToSourceRow(idx.internalId()) : -1;
@@ -337,8 +337,8 @@ bool PluginGroupProxyModel::dropMimeData(const QMimeData* data, Qt::DropAction a
     row    = 0;
   }
 
-  const bool draggedOntoGroup = row == -1;
-  const bool draggedToBottom  = row == rowCount(parent);
+  const bool draggedOntoGroup = parent.isValid() && row == -1;
+  const bool draggedToBottom  = parent.isValid() && row == rowCount(parent);
   const auto idx      = draggedOntoGroup || draggedToBottom ? index(parent.row() + 1, 0)
                                                             : index(row, column, parent);
   const int sourceRow = idx.isValid() ? mapLowerBoundToSourceRow(idx.internalId()) : -1;
