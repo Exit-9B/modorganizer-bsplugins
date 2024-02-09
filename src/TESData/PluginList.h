@@ -20,8 +20,8 @@
 
 #include <map>
 #include <memory>
-#include <shared_mutex>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -164,13 +164,14 @@ private:
   std::map<QString, MOTools::Loot::Plugin, MOBase::FileNameComparator> m_LootInfo;
 
   TESFileHandle m_NextHandle = 0;
-  std::map<std::string, std::shared_ptr<FileEntry>> m_EntriesByName;
+  std::map<std::string, std::shared_ptr<FileEntry>, TESFile::less> m_EntriesByName;
   std::map<TESFileHandle, std::shared_ptr<FileEntry>> m_EntriesByHandle;
   std::map<std::string, std::shared_ptr<Record>> m_Settings;
   std::map<TESFile::Type, std::shared_ptr<Record>> m_DefaultObjects;
 
   std::shared_ptr<AssociatedEntry> m_MasterArchiveEntry;
-  std::map<QString, std::shared_ptr<AssociatedEntry>> m_Archives;
+  std::map<QString, std::shared_ptr<AssociatedEntry>, MOBase::FileNameComparator>
+      m_Archives;
 
   mutable std::shared_mutex m_FileEntryMutex;
   mutable std::shared_mutex m_ArchiveEntryMutex;

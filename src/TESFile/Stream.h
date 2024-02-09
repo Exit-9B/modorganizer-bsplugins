@@ -3,8 +3,6 @@
 
 #include "Type.h"
 
-#include <boost/algorithm/string/predicate.hpp>
-
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
@@ -35,16 +33,29 @@ inline std::string readZstring(std::istream& stream)
   return value;
 }
 
-template <std::ranges::input_range R, typename T, typename Proj = std::identity>
-inline auto find(R&& r, const T& value, Proj proj = {})
+inline bool iequals(const std::string& a, const std::string& b)
+{
+  return _stricmp(a.data(), b.data()) == 0;
+}
+
+template <std::ranges::input_range R, typename Proj = std::identity>
+inline auto find(R&& r, const std::string& value, Proj proj = {})
 {
   return std::ranges::find_if(
       r,
       [&](auto&& val) {
-        return boost::iequals(val, value);
+        return iequals(val, value);
       },
       proj);
 }
+
+struct less
+{
+  bool operator()(const std::string& a, const std::string& b) const
+  {
+    return _stricmp(a.data(), b.data()) < 0;
+  }
+};
 
 enum class TESFormat
 {

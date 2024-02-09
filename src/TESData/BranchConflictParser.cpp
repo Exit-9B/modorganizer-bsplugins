@@ -14,18 +14,18 @@ BranchConflictParser::BranchConflictParser(PluginList* pluginList,
 
 bool BranchConflictParser::Group(TESFile::GroupData group)
 {
+  if (group.hasParent()) {
+    const std::uint8_t localIndex = group.parent() >> 24U;
+    const std::string& owner =
+        localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
+    const auto files            = m_Path.files();
+    const std::uint8_t newIndex = static_cast<std::uint8_t>(
+        std::distance(std::begin(files), TESFile::find(files, owner)));
+
+    group.setLocalIndex(newIndex);
+  }
+
   if (m_CurrentPath.groups().size() < m_Path.groups().size()) {
-
-    if (group.hasParent()) {
-      const std::uint8_t localIndex = group.parent() >> 24U;
-      const std::string& owner =
-          localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
-      const auto files            = m_Path.files();
-      const std::uint8_t newIndex = static_cast<std::uint8_t>(
-          std::distance(std::begin(files), TESFile::find(files, owner)));
-
-      group.setLocalIndex(newIndex);
-    }
 
     if (group == m_Path.groups()[m_CurrentPath.groups().size()]) {
       m_CurrentPath.push(group, m_Path.files(), m_PluginName);
@@ -34,6 +34,12 @@ bool BranchConflictParser::Group(TESFile::GroupData group)
 
     return false;
   } else {
+    if (group.hasParent() && m_Path.hasFormId()) {
+      if (group.parent() != m_Path.formId()) {
+        return false;
+      }
+    }
+
     m_CurrentPath.push(group, m_Masters, m_PluginName);
     return true;
   }
@@ -54,6 +60,20 @@ bool BranchConflictParser::Form(TESFile::FormData form)
 
   if (m_CurrentPath.groups().size() < m_Path.groups().size()) {
     return false;
+  } else if (m_CurrentPath.groups().size() == m_Path.groups().size()) {
+    if (m_Path.hasFormId()) {
+      if ((form.formId() & 0xFFFFFF) != (m_Path.formId() & 0xFFFFFF)) {
+        return false;
+      }
+
+      const std::uint8_t localIndex = form.formId() >> 24U;
+      const std::string& owner =
+          localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
+
+      if (!TESFile::iequals(owner, m_Path.files()[m_Path.formId() >> 24])) {
+        return false;
+      }
+    }
   }
 
   m_CurrentPath.setFormId(form.formId(), m_Masters, m_PluginName);
