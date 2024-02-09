@@ -1,0 +1,27 @@
+{
+    "Name": "Bethesda Plugin Manager",
+    "Author": "Parapets",
+    "Description": "Manages plugin load order for Bethesda Game Studios game engines",
+    "DocsUrl": "",
+    "GithubUrl": "https://github.com/Exit-9B/modorganizer-bsplugins",
+    "NexusUrl": "https://www.nexusmods.com/skyrimspecialedition/mods/111236",
+    "Versions": [
+        {
+            "Version": "0.1.0.0b",
+            "Released": "2024-02-09",
+            "MinSupport": "2.5.0",
+            "MaxSupport": "",
+            "MinWorking": "2.5.0",
+            "MaxWorking": "",
+            "DownloadUrl": "https://github.com/Exit-9B/modorganizer-bsplugins/releases/download/v0.1.0/bsplugins-v0.1.0.7z",
+            "PluginPath": [
+                "plugins/bsplugins.dll"
+            ],
+            "LocalePath": [
+                "translations/bsplugins_en.qm"
+            ],
+            "DataPath": [],
+            "ReleaseNotes": []
+        }
+    ]
+}
