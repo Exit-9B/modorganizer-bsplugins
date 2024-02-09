@@ -71,7 +71,7 @@ void FileEntry::addChildGroup(const RecordPath& path)
   if (group.hasParent()) {
     const auto& file            = path.files()[group.parent() >> 24];
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+        std::distance(std::begin(m_Files), TESFile::find(m_Files, file)));
 
     if (newIndex == m_Files.size()) {
       m_Files.push_back(file);
@@ -99,7 +99,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path)
     if (group.hasParent()) {
       const auto& file            = path.files()[group.parent() >> 24];
       const std::uint8_t newIndex = static_cast<std::uint8_t>(
-          std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+          std::distance(std::begin(m_Files), TESFile::find(m_Files, file)));
 
       if (newIndex == m_Files.size()) {
         return nullptr;
@@ -129,7 +129,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::findItem(const RecordPath& path)
   if (path.hasFormId()) {
     const auto& file            = path.files()[path.formId() >> 24];
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+        std::distance(std::begin(m_Files), TESFile::find(m_Files, file)));
 
     if (newIndex == m_Files.size()) {
       return nullptr;
@@ -159,7 +159,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
     if (group.hasParent()) {
       const auto& file            = path.files()[group.parent() >> 24];
       const std::uint8_t newIndex = static_cast<std::uint8_t>(
-          std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+          std::distance(std::begin(m_Files), TESFile::find(m_Files, file)));
 
       if (newIndex == m_Files.size()) {
         m_Files.push_back(file);
@@ -174,6 +174,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
       if (!nextItem) {
         nextItem         = std::make_shared<TreeItem>();
         nextItem->parent = item.get();
+        nextItem->record = std::make_shared<Record>();
       }
       nextItem->group = group;
 
@@ -193,7 +194,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
   if (path.hasFormId()) {
     const auto& file            = path.files()[path.formId() >> 24];
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(m_Files), std::ranges::find(m_Files, file)));
+        std::distance(std::begin(m_Files), TESFile::find(m_Files, file)));
 
     if (newIndex == m_Files.size()) {
       m_Files.push_back(file);

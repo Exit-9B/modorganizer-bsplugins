@@ -339,14 +339,15 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
                  "</b>";
     }
 
-    std::set<QString> enabledMasters;
-    std::ranges::set_difference(plugin->masters(), plugin->missingMasters(),
-                                std::inserter(enabledMasters, enabledMasters.end()),
-                                MOBase::FileNameComparator{});
+    QStringList enabledMasters;
+    std::ranges::remove_copy_if(plugin->masters(), std::back_inserter(enabledMasters),
+                                [&](auto&& master) {
+                                  return plugin->missingMasters().contains(master);
+                                });
 
     if (!enabledMasters.empty()) {
       toolTip += "<br><b>" + tr("Enabled Masters") +
-                 "</b>: " + truncateString(MOBase::SetJoin(enabledMasters, ", "));
+                 "</b>: " + truncateString(enabledMasters.join(", "));
     }
 
     if (!plugin->archives().empty()) {

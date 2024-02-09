@@ -67,7 +67,7 @@ public:
     bool isOverlayFlagged;
     bool hasNoRecords;
 
-    std::vector<QString> masters;
+    QStringList masters;
     mutable boost::container::flat_set<QString, MOBase::FileNameComparator> masterUnset;
   };
 

@@ -177,10 +177,10 @@ QVariant PluginRecordModel::data(const QModelIndex& index, int role) const
               m_PluginList ? m_PluginList->getPluginByName(m_PluginName) : nullptr;
 
           if (plugin) {
-            const auto file = QString::fromStdString(item->record->file());
-            const auto localIndex =
-                std::distance(std::begin(plugin->masters()),
-                              std::ranges::find(plugin->masters(), file));
+            const auto file       = item->record->file();
+            const auto localIndex = std::distance(
+                std::begin(plugin->masters()),
+                TESFile::find(plugin->masters(), file, &QString::toStdString));
             formId |= ((localIndex & 0xFF) << 24U);
           }
 

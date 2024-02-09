@@ -57,7 +57,7 @@ bool SingleRecordParser::Group(TESFile::GroupData group)
         localIndex < m_Masters.size() ? m_Masters[localIndex] : m_File;
     const auto files            = m_Path.files();
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(files), std::ranges::find(files, owner)));
+        std::distance(std::begin(files), TESFile::find(files, owner)));
 
     group.setLocalIndex(newIndex);
   }

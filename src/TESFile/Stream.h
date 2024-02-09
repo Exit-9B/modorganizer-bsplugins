@@ -3,9 +3,13 @@
 
 #include "Type.h"
 
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <istream>
+#include <ranges>
 #include <utility>
 
 namespace TESFile
@@ -29,6 +33,17 @@ inline std::string readZstring(std::istream& stream)
   std::string value;
   std::getline(stream, value, '\0');
   return value;
+}
+
+template <std::ranges::input_range R, typename T, typename Proj = std::identity>
+inline auto find(R&& r, const T& value, Proj proj = {})
+{
+  return std::ranges::find_if(
+      r,
+      [&](auto&& val) {
+        return boost::iequals(val, value);
+      },
+      proj);
 }
 
 enum class TESFormat

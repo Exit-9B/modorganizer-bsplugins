@@ -69,7 +69,7 @@ void RecordPath::setFormId(std::uint32_t formId, std::span<const std::string> ma
   const std::uint8_t localIndex = formId >> 24U;
   const std::string& owner = localIndex < masters.size() ? masters[localIndex] : file;
   const std::uint8_t newIndex = static_cast<std::uint8_t>(
-      std::distance(std::begin(m_Files), std::ranges::find(m_Files, owner)));
+      std::distance(std::begin(m_Files), TESFile::find(m_Files, owner)));
 
   if (newIndex == m_Files.size()) {
     m_Files.push_back(owner);
@@ -121,7 +121,7 @@ void RecordPath::push(TESFile::GroupData group, std::span<const std::string> mas
     const std::uint8_t localIndex = group.parent() >> 24U;
     const std::string& owner = localIndex < masters.size() ? masters[localIndex] : file;
     const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(m_Files), std::ranges::find(m_Files, owner)));
+        std::distance(std::begin(m_Files), TESFile::find(m_Files, owner)));
 
     if (newIndex == m_Files.size()) {
       m_Files.push_back(owner);

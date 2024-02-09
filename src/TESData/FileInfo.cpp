@@ -51,10 +51,8 @@ bool FileInfo::canBeToggled() const
 
 bool FileInfo::mustLoadAfter(const FileInfo& other) const
 {
-  const bool hasMaster =
-      std::ranges::find(this->masters(), other.name()) != std::end(this->masters());
-  const bool isMaster =
-      std::ranges::find(other.masters(), this->name()) != std::end(other.masters());
+  const bool hasMaster = this->masters().contains(other.name(), Qt::CaseInsensitive);
+  const bool isMaster  = other.masters().contains(this->name(), Qt::CaseInsensitive);
 
   if (hasMaster && !isMaster) {
     return true;
@@ -93,13 +91,13 @@ static void checkConflict(QSet<int>& winning, QSet<int>& losing, const FileInfo&
   const int otherIndex    = pluginList->getIndex(otherName);
 
   if (file.priority() > otherFile->priority()) {
-    if (!ignoreMasters || std::ranges::find(file.masters(), otherFile->name()) ==
-                              std::end(file.masters())) {
+    if (!ignoreMasters ||
+        !file.masters().contains(otherFile->name(), Qt::CaseInsensitive)) {
       winning.insert(otherIndex);
     }
   } else {
-    if (!ignoreMasters || std::ranges::find(otherFile->masters(), file.name()) ==
-                              std::end(otherFile->masters())) {
+    if (!ignoreMasters ||
+        !otherFile->masters().contains(file.name(), Qt::CaseInsensitive)) {
       losing.insert(otherIndex);
     }
   }
