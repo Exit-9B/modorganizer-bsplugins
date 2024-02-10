@@ -106,7 +106,6 @@ FileInfo* PluginList::findPlugin(const QString& name)
 {
   const auto it = m_PluginsByName.find(name);
   if (it == m_PluginsByName.end()) {
-    MOBase::log::warn("Plugin not found: \"{}\"", name);
     return nullptr;
   } else {
     return m_Plugins.at(it->second).get();
@@ -117,7 +116,6 @@ const FileInfo* PluginList::findPlugin(const QString& name) const
 {
   const auto it = m_PluginsByName.find(name);
   if (it == m_PluginsByName.end()) {
-    MOBase::log::warn("Plugin not found: \"{}\"", name);
     return nullptr;
   } else {
     return m_Plugins.at(it->second).get();
