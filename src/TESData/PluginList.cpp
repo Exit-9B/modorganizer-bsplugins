@@ -841,7 +841,7 @@ static bool isAssociatedArchive(TESData::FileInfo& info, const QString& candidat
     return false;
 
   default:
-    return true;
+    return candidate.endsWith(u".bsa"_s);
   }
 }
 
