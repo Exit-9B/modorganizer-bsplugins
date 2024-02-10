@@ -257,6 +257,38 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Overrides &amp; has overridden records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overrides records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has overridden records</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a master file. It will load before any non-master files in the load order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file is flagged as an ESL. It will adhere to its position in the load order but the records will be loaded in ESL space.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overwrites &amp; has overwritten archive files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overwrites another archive file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Overwritten by another archive file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
@@ -278,26 +310,6 @@
     </message>
     <message>
         <source>unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Overrides &amp; has overridden records</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Overrides records</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Has overridden records</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This is a master file. It will load before any non-master files in the load order.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This file is flagged as an ESL. It will adhere to its position in the load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
