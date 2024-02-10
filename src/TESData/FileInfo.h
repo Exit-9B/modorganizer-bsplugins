@@ -37,9 +37,10 @@ public:
     FLAG_INFORMATION = 0x02,
     FLAG_INI         = 0x04,
     FLAG_BSA         = 0x08,
-    FLAG_LIGHT       = 0x10,
-    FLAG_OVERLAY     = 0x20,
-    FLAG_CLEAN       = 0x40,
+    FLAG_MASTER      = 0x10,
+    FLAG_LIGHT       = 0x20,
+    FLAG_OVERLAY     = 0x40,
+    FLAG_CLEAN       = 0x80,
   };
 
   struct FileSystemData

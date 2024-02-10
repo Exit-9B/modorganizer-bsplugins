@@ -415,11 +415,15 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
           spacing;
     }
 
+    if (plugin->isMasterFile()) {
+      toolTip += tr("This is a master file. It will load before any non-master files "
+                    "in the load order.") +
+                 spacing;
+    }
+
     if (plugin->isSmallFile()) {
-      QString type = plugin->isMasterFile() ? "ESM" : "ESP";
-      toolTip += tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
-                    "order but the records will be loaded in ESL space.")
-                     .arg(type) +
+      toolTip += tr("This file is flagged as an ESL. It will adhere to its position in "
+                    "the load order but the records will be loaded in ESL space.") +
                  spacing;
     }
 
@@ -509,6 +513,10 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
 
   if (!plugin->archives().empty()) {
     flag |= FLAG_BSA;
+  }
+
+  if (plugin->isMasterFile()) {
+    flag |= FLAG_MASTER;
   }
 
   if (plugin->isSmallFile()) {
