@@ -137,8 +137,10 @@ private:
   void associateArchive(const TESData::FileInfo& info, const QString& archiveName);
 
   [[nodiscard]] QString groupsPath() const;
+  [[nodiscard]] QString lockedOrderPath() const;
   void clearGroups();
   void readGroups(const QString& fileName);
+  void writeEmptyTextFile(const QString& fileName) const;
   void writeGroups(const QString& fileName) const;
   [[nodiscard]] QString destinationGroup(
       int oldPriority, int newPriority, const QString& originalGroup, bool isESM,
