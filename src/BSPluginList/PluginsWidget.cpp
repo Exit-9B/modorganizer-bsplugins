@@ -564,6 +564,9 @@ void PluginsWidget::onModStateChanged(
   // HACK: the virtual file tree won't update until the next refresh, so keep track of
   // any mods that might be newly activated
   const auto modList = m_Organizer->modList();
+  if (!modList)
+    return;
+
   for (const auto& [modName, modState] : mods) {
     const auto mod = modList->getMod(modName);
     if (containsPlugin(mod)) {

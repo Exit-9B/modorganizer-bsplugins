@@ -33,6 +33,10 @@ QList<QString> FlagIconDelegate::getIcons(const QModelIndex& index) const
     icons.append(":/MO/gui/archive_conflict_neutral");
   }
 
+  if (flags & FLAG_MASTER) {
+    icons.append(":/bsplugins/star");
+  }
+
   if (flags & FLAG_LIGHT) {
     icons.append(":/bsplugins/feather");
   }

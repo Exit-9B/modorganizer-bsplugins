@@ -374,17 +374,30 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     return toolTip;
   }
   case COL_CONFLICTS: {
-    const bool overriding = !data(index, OverridingRole).toList().empty();
-    const bool overridden = !data(index, OverriddenRole).toList().empty();
+    const uint conflictFlags = data(index, ConflictsIconRole).toUInt();
+    using enum TESData::FileInfo::EConflictFlag;
 
-    if (overriding && overridden) {
-      return tr("Overrides & has overridden records");
-    } else if (overriding) {
-      return tr("Overrides records");
-    } else if (overridden) {
-      return tr("Has overridden records");
+    QString toolTip;
+    if ((conflictFlags & CONFLICT_MIXED) == CONFLICT_MIXED) {
+      toolTip += tr("Overrides & has overridden records");
+    } else if (conflictFlags & CONFLICT_OVERRIDE) {
+      toolTip += tr("Overrides records");
+    } else if (conflictFlags & CONFLICT_OVERRIDDEN) {
+      toolTip += tr("Has overridden records");
     }
-    return QVariant();
+
+    if ((conflictFlags & CONFLICT_MIXED) && (conflictFlags & CONFLICT_ARCHIVE_MIXED)) {
+      toolTip += "<br>";
+    }
+
+    if ((conflictFlags & CONFLICT_ARCHIVE_MIXED) == CONFLICT_ARCHIVE_MIXED) {
+      toolTip += tr("Overwrites & has overwritten archive files");
+    } else if (conflictFlags & CONFLICT_ARCHIVE_OVERWRITE) {
+      toolTip += tr("Overwrites another archive file");
+    } else if (conflictFlags & CONFLICT_ARCHIVE_OVERWRITTEN) {
+      toolTip += tr("Overwritten by another archive file");
+    }
+    return toolTip;
   }
   case COL_FLAGS: {
     // HACK: insert some HTML to enable multiline tooltips
@@ -415,11 +428,15 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
           spacing;
     }
 
+    if (plugin->isMasterFile()) {
+      toolTip += tr("This file is flagged as an ESM. It will load before any non-ESM "
+                    "files in the load order.") +
+                 spacing;
+    }
+
     if (plugin->isSmallFile()) {
-      QString type = plugin->isMasterFile() ? "ESM" : "ESP";
-      toolTip += tr("This %1 is flagged as an ESL. It will adhere to the %1 load "
-                    "order but the records will be loaded in ESL space.")
-                     .arg(type) +
+      toolTip += tr("This file is flagged as an ESL. It will adhere to its position in "
+                    "the load order but the records will be loaded in ESL space.") +
                  spacing;
     }
 
@@ -509,6 +526,10 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
 
   if (!plugin->archives().empty()) {
     flag |= FLAG_BSA;
+  }
+
+  if (plugin->isMasterFile()) {
+    flag |= FLAG_MASTER;
   }
 
   if (plugin->isSmallFile()) {
