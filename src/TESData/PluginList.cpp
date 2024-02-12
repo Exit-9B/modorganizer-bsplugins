@@ -314,12 +314,6 @@ void PluginList::toggleState(const std::vector<int>& ids)
 
 bool PluginList::canMoveToPriority(const std::vector<int>& ids, int newPriority) const
 {
-  if (std::ranges::any_of(ids, [this](int id) {
-        return m_Plugins.at(id)->forceLoaded();
-      })) {
-    return false;
-  }
-
   boost::container::flat_set<QString, MOBase::FileNameComparator> names;
   names.reserve(ids.size());
   for (const int id : ids) {
@@ -330,6 +324,16 @@ bool PluginList::canMoveToPriority(const std::vector<int>& ids, int newPriority)
   for (const int id : ids) {
     const auto pluginToMove = m_Plugins[id];
     const int priority      = pluginToMove->priority();
+
+    if (pluginToMove->forceLoaded()) {
+      const int min = std::min(priority, newPriority);
+      const int max = std::max(priority, newPriority);
+      for (int i = min; i < max; ++i) {
+        if (std::ranges::find(ids, m_PluginsByPriority.at(i)) == std::end(ids)) {
+          return false;
+        }
+      }
+    }
 
     for (int i = newPriority; i < priority; ++i) {
       const auto plugin = m_Plugins.at(m_PluginsByPriority.at(i));
