@@ -142,16 +142,11 @@ void SingleRecordParser::Data(std::istream& stream)
 
   if (m_Path.hasTypeId() && m_CurrentChunk == "DNAM"_ts) {
     while (stream.peek() != std::char_traits<char>::eof()) {
-      const TESFile::Type name      = TESFile::readType<TESFile::Type>(stream);
-      const std::uint32_t formId    = TESFile::readType<std::uint32_t>(stream);
-      const std::uint8_t localIndex = formId >> 24U;
-      const auto& file = localIndex < m_Masters.size() ? m_Masters[localIndex] : m_File;
+      const TESFile::Type name   = TESFile::readType<TESFile::Type>(stream);
+      const QString formIdString = readFormId(m_Masters, m_File, stream);
       if (name == m_Path.typeId()) {
         m_DataRoot->getOrInsertChild(0, name, u""_s)
-            ->setData(m_FileIndex,
-                      u"%2 | %1"_s.arg(formId & 0xFFFFFFU, 6, 16, QChar(u'0'))
-                          .toUpper()
-                          .arg(QString::fromStdString(file)));
+            ->setData(m_FileIndex, formIdString);
         m_RecordFound = true;
         break;
       }
