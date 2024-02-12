@@ -606,7 +606,6 @@ void PluginList::setState(const QString& name, PluginStates state)
 {
   const auto it = m_PluginsByName.find(name);
   if (it == m_PluginsByName.end()) {
-    MOBase::log::warn("Plugin not found: \"{}\"", name);
     return;
   }
 
