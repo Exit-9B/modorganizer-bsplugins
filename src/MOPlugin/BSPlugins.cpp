@@ -38,7 +38,7 @@ QString BSPlugins::description() const
 
 MOBase::VersionInfo BSPlugins::version() const
 {
-  return MOBase::VersionInfo(0, 1, 2, 0, MOBase::VersionInfo::RELEASE_BETA);
+  return MOBase::VersionInfo(0, 1, 3, 0, MOBase::VersionInfo::RELEASE_BETA);
 }
 
 QList<MOBase::PluginSetting> BSPlugins::settings() const
