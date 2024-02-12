@@ -88,24 +88,21 @@ bool PluginSortFilterProxyModel::lessThan(const QModelIndex& source_left,
 {
   switch (source_left.column()) {
   case PluginListModel::COL_CONFLICTS: {
-    const auto left =
-        source_left.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
-    const auto right =
-        source_right.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
-
-    const auto leftState  = left ? left->conflictState() : 0;
-    const auto rightState = right ? right->conflictState() : 0;
-    return leftState < rightState;
+    const uint lhs = source_left.data(PluginListModel::ConflictsIconRole).toUInt();
+    const uint rhs = source_right.data(PluginListModel::ConflictsIconRole).toUInt();
+    return lhs < rhs;
   }
   case PluginListModel::COL_FLAGS: {
-    QVariantList lhsList = source_left.data(PluginListModel::FlagsIconRole).toList();
-    QVariantList rhsList = source_right.data(PluginListModel::FlagsIconRole).toList();
-    if (lhsList.length() != rhsList.length()) {
-      return lhsList.length() < rhsList.length();
+    const uint lhs = source_left.data(PluginListModel::FlagsIconRole).toUInt();
+    const uint rhs = source_right.data(PluginListModel::FlagsIconRole).toUInt();
+    if (std::popcount(lhs) != std::popcount(rhs)) {
+      return std::popcount(lhs) < std::popcount(rhs);
     } else {
-      for (int i = 0; i < lhsList.length(); ++i) {
-        if (lhsList.at(i) != rhsList.at(i)) {
-          return lhsList.at(i).toString() < rhsList.at(i).toString();
+      for (uint i = 0; i < sizeof(lhs) * 8; ++i) {
+        const uint lhsBit = (lhs & (1U << i));
+        const uint rhsBit = (rhs & (1U << i));
+        if (lhsBit != rhsBit) {
+          return lhsBit < rhsBit;
         }
       }
       return false;
