@@ -7,13 +7,13 @@
     "NexusUrl": "https://www.nexusmods.com/skyrimspecialedition/mods/111236",
     "Versions": [
         {
-            "Version": "0.1.1.0b",
-            "Released": "2024-02-10",
+            "Version": "0.1.2.0b",
+            "Released": "2024-02-12",
             "MinSupport": "2.5.0",
             "MaxSupport": "",
             "MinWorking": "2.5.0",
             "MaxWorking": "",
-            "DownloadUrl": "https://github.com/Exit-9B/modorganizer-bsplugins/releases/download/v0.1.1/bsplugins-v0.1.1.7z",
+            "DownloadUrl": "https://github.com/Exit-9B/modorganizer-bsplugins/releases/download/v0.1.2/bsplugins-v0.1.2.7z",
             "PluginPath": [
                 "plugins/bsplugins.dll"
             ],

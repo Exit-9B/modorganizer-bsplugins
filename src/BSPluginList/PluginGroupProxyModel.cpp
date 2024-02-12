@@ -125,16 +125,20 @@ QModelIndex PluginGroupProxyModel::mapToSource(const QModelIndex& proxyIndex) co
 
 Qt::ItemFlags PluginGroupProxyModel::flags(const QModelIndex& index) const
 {
+  if (!index.isValid()) {
+    return QAbstractProxyModel::flags(index);
+  }
+
   const auto& item = m_ProxyItems.at(index.internalId());
   if (!item.isGroup()) {
-    if (item.sourceRow != -1) {
+    if (item.isSourceItem()) {
       return sourceModel()->flags(mapToSource(index)) | Qt::ItemNeverHasChildren;
     } else {
       return Qt::ItemNeverHasChildren;
     }
   }
 
-  Qt::ItemFlags result = QAbstractItemModel::flags(index);
+  Qt::ItemFlags result = QAbstractProxyModel::flags(index);
   if (index.column() == PluginListModel::COL_NAME) {
     result |= Qt::ItemIsEditable;
   }
