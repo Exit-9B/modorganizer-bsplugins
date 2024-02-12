@@ -142,6 +142,7 @@ Qt::ItemFlags PluginGroupProxyModel::flags(const QModelIndex& index) const
   if (index.column() == PluginListModel::COL_NAME) {
     result |= Qt::ItemIsEditable;
   }
+  result |= Qt::ItemIsSelectable;
   result |= Qt::ItemIsDragEnabled;
   result |= Qt::ItemIsDropEnabled;
   result |= Qt::ItemIsEnabled;

@@ -25,7 +25,7 @@ std::shared_ptr<const IFormParser> FormParserManager::getParser(Game game,
   return registrationMap()[TESFile::Type()];
 }
 
-static QString readBytes(std::istream& stream, int size)
+QString readBytes(std::istream& stream, int size)
 {
   QString data;
   for (int i = 0; i < size; ++i) {
@@ -39,7 +39,7 @@ static QString readBytes(std::istream& stream, int size)
   return data;
 }
 
-static QString readLstring(bool localized, std::istream& stream)
+QString readLstring(bool localized, std::istream& stream)
 {
   if (localized) {
     const std::uint32_t index = TESFile::readType<std::uint32_t>(stream);
@@ -51,7 +51,7 @@ static QString readLstring(bool localized, std::istream& stream)
   }
 }
 
-static QString readFormId(std::span<const std::string> masters,
+QString readFormId(std::span<const std::string> masters,
                           const std::string& plugin, std::istream& stream)
 {
   const std::uint32_t formId = TESFile::readType<std::uint32_t>(stream);

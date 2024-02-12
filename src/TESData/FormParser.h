@@ -105,6 +105,11 @@ public:
                       std::istream* const& stream) const override;
 };
 
+QString readBytes(std::istream& stream, int size);
+QString readLstring(bool localized, std::istream& stream);
+QString readFormId(std::span<const std::string> masters, const std::string& plugin,
+                   std::istream& stream);
+
 }  // namespace TESData
 
 #endif  // TESDATA_FORMPARSER_H
