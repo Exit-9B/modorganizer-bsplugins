@@ -79,12 +79,15 @@ public:
   DataItem* getOrInsertChild(int index, TESFile::Type signature, const QString& name,
                              ConflictType conflictType = ConflictType::Override);
 
-  void setData(int fileIndex, const QVariant& data);
+  void setData(int fileIndex, const QVariant& data, bool caseSensitive = false);
   void setDisplayData(int fileIndex, const QVariant& data);
 
 private:
+  [[nodiscard]] bool hasConflict(const QVariant& var1, const QVariant& var2) const;
+
   ConflictType m_ConflictType{ConflictType::Override};
   TESFile::Type m_Signature{};
+  bool m_CaseSensitive = false;
   QString m_Name;
   QList<QVariant> m_Data;
   QList<QVariant> m_DisplayData;

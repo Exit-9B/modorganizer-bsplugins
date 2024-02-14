@@ -338,7 +338,7 @@ class DefineType:
         localized: bool = element.get('localized', False)
         if localized:
             code.write('item->setData('
-                       'fileIndex, readLstring(localized, *stream));\n')
+                       'fileIndex, readLstring(localized, *stream), true);\n')
         elif 'prefix' in element:
             prefix: int = element['prefix']
             lengthType: str
