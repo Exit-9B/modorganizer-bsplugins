@@ -303,6 +303,9 @@ void PluginsWidget::displayPluginInformation(const QModelIndex& index)
   BSPluginInfo::PluginInfoDialog dialog{m_Organizer, m_PluginList, fileName, parent};
   dialog.exec();
 
+  const bool ignoreMasters =
+      Settings::instance()->get<bool>("ignore_master_conflicts", false);
+  toggleIgnoreMasters->setChecked(ignoreMasters);
   m_PluginListModel->invalidateConflicts();
 }
 
