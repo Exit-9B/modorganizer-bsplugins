@@ -2,6 +2,8 @@
 #include "MOPlugin/Settings.h"
 #include "ui_pluginrecordview.h"
 
+#include <widgetutility.h>
+
 #include <QMenu>
 
 #include <ranges>
@@ -13,6 +15,12 @@ PluginRecordView::PluginRecordView(QWidget* parent)
     : QWidget(parent), ui{new Ui::PluginRecordView()}
 {
   ui->setupUi(this);
+
+  MOBase::setCustomizableColumns(ui->pickRecordView);
+
+  // fix issue where view scrolls after moving headers
+  ui->recordStructureView->header()->setAutoScroll(false);
+
   ui->conflictFilterRow->hide();
 }
 

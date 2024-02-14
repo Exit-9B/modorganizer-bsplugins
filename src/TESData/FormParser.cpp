@@ -43,6 +43,9 @@ QString readLstring(bool localized, std::istream& stream)
 {
   if (localized) {
     const std::uint32_t index = TESFile::readType<std::uint32_t>(stream);
+    if (index == 0) {
+      return u""_s;
+    }
     return u"<lstring:%1>"_s.arg(index);
   } else {
     std::string str;

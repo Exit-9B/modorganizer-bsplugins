@@ -175,6 +175,7 @@ std::shared_ptr<FileEntry::TreeItem> FileEntry::createHierarchy(const RecordPath
         nextItem         = std::make_shared<TreeItem>();
         nextItem->parent = item.get();
         nextItem->record = std::make_shared<Record>();
+        nextItem->record->setIdentifier(group.parent(), m_Files);
       }
       nextItem->group = group;
 

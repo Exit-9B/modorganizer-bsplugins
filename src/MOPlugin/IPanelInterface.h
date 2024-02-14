@@ -20,6 +20,11 @@ public:
 
   virtual bool
   onSelectedOriginsChanged(const std::function<void(const QList<QString>&)>& func) = 0;
+
+  // HACK: this shouldn't be here, but the MOBase::IPluginList::setState function does
+  // not cause the list to notify its onPluginStateChanged listeners, so this will work
+  // around that
+  virtual void setPluginState(const QString& name, bool enable) = 0;
 };
 
 #endif  // IPANELINTERFACE_H

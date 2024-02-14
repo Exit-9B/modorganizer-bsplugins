@@ -56,7 +56,7 @@ bool DataItem::isLosingConflict(int fileIndex, int fileCount) const
     }
 
     for (int i = fileIndex + 1; i < m_Data.length(); ++i) {
-      if (m_Data[i] != m_Data[fileIndex]) {
+      if (hasConflict(m_Data[i], m_Data[fileIndex])) {
         return true;
       }
     }
@@ -84,7 +84,7 @@ bool DataItem::isOverriding(int fileIndex) const
     }
 
     for (int i = 0; i < std::min(fileIndex, static_cast<int>(m_Data.length())); ++i) {
-      if (m_Data[i] != m_Data[fileIndex]) {
+      if (hasConflict(m_Data[i], m_Data[fileIndex])) {
         return true;
       }
     }
@@ -112,7 +112,7 @@ bool DataItem::isConflicted(int fileCount) const
     }
 
     for (int i = 1; i < m_Data.length(); ++i) {
-      if (m_Data[i] != m_Data[0]) {
+      if (hasConflict(m_Data[i], m_Data[0])) {
         return true;
       }
     }
@@ -195,12 +195,13 @@ DataItem* DataItem::getOrInsertChild(int index, TESFile::Type signature,
   return insertChild(index, signature, name, conflictType);
 }
 
-void DataItem::setData(int fileIndex, const QVariant& data)
+void DataItem::setData(int fileIndex, const QVariant& data, bool caseSensitive)
 {
   if (m_Data.size() <= fileIndex) {
     m_Data.resize(fileIndex + 1);
   }
   m_Data[fileIndex] = data;
+  m_CaseSensitive   = caseSensitive;
 }
 
 void DataItem::setDisplayData(int fileIndex, const QVariant& data)
@@ -209,6 +210,16 @@ void DataItem::setDisplayData(int fileIndex, const QVariant& data)
     m_DisplayData.resize(fileIndex + 1);
   }
   m_DisplayData[fileIndex] = data;
+}
+
+bool DataItem::hasConflict(const QVariant& var1, const QVariant& var2) const
+{
+  if (!m_CaseSensitive && var1.userType() == QMetaType::QString &&
+      var2.userType() == QMetaType::QString) {
+    return var1.toString().compare(var2.toString(), Qt::CaseInsensitive) != 0;
+  } else {
+    return var1 != var2;
+  }
 }
 
 }  // namespace TESData

@@ -44,7 +44,7 @@ constexpr auto FormNames = std::to_array<std::pair<TESFile::Type, QStringView>>(
     {"DIAL"_ts, u"Dialogue Topic"},
     {"DLBR"_ts, u"Dialogue Branch"},
     {"DLVW"_ts, u"Dialogue View"},
-    {"DOBJ"_ts, u"Default Object Manager"},
+    {"DOBJ"_ts, u"Default Object"},
     {"DOOR"_ts, u"Door"},
     {"DUAL"_ts, u"Dual Cast Data"},
     {"ECZN"_ts, u"Encounter Zone"},
@@ -148,6 +148,7 @@ constexpr auto FormNames = std::to_array<std::pair<TESFile::Type, QStringView>>(
     {"WRLD"_ts, u"World Space"},
     {"WTHR"_ts, u"Weather"},
 });
+static_assert(std::ranges::is_sorted(FormNames));
 
 constexpr auto DefaultObjectNames =
     std::to_array<std::pair<TESFile::Type, QStringView>>({
@@ -522,6 +523,7 @@ constexpr auto DefaultObjectNames =
         {"WTBA"_ts, u"Keyword - WeaponTypeBoundArrow"},
         {"WWSP"_ts, u"Werewolf Spell"},
     });
+static_assert(std::ranges::is_sorted(DefaultObjectNames));
 
 template <typename K, typename V, std::size_t N>
 inline constexpr V find(const std::array<std::pair<K, V>, N>& table, const K& key)
