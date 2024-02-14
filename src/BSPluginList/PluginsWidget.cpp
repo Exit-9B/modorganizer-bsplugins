@@ -67,6 +67,9 @@ PluginsWidget::PluginsWidget(MOBase::IOrganizer* organizer,
     ui->pluginList->scrollToTop();
   });
 
+  connect(ui->pluginList, &QTreeView::collapsed, this,
+          &PluginsWidget::onGroupCollapsed);
+  connect(ui->pluginList, &QTreeView::expanded, this, &PluginsWidget::onGroupExpanded);
   connect(ui->pluginList->selectionModel(), &QItemSelectionModel::selectionChanged,
           this, &PluginsWidget::onSelectionChanged);
 
@@ -215,16 +218,42 @@ void PluginsWidget::changeEvent(QEvent* event)
   }
 }
 
-void PluginsWidget::onSelectionChanged(
-    [[maybe_unused]] const QItemSelection& selected,
-    [[maybe_unused]] const QItemSelection& deselected)
+void PluginsWidget::onGroupCollapsed(const QModelIndex& index)
+{
+  if (ui->pluginList->selectionModel()->isSelected(index)) {
+    onSelectionChanged();
+  }
+}
+
+void PluginsWidget::onGroupExpanded(const QModelIndex& index)
+{
+  if (ui->pluginList->selectionModel()->isSelected(index)) {
+    onSelectionChanged();
+  }
+}
+
+void PluginsWidget::onSelectionChanged()
 {
   QList<QString> selectedFiles;
-  for (const auto& idx : ui->pluginList->selectionModel()->selectedRows()) {
-    const auto model = ui->pluginList->model();
-    const auto& name = model->data(idx, Qt::DisplayRole).toString();
-    selectedFiles.append(name);
+  std::function<void(const QModelIndex&)> addFiles;
+  addFiles = [&](const QModelIndex& index) {
+    if (index.model()->hasChildren(index)) {
+      if (ui->pluginList->isExpanded(index)) {
+        return;
+      }
+
+      for (int i = 0, count = index.model()->rowCount(index); i < count; ++i) {
+        addFiles(index.model()->index(i, 0, index));
+      }
+    } else {
+      selectedFiles.append(index.data(Qt::DisplayRole).toString());
+    }
+  };
+
+  for (const auto& index : ui->pluginList->selectionModel()->selectedRows()) {
+    addFiles(index);
   }
+
   m_PanelInterface->setSelectedFiles(selectedFiles);
 }
 

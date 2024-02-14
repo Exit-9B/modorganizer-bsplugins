@@ -42,8 +42,9 @@ protected:
   void changeEvent(QEvent* event) override;
 
 private slots:
-  void onSelectionChanged(const QItemSelection& selected,
-                          const QItemSelection& deselected);
+  void onGroupCollapsed(const QModelIndex& index);
+  void onGroupExpanded(const QModelIndex& index);
+  void onSelectionChanged();
 
   void onPanelActivated();
 
