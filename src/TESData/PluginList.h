@@ -168,7 +168,8 @@ private:
 
   std::atomic<TESFileHandle> m_NextHandle = 0;
   std::map<std::string, std::shared_ptr<FileEntry>, TESFile::less> m_EntriesByName;
-  std::map<TESFileHandle, std::shared_ptr<FileEntry>> m_EntriesByHandle;
+  boost::container::flat_map<TESFileHandle, std::shared_ptr<FileEntry>>
+      m_EntriesByHandle;
   std::map<std::string, std::shared_ptr<Record>> m_Settings;
   std::map<TESFile::Type, std::shared_ptr<Record>> m_DefaultObjects;
 
