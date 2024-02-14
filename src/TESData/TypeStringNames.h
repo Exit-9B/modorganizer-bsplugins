@@ -44,7 +44,7 @@ constexpr auto FormNames = std::to_array<std::pair<TESFile::Type, QStringView>>(
     {"DIAL"_ts, u"Dialogue Topic"},
     {"DLBR"_ts, u"Dialogue Branch"},
     {"DLVW"_ts, u"Dialogue View"},
-    {"DOBJ"_ts, u"Default Object Manager"},
+    {"DOBJ"_ts, u"Default Object"},
     {"DOOR"_ts, u"Door"},
     {"DUAL"_ts, u"Dual Cast Data"},
     {"ECZN"_ts, u"Encounter Zone"},
