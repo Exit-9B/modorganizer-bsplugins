@@ -40,7 +40,7 @@ bool BranchConflictParser::Group(TESFile::GroupData group)
       }
     }
 
-    m_CurrentPath.push(group, m_Masters, m_PluginName);
+    m_CurrentPath.push(group, m_Path.files(), m_PluginName);
     return true;
   }
 }
