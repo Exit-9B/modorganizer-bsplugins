@@ -41,6 +41,8 @@ public:
       const std::function<void(const QList<QString>&)>& func) override;
 
 private slots:
+  void onModSeparatorCollapsed(const QModelIndex& index);
+  void onModSeparatorExpanded(const QModelIndex& index);
   void onModSelectionChanged();
 
 private:

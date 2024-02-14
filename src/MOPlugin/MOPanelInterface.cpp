@@ -3,6 +3,7 @@
 #include <log.h>
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 
 using namespace Qt::Literals::StringLiterals;
@@ -14,6 +15,10 @@ MOPanelInterface::MOPanelInterface(MOBase::IOrganizer* organizer,
       m_PluginListView{mainWindow->findChild<QTreeView*>(u"espList"_s)}
 {
   if (m_ModListView) {
+    QObject::connect(m_ModListView, &QTreeView::collapsed, this,
+                     &MOPanelInterface::onModSeparatorCollapsed);
+    QObject::connect(m_ModListView, &QTreeView::expanded, this,
+                     &MOPanelInterface::onModSeparatorExpanded);
     QObject::connect(m_ModListView->selectionModel(),
                      &QItemSelectionModel::selectionChanged, this,
                      &MOPanelInterface::onModSelectionChanged);
@@ -90,12 +95,39 @@ bool MOPanelInterface::onSelectedOriginsChanged(
   return connection.connected();
 }
 
+void MOPanelInterface::onModSeparatorCollapsed(const QModelIndex& index)
+{
+  if (m_ModListView->selectionModel()->isSelected(index)) {
+    onModSelectionChanged();
+  }
+}
+
+void MOPanelInterface::onModSeparatorExpanded(const QModelIndex& index)
+{
+  if (m_ModListView->selectionModel()->isSelected(index)) {
+    onModSelectionChanged();
+  }
+}
+
 void MOPanelInterface::onModSelectionChanged()
 {
   QList<QString> origins;
+  std::function<void(const QModelIndex&)> addOrigins;
+  addOrigins = [&](const QModelIndex& index) {
+    if (index.model()->hasChildren(index)) {
+      if (m_ModListView->isExpanded(index)) {
+        return;
+      }
+
+      for (int i = 0, count = index.model()->rowCount(index); i < count; ++i) {
+        addOrigins(index.model()->index(i, 0, index));
+      }
+    } else {
+      origins.append(index.data(Qt::DisplayRole).toString());
+    }
+  };
+
   const auto indexes = m_ModListView->selectionModel()->selectedRows();
-  std::ranges::transform(indexes, std::back_inserter(origins), [](auto&& idx) {
-    return idx.data(Qt::DisplayRole).toString();
-  });
+  std::ranges::for_each(indexes, addOrigins);
   m_SelectedOriginsChanged(origins);
 }
