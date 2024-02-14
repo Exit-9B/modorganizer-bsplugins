@@ -13,6 +13,10 @@ PluginRecordView::PluginRecordView(QWidget* parent)
     : QWidget(parent), ui{new Ui::PluginRecordView()}
 {
   ui->setupUi(this);
+
+  // fix issue where view scrolls after moving headers
+  ui->recordStructureView->header()->setAutoScroll(false);
+
   ui->conflictFilterRow->hide();
 }
 
