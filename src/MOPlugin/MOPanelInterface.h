@@ -40,6 +40,8 @@ public:
   bool onSelectedOriginsChanged(
       const std::function<void(const QList<QString>&)>& func) override;
 
+  void setPluginState(const QString& name, bool enable) override;
+
 private slots:
   void onModSeparatorCollapsed(const QModelIndex& index);
   void onModSeparatorExpanded(const QModelIndex& index);

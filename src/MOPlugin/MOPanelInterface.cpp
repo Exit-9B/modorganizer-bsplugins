@@ -95,6 +95,17 @@ bool MOPanelInterface::onSelectedOriginsChanged(
   return connection.connected();
 }
 
+void MOPanelInterface::setPluginState(const QString& name, bool enable)
+{
+  const auto model = m_PluginListView->model();
+  for (int i = 0, count = model->rowCount(); i < count; ++i) {
+    const auto index = model->index(i, 0);
+    if (index.data().toString().compare(name, Qt::CaseInsensitive) == 0) {
+      model->setData(index, enable ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
+    }
+  }
+}
+
 void MOPanelInterface::onModSeparatorCollapsed(const QModelIndex& index)
 {
   if (m_ModListView->selectionModel()->isSelected(index)) {

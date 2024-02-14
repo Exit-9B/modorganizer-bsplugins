@@ -776,16 +776,8 @@ void PluginsWidget::synchronizePluginLists(MOBase::IOrganizer* organizer)
           return;
 
         for (const auto& [name, state] : infos) {
-          ipluginlist->setState(name, state);
-        }
-
-        // kick the plugin list so it actually updates
-        const MOBase::IPluginGame* const managedGame = organizer->managedGame();
-        const QStringList primaryPlugins =
-            managedGame ? managedGame->primaryPlugins() : QStringList();
-
-        if (!primaryPlugins.isEmpty()) {
-          ipluginlist->setPriority(primaryPlugins[0], 0);
+          m_PanelInterface->setPluginState(name,
+                                           state == MOBase::IPluginList::STATE_ACTIVE);
         }
       });
 }
