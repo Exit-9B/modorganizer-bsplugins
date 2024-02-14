@@ -28,6 +28,8 @@ bool BranchConflictParser::Group(TESFile::GroupData group)
       if (!TESFile::iequals(owner, m_Path.files()[lastGroup.parent() >> 24])) {
         return false;
       }
+    } else if (group != lastGroup) {
+      return false;
     }
   } else {
     if (group.hasParent() && m_Path.hasFormId()) {
