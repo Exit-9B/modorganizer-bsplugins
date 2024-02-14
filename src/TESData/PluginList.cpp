@@ -155,9 +155,9 @@ FileEntry* PluginList::createEntry(const std::string& name)
     return it->second.get();
   }
 
-  const auto entry                  = std::make_shared<FileEntry>(m_NextHandle, name);
-  m_EntriesByName[name]             = entry;
-  m_EntriesByHandle[m_NextHandle++] = entry;
+  const auto entry = std::make_shared<FileEntry>(m_NextHandle++, name);
+  m_EntriesByHandle[entry->handle()] = entry;
+  m_EntriesByName[name]              = entry;
   return entry.get();
 }
 
