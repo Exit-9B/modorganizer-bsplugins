@@ -14,35 +14,39 @@ BranchConflictParser::BranchConflictParser(PluginList* pluginList,
 
 bool BranchConflictParser::Group(TESFile::GroupData group)
 {
-  if (group.hasParent()) {
-    const std::uint8_t localIndex = group.parent() >> 24U;
-    const std::string& owner =
-        localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
-    const auto files            = m_Path.files();
-    const std::uint8_t newIndex = static_cast<std::uint8_t>(
-        std::distance(std::begin(files), TESFile::find(files, owner)));
-
-    group.setLocalIndex(newIndex);
-  }
-
   if (m_CurrentPath.groups().size() < m_Path.groups().size()) {
-
-    if (group == m_Path.groups()[m_CurrentPath.groups().size()]) {
-      m_CurrentPath.push(group, m_Path.files(), m_PluginName);
-      return true;
+    const auto& lastGroup = m_Path.groups()[m_CurrentPath.groups().size()];
+    if (group.type() != lastGroup.type()) {
+      return false;
     }
 
-    return false;
-  } else {
-    if (group.hasParent() && m_Path.hasFormId()) {
-      if (group.parent() != m_Path.formId()) {
+    if (group.hasParent()) {
+      const std::uint8_t localIndex = group.parent() >> 24U;
+      const std::string& owner =
+          localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
+
+      if (!TESFile::iequals(owner, m_Path.files()[lastGroup.parent() >> 24])) {
         return false;
       }
     }
+  } else {
+    if (group.hasParent() && m_Path.hasFormId()) {
+      if ((group.parent() & 0xFFFFFF) != (m_Path.formId() & 0xFFFFFF)) {
+        return false;
+      }
 
-    m_CurrentPath.push(group, m_Path.files(), m_PluginName);
-    return true;
+      const std::uint8_t localIndex = group.parent() >> 24U;
+      const std::string& owner =
+          localIndex < m_Masters.size() ? m_Masters[localIndex] : m_PluginName;
+
+      if (!TESFile::iequals(owner.data(), m_Path.files()[m_Path.formId() >> 24])) {
+        return false;
+      }
+    }
   }
+
+  m_CurrentPath.push(group, m_Masters, m_PluginName);
+  return true;
 }
 
 void BranchConflictParser::EndGroup()
