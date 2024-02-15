@@ -22,6 +22,7 @@
 #include <future>
 #include <iterator>
 #include <ranges>
+#include <semaphore>
 #include <tuple>
 #include <utility>
 
@@ -982,6 +983,7 @@ void PluginList::scanDataFiles(bool invalidate)
     }
   }
 
+  std::counting_semaphore<512> smph{512};
   std::vector<std::shared_future<void>> futures;
   for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
@@ -1000,12 +1002,16 @@ void PluginList::scanDataFiles(bool invalidate)
         std::make_shared<FileInfo>(this, filename, forceLoaded, forceEnabled,
                                    forceDisabled, lightPluginsAreSupported));
 
-    auto assocTask = std::async([=] {
+    auto assocTask = std::async([=, &smph] {
+      smph.acquire();
       checkBsa(*info, tree);
       checkIni(*info, tree);
+      smph.release();
     });
 
-    auto fileTask = std::async([=, this, path = fullPath.toStdWString()] {
+    auto fileTask = std::async([=, this, &smph, path = fullPath.toStdWString()] {
+      smph.acquire();
+
       try {
         FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
                                    overridePluginsAreSupported};
@@ -1014,6 +1020,8 @@ void PluginList::scanDataFiles(bool invalidate)
       } catch (const std::exception& e) {
         MOBase::log::error("Error parsing \"{}\": {}", path, e.what());
       }
+
+      smph.release();
     });
 
     futures.push_back(assocTask.share());
