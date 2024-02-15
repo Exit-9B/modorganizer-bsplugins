@@ -21,7 +21,10 @@
 #include <algorithm>
 #include <future>
 #include <iterator>
+#include <limits>
 #include <ranges>
+#include <semaphore>
+#include <thread>
 #include <tuple>
 #include <utility>
 
@@ -155,9 +158,9 @@ FileEntry* PluginList::createEntry(const std::string& name)
     return it->second.get();
   }
 
-  const auto entry                  = std::make_shared<FileEntry>(m_NextHandle, name);
-  m_EntriesByName[name]             = entry;
-  m_EntriesByHandle[m_NextHandle++] = entry;
+  const auto entry = std::make_shared<FileEntry>(m_NextHandle++, name);
+  m_EntriesByHandle.emplace_hint(m_EntriesByHandle.cend(), entry->handle(), entry);
+  m_EntriesByName[name] = entry;
   return entry.get();
 }
 
@@ -982,6 +985,9 @@ void PluginList::scanDataFiles(bool invalidate)
     }
   }
 
+  const uint concurrency = std::max(1U, std::thread::hardware_concurrency() / 2);
+  std::counting_semaphore smph{concurrency};
+
   std::vector<std::shared_future<void>> futures;
   for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
@@ -1000,12 +1006,16 @@ void PluginList::scanDataFiles(bool invalidate)
         std::make_shared<FileInfo>(this, filename, forceLoaded, forceEnabled,
                                    forceDisabled, lightPluginsAreSupported));
 
-    auto assocTask = std::async([=] {
+    auto assocTask = std::async([=, &smph] {
+      smph.acquire();
       checkBsa(*info, tree);
       checkIni(*info, tree);
+      smph.release();
     });
 
-    auto fileTask = std::async([=, this, path = fullPath.toStdWString()] {
+    auto fileTask = std::async([=, this, &smph, path = fullPath.toStdWString()] {
+      smph.acquire();
+
       try {
         FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
                                    overridePluginsAreSupported};
@@ -1014,6 +1024,8 @@ void PluginList::scanDataFiles(bool invalidate)
       } catch (const std::exception& e) {
         MOBase::log::error("Error parsing \"{}\": {}", path, e.what());
       }
+
+      smph.release();
     });
 
     futures.push_back(assocTask.share());

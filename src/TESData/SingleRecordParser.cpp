@@ -20,7 +20,9 @@ static constexpr auto GameMap = std::to_array<std::pair<QStringView, Game>>({
     {u"Fallout 4", Game::FO4},
     {u"Fallout 4 VR", Game::FO4},
     {u"Skyrim", Game::TES5},
+    {u"Enderal", Game::TES5},
     {u"New Vegas", Game::FNV},
+    {u"TTW", Game::FNV},
     {u"Fallout 3", Game::FO3},
     {u"Oblivion", Game::TES4},
 });

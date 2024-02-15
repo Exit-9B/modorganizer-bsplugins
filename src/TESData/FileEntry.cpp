@@ -40,6 +40,8 @@ std::shared_ptr<Record> FileEntry::createRecord(const RecordPath& path,
 
   if (!item->record) {
     item->record = std::make_shared<Record>();
+    lk.unlock();
+
     item->record->setIdentifier(path.identifier(), path.files());
     item->record->addAlternative(m_Handle);
     item->name     = name;
