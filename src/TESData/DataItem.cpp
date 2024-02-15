@@ -43,7 +43,9 @@ QVariant DataItem::displayData(int fileIndex) const
 
 bool DataItem::isLosingConflict(int fileIndex, int fileCount) const
 {
-  if (m_ConflictType == ConflictType::Ignore) {
+  if (m_ConflictType == ConflictType::Ignore ||
+      m_ConflictType == ConflictType::Benign ||
+      m_ConflictType == ConflictType::BenignIfAdded) {
     return false;
   }
 
@@ -80,10 +82,14 @@ bool DataItem::isOverriding(int fileIndex) const
   if (!m_Data.isEmpty()) {
     if (fileIndex >= m_Data.length() &&
         m_ConflictType != ConflictType::NormalIgnoreEmpty) {
-      return true;
+      return m_ConflictType != ConflictType::Benign;
     }
 
     for (int i = 0; i < std::min(fileIndex, static_cast<int>(m_Data.length())); ++i) {
+      if (m_ConflictType == ConflictType::Benign && !m_Data[i].isValid()) {
+        continue;
+      }
+
       if (hasConflict(m_Data[i], m_Data[fileIndex])) {
         return true;
       }
