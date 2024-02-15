@@ -21,8 +21,10 @@
 #include <algorithm>
 #include <future>
 #include <iterator>
+#include <limits>
 #include <ranges>
 #include <semaphore>
+#include <thread>
 #include <tuple>
 #include <utility>
 
@@ -983,7 +985,9 @@ void PluginList::scanDataFiles(bool invalidate)
     }
   }
 
-  std::counting_semaphore<512> smph{512};
+  const uint concurrency = std::max(1U, std::thread::hardware_concurrency() / 2);
+  std::counting_semaphore smph{concurrency};
+
   std::vector<std::shared_future<void>> futures;
   for (const auto& filename : availablePlugins) {
     if (!invalidate && m_PluginsByName.contains(filename)) {
