@@ -33,7 +33,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überschriebene Mods</source>
+        <source>&Uuml;berschriebene Mods</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -257,11 +257,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überschreibt &amp; hat &uuml;berschriebene Datens&auml;tze</source>
+        <source>&Uuml;berschreibt &amp; hat &uuml;berschriebene Datens&auml;tze</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überschreibt Datens&auml;tze</source>
+        <source>&Uuml;berschreibt Datens&auml;tze</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -273,11 +273,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überschreibt &amp; wird von einem anderen Archiv &uuml;berschrieben</source>
+        <source>&Uuml;berschreibt &amp; wird von einem anderen Archiv &uuml;berschrieben</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überschreibt ein anderes Archiv</source>
+        <source>&Uuml;berschreibt ein anderes Archiv</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -607,7 +607,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Öffne Listenoptionen...</source>
+        <source>&Ouml;ffne Listenoptionen...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -702,7 +702,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Überpr&uuml;fung der Existenz der Masterliste</source>
+        <source>&Uuml;berpr&uuml;fung der Existenz der Masterliste</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
