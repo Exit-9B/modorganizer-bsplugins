@@ -16,23 +16,19 @@
         },
         "BOOST_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../boost_1_83_0"
+          "value": "${sourceDir}/../../boost_1_85_0"
         },
         "BOOST_LIBRARYDIR": {
           "type": "PATH",
-          "value": "${sourceDir}/../../boost_1_83_0/lib64-msvc-14.3/lib"
-        },
-        "FMT_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../fmt-8.1.1"
+          "value": "${sourceDir}/../../boost_1_85_0/lib64-msvc-14.3/lib"
         },
         "SPDLOG_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../spdlog-v1.10.0"
+          "value": "${sourceDir}/../../spdlog-v1.14.1"
         },
         "LOOT_PATH": {
           "type": "PATH",
-          "value": "${sourceDir}/../../libloot-0.22.1-win64"
+          "value": "${sourceDir}/../../libloot-0.23.0-win64"
         },
         "LZ4_ROOT": {
           "type": "PATH",
@@ -40,23 +36,23 @@
         },
         "QT_ROOT": {
           "type": "PATH",
-          "value": "C:/Qt/6.5.3/msvc2019_64"
+          "value": "C:/Qt/6.7.1/msvc2019_64"
         },
         "ZLIB_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../zlib-v1.3"
+          "value": "${sourceDir}/../../zlib-v1.3.1"
         },
         "PYTHON_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../python-3.11.5"
+          "value": "${sourceDir}/../../python-3.12.3"
         },
         "SEVENZ_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../7zip-23.01"
+          "value": "${sourceDir}/../../7zip-24.05"
         },
         "LIBBSARCH_ROOT": {
           "type": "PATH",
-          "value": "${sourceDir}/../../libbsarch-0.0.9-release-x64"
+          "value": "${sourceDir}/../../libbsarch-0.0.12-release-x64"
         },
         "BOOST_DI_ROOT": {
           "type": "PATH",

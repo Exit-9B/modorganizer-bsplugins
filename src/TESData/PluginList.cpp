@@ -3,6 +3,7 @@
 #include "TESFile/Reader.h"
 
 #include <bsatk.h>
+#include <igamefeatures.h>
 #include <gameplugins.h>
 #include <iplugingame.h>
 #include <log.h>
@@ -759,10 +760,10 @@ bool PluginList::isLightFlagged(const QString& name) const
   return plugin ? plugin->isLightFlagged() : false;
 }
 
-bool PluginList::isOverlayFlagged(const QString& name) const
+bool PluginList::isMediumFlagged(const QString& name) const
 {
   const auto plugin = findPlugin(name);
-  return plugin ? plugin->isOverlayFlagged() : false;
+  return plugin ? plugin->isMediumFlagged() : false;
 }
 
 bool PluginList::hasNoRecords(const QString& name) const
@@ -800,8 +801,9 @@ const MOTools::Loot::Plugin* PluginList::getLootReport(const QString& name) cons
 
 void PluginList::writePluginLists() const
 {
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport = gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
+
   if (tesSupport) {
     tesSupport->writePluginLists(this);
   }
@@ -942,12 +944,13 @@ void PluginList::scanDataFiles(bool invalidate)
                                       ? managedGame->loadOrderMechanism()
                                       : MOBase::IPluginGame::LoadOrderMechanism::None;
 
-  const auto tesSupport = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport = gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   const bool lightPluginsAreSupported =
       tesSupport && tesSupport->lightPluginsAreSupported();
   const bool overridePluginsAreSupported =
-      tesSupport && tesSupport->overridePluginsAreSupported();
+      tesSupport && tesSupport->mediumPluginsAreSupported();
 
   QStringList availablePlugins;
 
@@ -1046,8 +1049,8 @@ void PluginList::scanDataFiles(bool invalidate)
 
 void PluginList::readPluginLists()
 {
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport = gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   if (tesSupport) {
     tesSupport->readPluginLists(this);
@@ -1297,13 +1300,13 @@ void PluginList::computeCompileIndices()
   int numESLs    = 0;
   int numSkipped = 0;
 
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport = gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   const bool lightPluginsAreSupported =
       tesSupport && tesSupport->lightPluginsAreSupported();
   const bool overridePluginsAreSupported =
-      tesSupport && tesSupport->overridePluginsAreSupported();
+      tesSupport && tesSupport->mediumPluginsAreSupported();
 
   for (int priority = 0; priority < m_PluginsByPriority.size(); ++priority) {
     const int index   = m_PluginsByPriority[priority];
