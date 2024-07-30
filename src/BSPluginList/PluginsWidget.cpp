@@ -9,6 +9,7 @@
 #include "PluginListContextMenu.h"
 #include "PluginSortFilterProxyModel.h"
 #include "ui_pluginswidget.h"
+#include <igamefeatures.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -114,13 +115,13 @@ void PluginsWidget::updatePluginCount()
   int regularCount           = 0;
   int activeVisibleCount     = 0;
 
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport = gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   const bool lightPluginsAreSupported =
       tesSupport && tesSupport->lightPluginsAreSupported();
-  const bool overridePluginsAreSupported =
-      tesSupport && tesSupport->overridePluginsAreSupported();
+  const bool mediumPluginsAreSupported =
+      tesSupport && tesSupport->mediumPluginsAreSupported();
 
   for (int i = 0, count = m_PluginListModel->rowCount(); i < count; ++i) {
     const auto index = m_PluginListModel->index(i, 0);
@@ -175,7 +176,7 @@ void PluginsWidget::updatePluginCount()
                  .arg(masterCount + regularCount);
   if (lightPluginsAreSupported)
     toolTip += row.arg(tr("ESLs")).arg(activeLightMasterCount).arg(lightMasterCount);
-  if (overridePluginsAreSupported)
+  if (mediumPluginsAreSupported)
     toolTip += row.arg(tr("Overlay")).arg(activeOverlayCount).arg(overlayCount);
   toolTip += uR"(</table>)"_s;
 

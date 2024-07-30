@@ -112,7 +112,7 @@ public:
   [[nodiscard]] bool hasLightExtension(const QString& name) const override;
   [[nodiscard]] bool isMasterFlagged(const QString& name) const override;
   [[nodiscard]] bool isLightFlagged(const QString& name) const override;
-  [[nodiscard]] bool isOverlayFlagged(const QString& name) const override;
+  [[nodiscard]] bool isMediumFlagged(const QString& name) const override;
   [[nodiscard]] bool hasNoRecords(const QString& name) const override;
 
   // ILootCache

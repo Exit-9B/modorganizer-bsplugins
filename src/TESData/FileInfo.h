@@ -66,6 +66,7 @@ public:
     bool isMasterFlagged;
     bool isLightFlagged;
     bool isOverlayFlagged;
+    bool isMediumFlagged; // Not sure what to do with overlay. MO2 seems to have converted it to Medium but these hex codes are different.
     bool hasNoRecords;
 
     QStringList masters;
@@ -126,6 +127,8 @@ public:
   void setLightFlagged(bool value) { m_Metadata.isLightFlagged = value; }
   [[nodiscard]] bool isOverlayFlagged() const { return m_Metadata.isOverlayFlagged; }
   void setOverlayFlagged(bool value) { m_Metadata.isOverlayFlagged = value; }
+  [[nodiscard]] bool isMediumFlagged() const { return m_Metadata.isMediumFlagged; }
+  void setMediumFlagged(bool value) { m_Metadata.isMediumFlagged = value; }
   [[nodiscard]] bool hasNoRecords() const { return m_Metadata.hasNoRecords; }
   void setHasNoRecords(bool value) { m_Metadata.hasNoRecords = value; }
 
