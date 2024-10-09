@@ -33,9 +33,19 @@ bool FileInfo::isMasterFile() const
          m_FileSystemData.hasLightExtension;
 }
 
+bool FileInfo::isMediumFile() const
+{
+  return m_Metadata.isMediumFlagged;
+}
+
 bool FileInfo::isSmallFile() const
 {
   return m_Metadata.isLightFlagged || m_FileSystemData.hasLightExtension;
+}
+
+bool FileInfo::isBlueprintFile() const
+{
+  return isMasterFile() && m_Metadata.isBlueprintFlagged;
 }
 
 bool FileInfo::isAlwaysEnabled() const

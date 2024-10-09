@@ -111,9 +111,13 @@ public:
   [[nodiscard]] bool hasMasterExtension(const QString& name) const override;
   [[nodiscard]] bool hasLightExtension(const QString& name) const override;
   [[nodiscard]] bool isMasterFlagged(const QString& name) const override;
+  [[nodiscard]] bool isMediumFlagged(const QString& name) const override;
   [[nodiscard]] bool isLightFlagged(const QString& name) const override;
-  [[nodiscard]] bool isOverlayFlagged(const QString& name) const override;
+  [[nodiscard]] bool isBlueprintFlagged(const QString& name) const override;
   [[nodiscard]] bool hasNoRecords(const QString& name) const override;
+
+  [[nodiscard]] QString author(const QString& name) const override;
+  [[nodiscard]] QString description(const QString& name) const override;
 
   // ILootCache
 

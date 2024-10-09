@@ -489,8 +489,10 @@ void PluginGroupProxyModel::buildGroups()
   QString lastGroup;
   std::size_t groupId = NO_ID;
   for (int i = 0, count = sourceModel()->rowCount(); i < count; ++i) {
-    const auto idx      = sourceModel()->index(i, 0);
-    const QString name  = idx.data().toString();
+    const auto idx = sourceModel()->index(i, 0);
+    const auto info =
+        idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+    const QString name  = info ? info->name() : QString();
     const QString group = idx.data(PluginListModel::GroupingRole).toString();
 
     if (sorted && group != lastGroup) {

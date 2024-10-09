@@ -32,15 +32,16 @@ public:
 
   enum EFlag : uint
   {
-    FLAG_NONE        = 0x00,
-    FLAG_PROBLEMATIC = 0x01,
-    FLAG_INFORMATION = 0x02,
-    FLAG_INI         = 0x04,
-    FLAG_BSA         = 0x08,
-    FLAG_MASTER      = 0x10,
-    FLAG_LIGHT       = 0x20,
-    FLAG_OVERLAY     = 0x40,
-    FLAG_CLEAN       = 0x80,
+    FLAG_NONE        = 0x000,
+    FLAG_PROBLEMATIC = 0x001,
+    FLAG_INFORMATION = 0x002,
+    FLAG_INI         = 0x004,
+    FLAG_BSA         = 0x008,
+    FLAG_MASTER      = 0x010,
+    FLAG_MEDIUM      = 0x020,
+    FLAG_LIGHT       = 0x040,
+    FLAG_BLUEPRINT   = 0x080,
+    FLAG_CLEAN       = 0x100,
   };
 
   struct FileSystemData
@@ -64,8 +65,9 @@ public:
     QString description;
 
     bool isMasterFlagged;
+    bool isMediumFlagged;
     bool isLightFlagged;
-    bool isOverlayFlagged;
+    bool isBlueprintFlagged;
     bool hasNoRecords;
 
     QStringList masters;
@@ -122,10 +124,12 @@ public:
   void setDescription(const QString& text) { m_Metadata.description = text; }
   [[nodiscard]] bool isMasterFlagged() const { return m_Metadata.isMasterFlagged; }
   void setMasterFlagged(bool value) { m_Metadata.isMasterFlagged = value; }
+  [[nodiscard]] bool isMediumFlagged() const { return m_Metadata.isMediumFlagged; }
+  void setMediumFlagged(bool value) { m_Metadata.isMediumFlagged = value; }
   [[nodiscard]] bool isLightFlagged() const { return m_Metadata.isLightFlagged; }
   void setLightFlagged(bool value) { m_Metadata.isLightFlagged = value; }
-  [[nodiscard]] bool isOverlayFlagged() const { return m_Metadata.isOverlayFlagged; }
-  void setOverlayFlagged(bool value) { m_Metadata.isOverlayFlagged = value; }
+  [[nodiscard]] bool isBlueprintFlagged() const { return m_Metadata.isBlueprintFlagged; }
+  void setBlueprintFlagged(bool value) { m_Metadata.isBlueprintFlagged = value; }
   [[nodiscard]] bool hasNoRecords() const { return m_Metadata.hasNoRecords; }
   void setHasNoRecords(bool value) { m_Metadata.hasNoRecords = value; }
 
@@ -187,7 +191,9 @@ public:
   }
 
   [[nodiscard]] bool isMasterFile() const;
+  [[nodiscard]] bool isMediumFile() const;
   [[nodiscard]] bool isSmallFile() const;
+  [[nodiscard]] bool isBlueprintFile() const;
   [[nodiscard]] bool isAlwaysEnabled() const;
   [[nodiscard]] bool canBeToggled() const;
   [[nodiscard]] bool mustLoadAfter(const FileInfo& other) const;

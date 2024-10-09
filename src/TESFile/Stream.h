@@ -85,10 +85,13 @@ struct RecordFlags
   enum TES4Flag : std::uint32_t
   {
     Master    = 0x1,
+    Optimized = 0x10,
     Localized = 0x80,
-    LightNew  = 0x100,  // Starfield ESL flag
-    LightOld  = 0x200,  // SSE/F4 ESL flag
-    Overlay   = 0x200,  // Starfield ESQ flag
+    SmallNew  = 0x100,
+    SmallOld  = 0x200,
+    Update    = 0x200,
+    Medium    = 0x400,
+    Blueprint = 0x800,
   };
 
   enum Flag : std::uint32_t

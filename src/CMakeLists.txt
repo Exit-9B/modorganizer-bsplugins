@@ -41,7 +41,7 @@ mo2_configure_plugin(
 	WARNINGS OFF
 	PRIVATE_DEPENDS
 		bsatk lootcli uibase
-		boost fmt zlib
+		libbsarch boost zlib
 		Qt::WebEngineWidgets
 )
 mo2_install_target(bsplugins)

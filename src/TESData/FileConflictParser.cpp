@@ -10,9 +10,10 @@ namespace TESData
 {
 
 FileConflictParser::FileConflictParser(PluginList* pluginList, FileInfo* plugin,
-                                       bool lightSupported, bool overlaySupported)
+                                       bool lightSupported, bool mediumSupported,
+                                       bool blueprintSupported)
     : m_PluginList{pluginList}, m_Plugin{plugin}, m_LightSupported{lightSupported},
-      m_OverlaySupported{overlaySupported}
+      m_MediumSupported{mediumSupported}, m_BlueprintSupported{blueprintSupported}
 {
   m_PluginName = m_Plugin->name().toStdString();
 }
@@ -51,11 +52,13 @@ bool FileConflictParser::Form(TESFile::FormData form)
   if (m_CurrentPath.groups().empty()) {
     if (form.type() == "TES4"_ts) {
       m_Plugin->setMasterFlagged(form.flags() & TESFile::RecordFlags::Master);
-      m_Plugin->setOverlayFlagged(m_OverlaySupported &&
-                                  (form.flags() & TESFile::RecordFlags::Overlay));
+      m_Plugin->setMediumFlagged(m_MediumSupported &&
+                                 (form.flags() & TESFile::RecordFlags::Medium));
+      m_Plugin->setBlueprintFlagged(m_BlueprintSupported &&
+                                    (form.flags() & TESFile::RecordFlags::Blueprint));
       m_Plugin->setLightFlagged(
-          m_OverlaySupported ? (form.flags() & TESFile::RecordFlags::LightNew)
-          : m_LightSupported ? (form.flags() & TESFile::RecordFlags::LightOld)
+          m_MediumSupported  ? (form.flags() & TESFile::RecordFlags::SmallNew)
+          : m_LightSupported ? (form.flags() & TESFile::RecordFlags::SmallOld)
                              : false);
       return true;
     } else {
@@ -214,8 +217,8 @@ void FileConflictParser::StandardData(std::istream& stream)
 {
   switch (m_CurrentChunk) {
   case "EDID"_ts: {
-    const std::string editorId = TESFile::readZstring(stream);
-    m_CurrentName              = std::move(editorId);
+    std::string editorId = TESFile::readZstring(stream);
+    m_CurrentName        = std::move(editorId);
   } break;
   }
 }
