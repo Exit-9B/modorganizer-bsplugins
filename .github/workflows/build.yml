@@ -14,12 +14,6 @@ jobs:
   build:
     runs-on: windows-2022
     steps:
-      - name: Configure Pagefile
-        uses: al-cheb/configure-pagefile-action@v1.4
-        with:
-          minimum-size: 2GB
-          maximum-size: 48GB
-
       - name: Build
         uses: ModOrganizer2/build-with-mob-action@master
         with:
@@ -31,7 +25,7 @@ jobs:
         run: cmake --install ${{env.SOURCE_ROOT}}/vsbuild --config ${{env.BUILD_TYPE}} --prefix ${{env.SOURCE_ROOT}}/install
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bsplugins
           path: ${{env.SOURCE_ROOT}}/install/bin
