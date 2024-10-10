@@ -61,6 +61,10 @@ bool FileInfo::canBeToggled() const
 
 bool FileInfo::mustLoadAfter(const FileInfo& other) const
 {
+  if (this->isBlueprintFile() && !other.isBlueprintFile()) {
+    return true;
+  }
+
   const bool hasMaster = this->masters().contains(other.name(), Qt::CaseInsensitive);
   const bool isMaster  = other.masters().contains(this->name(), Qt::CaseInsensitive);
 
