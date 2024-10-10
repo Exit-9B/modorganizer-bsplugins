@@ -3,8 +3,8 @@
 #include "TESFile/Reader.h"
 
 #include <bsatk.h>
-#include <gameplugins.h>
-#include <iplugingame.h>
+#include <game_features/gameplugins.h>
+#include <game_features/igamefeatures.h>
 #include <log.h>
 #include <safewritefile.h>
 #include <utility.h>
@@ -753,22 +753,40 @@ bool PluginList::isMasterFlagged(const QString& name) const
   return plugin ? plugin->isMasterFlagged() : false;
 }
 
+bool PluginList::isMediumFlagged(const QString& name) const
+{
+  const auto plugin = findPlugin(name);
+  return plugin ? plugin->isMediumFlagged() : false;
+}
+
 bool PluginList::isLightFlagged(const QString& name) const
 {
   const auto plugin = findPlugin(name);
   return plugin ? plugin->isLightFlagged() : false;
 }
 
-bool PluginList::isOverlayFlagged(const QString& name) const
+bool PluginList::isBlueprintFlagged(const QString& name) const
 {
   const auto plugin = findPlugin(name);
-  return plugin ? plugin->isOverlayFlagged() : false;
+  return plugin ? plugin->isBlueprintFlagged() : false;
 }
 
 bool PluginList::hasNoRecords(const QString& name) const
 {
   const auto plugin = findPlugin(name);
   return plugin ? plugin->hasNoRecords() : false;
+}
+
+QString PluginList::author(const QString& name) const
+{
+  const auto plugin = findPlugin(name);
+  return plugin ? plugin->author() : QString();
+}
+
+QString PluginList::description(const QString& name) const
+{
+  const auto plugin = findPlugin(name);
+  return plugin ? plugin->description() : QString();
 }
 
 #pragma endregion IPluginList
@@ -800,8 +818,9 @@ const MOTools::Loot::Plugin* PluginList::getLootReport(const QString& name) cons
 
 void PluginList::writePluginLists() const
 {
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport =
+      gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
   if (tesSupport) {
     tesSupport->writePluginLists(this);
   }
@@ -932,7 +951,8 @@ void PluginList::scanDataFiles(bool invalidate)
     m_Archives.clear();
   }
 
-  const auto managedGame = m_Organizer->managedGame();
+  const auto managedGame  = m_Organizer->managedGame();
+  const auto gameFeatures = m_Organizer->gameFeatures();
 
   const QStringList primaryPlugins =
       managedGame ? managedGame->primaryPlugins() : QStringList();
@@ -942,12 +962,15 @@ void PluginList::scanDataFiles(bool invalidate)
                                       ? managedGame->loadOrderMechanism()
                                       : MOBase::IPluginGame::LoadOrderMechanism::None;
 
-  const auto tesSupport = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto tesSupport =
+      gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   const bool lightPluginsAreSupported =
       tesSupport && tesSupport->lightPluginsAreSupported();
-  const bool overridePluginsAreSupported =
-      tesSupport && tesSupport->overridePluginsAreSupported();
+  const bool mediumPluginsAreSupported =
+      tesSupport && tesSupport->mediumPluginsAreSupported();
+  const bool blueprintPluginsAreSupported =
+      tesSupport && tesSupport->blueprintPluginsAreSupported();
 
   QStringList availablePlugins;
 
@@ -1018,7 +1041,8 @@ void PluginList::scanDataFiles(bool invalidate)
 
       try {
         FileConflictParser handler{this, info.get(), lightPluginsAreSupported,
-                                   overridePluginsAreSupported};
+                                   mediumPluginsAreSupported,
+                                   blueprintPluginsAreSupported};
         TESFile::Reader<FileConflictParser> reader{};
         reader.parse(std::filesystem::path(path), handler);
       } catch (const std::exception& e) {
@@ -1046,8 +1070,9 @@ void PluginList::scanDataFiles(bool invalidate)
 
 void PluginList::readPluginLists()
 {
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport =
+      gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   if (tesSupport) {
     tesSupport->readPluginLists(this);
@@ -1226,11 +1251,11 @@ void PluginList::enforcePluginRelationships()
   MOBase::TimeThis tt{"TESData::PluginList::enforcePluginRelationships"};
 
   for (int i = 0; i < m_PluginsByPriority.size(); ++i) {
-    const int firstIndex    = m_PluginsByPriority[i];
-    const auto& firstPlugin = m_Plugins.at(firstIndex);
+    const int& firstIndex = m_PluginsByPriority[i];
 
     for (int j = i + 1; j < m_PluginsByPriority.size(); ++j) {
       const int secondIndex    = m_PluginsByPriority[j];
+      const auto& firstPlugin  = m_Plugins.at(firstIndex);
       const auto& secondPlugin = m_Plugins.at(secondIndex);
 
       if (firstPlugin->mustLoadAfter(*secondPlugin)) {
@@ -1295,19 +1320,21 @@ void PluginList::computeCompileIndices()
 {
   int numNormal  = 0;
   int numESLs    = 0;
+  int numESHs    = 0;
   int numSkipped = 0;
 
-  const auto managedGame = m_Organizer->managedGame();
-  const auto tesSupport  = managedGame ? managedGame->feature<GamePlugins>() : nullptr;
+  const auto gameFeatures = m_Organizer->gameFeatures();
+  const auto tesSupport =
+      gameFeatures ? gameFeatures->gameFeature<MOBase::GamePlugins>() : nullptr;
 
   const bool lightPluginsAreSupported =
       tesSupport && tesSupport->lightPluginsAreSupported();
-  const bool overridePluginsAreSupported =
-      tesSupport && tesSupport->overridePluginsAreSupported();
+  const bool mediumPluginsAreSupported =
+      tesSupport && tesSupport->mediumPluginsAreSupported();
 
   for (int priority = 0; priority < m_PluginsByPriority.size(); ++priority) {
-    const int index   = m_PluginsByPriority[priority];
-    const auto plugin = m_Plugins.at(index);
+    const int index    = m_PluginsByPriority[priority];
+    const auto& plugin = m_Plugins.at(index);
 
     if (!plugin->enabled()) {
       plugin->setIndex(QString());
@@ -1315,16 +1342,19 @@ void PluginList::computeCompileIndices()
       continue;
     }
 
-    if (lightPluginsAreSupported && plugin->isSmallFile()) {
+    if (mediumPluginsAreSupported && plugin->isMediumFile()) {
+      const int ESHpos = 0xFD + (numESHs >> 8);
+      plugin->setIndex((u"%1:%2"_s)
+                           .arg(ESHpos, 2, 16, QChar(u'0'))
+                           .arg(numESHs & 0xFF, 2, 16, QChar(u'0'))
+                           .toUpper());
+    } else if (lightPluginsAreSupported && plugin->isSmallFile()) {
       const int ESLpos = 0xFE + (numESLs >> 12);
       plugin->setIndex((u"%1:%2"_s)
                            .arg(ESLpos, 2, 16, QChar(u'0'))
                            .arg(numESLs & 0xFFF, 3, 16, QChar(u'0'))
                            .toUpper());
       ++numESLs;
-    } else if (overridePluginsAreSupported && plugin->isOverlayFlagged()) {
-      plugin->setIndex((u"XX"_s));
-      ++numSkipped;
     } else {
       plugin->setIndex((u"%1"_s).arg(numNormal++, 2, 16, QChar(u'0')).toUpper());
     }

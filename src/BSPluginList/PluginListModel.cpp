@@ -429,21 +429,38 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     }
 
     if (plugin->isMasterFile()) {
-      toolTip += tr("This file is flagged as an ESM. It will load before any non-ESM "
+      toolTip += tr("This file is flagged as a master plugin (ESM). It will load "
+                    "before any non-ESM "
                     "files in the load order.") +
                  spacing;
     }
 
     if (plugin->isSmallFile()) {
-      toolTip += tr("This file is flagged as an ESL. It will adhere to its position in "
-                    "the load order but the records will be loaded in ESL space.") +
+      toolTip +=
+          tr("This file is flagged as a light plugin (ESL). It will adhere to its "
+             "position in "
+             "the load order but the records will be loaded in ESL space (FE/FF). You "
+             "can have up to 4096 light plugins in addition to other plugin types.") +
+          spacing;
+    } else if (plugin->isMediumFile()) {
+      toolTip += tr("This file is flagged as a medium plugin (ESH). It will adhere to "
+                    "its position in the load order but the records will be loaded in "
+                    "ESH space (FD). You can have 256 medium plugins in addition to "
+                    "other plugin types.") +
                  spacing;
     }
 
-    if (plugin->isOverlayFlagged()) {
-      toolTip += tr("This plugin is flagged as an overlay plugin. It contains only "
-                    "modified records and will overlay those changes onto the "
-                    "existing records in memory. It takes no memory space.") +
+    if (plugin->isBlueprintFile()) {
+      toolTip += tr("This plugin has the blueprint flag. This forces it to load after "
+                    "every other non-blueprint plugin. Blueprint plugins will adhere "
+                    "to standard load order rules with other blueprint plugins.") +
+                 spacing;
+    }
+
+    if (plugin->isLightFlagged() && plugin->isMediumFlagged()) {
+      toolTip += tr("WARNING: This plugin is both light and medium flagged. This could "
+                    "indicate that the file was saved improperly and may have "
+                    "mismatched record references. Use it at your own risk.") +
                  spacing;
     }
 
@@ -532,12 +549,16 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     flag |= FLAG_MASTER;
   }
 
+  if (plugin->isMediumFile()) {
+    flag |= FLAG_MEDIUM;
+  }
+
   if (plugin->isSmallFile()) {
     flag |= FLAG_LIGHT;
   }
 
-  if (plugin->isOverlayFlagged()) {
-    flag |= FLAG_OVERLAY;
+  if (plugin->isBlueprintFile()) {
+    flag |= FLAG_BLUEPRINT;
   }
 
   if (lootInfo && !lootInfo->dirty.empty() && Settings::instance()->lootShowDirty()) {

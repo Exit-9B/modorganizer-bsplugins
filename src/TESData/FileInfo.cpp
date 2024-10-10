@@ -33,9 +33,19 @@ bool FileInfo::isMasterFile() const
          m_FileSystemData.hasLightExtension;
 }
 
+bool FileInfo::isMediumFile() const
+{
+  return m_Metadata.isMediumFlagged;
+}
+
 bool FileInfo::isSmallFile() const
 {
   return m_Metadata.isLightFlagged || m_FileSystemData.hasLightExtension;
+}
+
+bool FileInfo::isBlueprintFile() const
+{
+  return isMasterFile() && m_Metadata.isBlueprintFlagged;
 }
 
 bool FileInfo::isAlwaysEnabled() const
@@ -51,6 +61,12 @@ bool FileInfo::canBeToggled() const
 
 bool FileInfo::mustLoadAfter(const FileInfo& other) const
 {
+  if (this->isBlueprintFile() && !other.isBlueprintFile()) {
+    return true;
+  } else if (other.isBlueprintFile() && !this->isBlueprintFile()) {
+    return false;
+  }
+
   const bool hasMaster = this->masters().contains(other.name(), Qt::CaseInsensitive);
   const bool isMaster  = other.masters().contains(this->name(), Qt::CaseInsensitive);
 

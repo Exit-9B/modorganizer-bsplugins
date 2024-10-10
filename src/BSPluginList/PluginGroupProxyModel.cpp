@@ -459,8 +459,9 @@ void PluginGroupProxyModel::buildGroups()
   const bool sorted =
       sortProxy && sortProxy->sortColumn() == PluginListModel::COL_PRIORITY;
 
-  int primaryDivider = -1;
-  int masterDivider  = -1;
+  int primaryDivider   = -1;
+  int masterDivider    = -1;
+  int blueprintDivider = -1;
   for (int i = 0; i < sourceModel()->rowCount(); ++i) {
     const auto idx = sourceModel()->index(i, 0);
     const auto plugin =
@@ -468,13 +469,17 @@ void PluginGroupProxyModel::buildGroups()
 
     if (sorted && plugin) {
       if (sortProxy->sortOrder() == Qt::AscendingOrder) {
-        if (plugin->forceLoaded()) {
+        if (blueprintDivider == -1 && plugin->isBlueprintFile()) {
+          blueprintDivider = i;
+        } else if (plugin->forceLoaded()) {
           primaryDivider = i;
         } else if (plugin->isMasterFile()) {
           masterDivider = i;
         }
       } else {
-        if (masterDivider == -1 && plugin->isMasterFile()) {
+        if (plugin->isBlueprintFile()) {
+          blueprintDivider = i - 1;
+        } else if (masterDivider == -1 && plugin->isMasterFile()) {
           masterDivider = i - 1;
         } else if (primaryDivider == -1 && plugin->forceLoaded()) {
           primaryDivider = i - 1;
@@ -489,8 +494,10 @@ void PluginGroupProxyModel::buildGroups()
   QString lastGroup;
   std::size_t groupId = NO_ID;
   for (int i = 0, count = sourceModel()->rowCount(); i < count; ++i) {
-    const auto idx      = sourceModel()->index(i, 0);
-    const QString name  = idx.data().toString();
+    const auto idx = sourceModel()->index(i, 0);
+    const auto info =
+        idx.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+    const QString name  = info ? info->name() : QString();
     const QString group = idx.data(PluginListModel::GroupingRole).toString();
 
     if (sorted && group != lastGroup) {
@@ -516,7 +523,8 @@ void PluginGroupProxyModel::buildGroups()
       m_SourceMap.push_back(id);
     }
 
-    if (sorted && (i == primaryDivider || i == masterDivider) &&
+    if (sorted &&
+        (i == primaryDivider || i == masterDivider || i == blueprintDivider) &&
         (i != 0 && i != count - 1)) {
       lastGroup = QString();
       groupId   = NO_ID;

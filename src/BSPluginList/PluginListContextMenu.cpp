@@ -264,17 +264,29 @@ void PluginListContextMenu::addSendToMenu()
   });
 }
 
+static MOBase::IModInterface* getModInfo(const QModelIndex& index,
+                                         MOBase::IModList* modList,
+                                         MOBase::IPluginList* pluginList)
+{
+  const auto info =
+      index.data(PluginListModel::InfoRole).value<const TESData::FileInfo*>();
+
+  if (!info) {
+    return nullptr;
+  }
+
+  const QString fileName = info->name();
+  return modList->getMod(pluginList->origin(fileName));
+}
+
 static void openOriginExplorer(const QModelIndexList& indices,
                                MOBase::IModList* modList,
                                MOBase::IPluginList* pluginList)
 {
   for (const auto& idx : indices) {
-    QString fileName   = idx.data().toString();
-    const auto modInfo = modList->getMod(pluginList->origin(fileName));
-    if (modInfo == nullptr) {
-      continue;
+    if (const auto modInfo = getModInfo(idx, modList, pluginList)) {
+      MOBase::shell::Explore(modInfo->absolutePath());
     }
-    MOBase::shell::Explore(modInfo->absolutePath());
   }
 }
 
@@ -291,16 +303,13 @@ void PluginListContextMenu::addOriginActions(MOBase::IModList* modList,
   const auto nameIdx = selectedIdx.siblingAtColumn(PluginListModel::COL_NAME);
 
   if (std::ranges::any_of(m_ModelSelected, [=](auto&& idx) {
-        QString fileName   = idx.data().toString();
-        const auto modInfo = modList->getMod(pluginList->origin(fileName));
-        return modInfo != nullptr;
+        return getModInfo(idx, modList, pluginList) != nullptr;
       })) {
     addAction(tr("Open Origin in Explorer"), [=, this]() {
       openOriginExplorer(m_ModelSelected, modList, pluginList);
     });
 
-    const auto fileName = nameIdx.data().toString();
-    const auto modInfo  = modList->getMod(pluginList->origin(fileName));
+    const auto modInfo = getModInfo(nameIdx, modList, pluginList);
     if (modInfo && !modInfo->isForeign()) {
       addAction(tr("Open Origin Info..."), [this, nameIdx] {
         emit openModInformation(nameIdx);

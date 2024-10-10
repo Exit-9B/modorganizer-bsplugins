@@ -245,10 +245,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This plugin is flagged as an overlay plugin. It contains only modified records and will overlay those changes onto the existing records in memory. It takes no memory space.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>This is a dummy plugin. It contains no records and is typically used to load a paired archive file.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -266,10 +262,6 @@
     </message>
     <message>
         <source>Has overridden records</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This file is flagged as an ESL. It will adhere to its position in the load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -309,7 +301,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This file is flagged as an ESM. It will load before any non-ESM files in the load order.</source>
+        <source>This file is flagged as a master plugin (ESM). It will load before any non-ESM files in the load order.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file is flagged as a light plugin (ESL). It will adhere to its position in the load order but the records will be loaded in ESL space (FE/FF). You can have up to 4096 light plugins in addition to other plugin types.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file is flagged as a medium plugin (ESH). It will adhere to its position in the load order but the records will be loaded in ESH space (FD). You can have 256 medium plugins in addition to other plugin types.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This plugin has the blueprint flag. This forces it to load after every other non-blueprint plugin. Blueprint plugins will adhere to standard load order rules with other blueprint plugins.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WARNING: This plugin is both light and medium flagged. This could indicate that the file was saved improperly and may have mismatched record references. Use it at your own risk.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -345,10 +353,6 @@
     </message>
     <message>
         <source>ESLs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Overlay</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -417,6 +421,10 @@
     </message>
     <message>
         <source>Ignore conflicts with masters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ESHs</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

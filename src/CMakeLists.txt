@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
 
 include(FetchContent)
 
@@ -41,7 +41,7 @@ mo2_configure_plugin(
 	WARNINGS OFF
 	PRIVATE_DEPENDS
 		bsatk lootcli uibase
-		boost fmt zlib
+		libbsarch boost zlib
 		Qt::WebEngineWidgets
 )
 mo2_install_target(bsplugins)
