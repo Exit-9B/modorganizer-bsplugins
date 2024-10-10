@@ -63,6 +63,8 @@ bool FileInfo::mustLoadAfter(const FileInfo& other) const
 {
   if (this->isBlueprintFile() && !other.isBlueprintFile()) {
     return true;
+  } else if (other.isBlueprintFile() && !this->isBlueprintFile()) {
+    return false;
   }
 
   const bool hasMaster = this->masters().contains(other.name(), Qt::CaseInsensitive);

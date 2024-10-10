@@ -1251,11 +1251,11 @@ void PluginList::enforcePluginRelationships()
   MOBase::TimeThis tt{"TESData::PluginList::enforcePluginRelationships"};
 
   for (int i = 0; i < m_PluginsByPriority.size(); ++i) {
-    const int firstIndex    = m_PluginsByPriority[i];
-    const auto& firstPlugin = m_Plugins.at(firstIndex);
+    const int& firstIndex = m_PluginsByPriority[i];
 
     for (int j = i + 1; j < m_PluginsByPriority.size(); ++j) {
       const int secondIndex    = m_PluginsByPriority[j];
+      const auto& firstPlugin  = m_Plugins.at(firstIndex);
       const auto& secondPlugin = m_Plugins.at(secondIndex);
 
       if (firstPlugin->mustLoadAfter(*secondPlugin)) {
