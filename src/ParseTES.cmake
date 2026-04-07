@@ -10,8 +10,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(esp_json)
 
-set(PYTHON_BUILD_PATH ${PYTHON_ROOT}/PCBuild/amd64)
-set(Python_EXECUTABLE ${PYTHON_BUILD_PATH}/python.exe)
+set(Python_FIND_VIRTUALENV STANDARD)
+
+# find Python before include mo2-cmake, otherwise this will trigger a bunch of CMP0111
+# due to the imported configuration mapping variables defined in mo2.cmake
+find_package(Python ${MO2_PYTHON_VERSION} COMPONENTS Interpreter Development REQUIRED)
+get_filename_component(Python_HOME ${Python_EXECUTABLE} PATH)
+set(Python_DLL_DIR "${Python_HOME}/DLLs")
+set(Python_LIB_DIR "${Python_HOME}/Lib")
 
 find_program(CLANG_FORMAT clang-format)
 

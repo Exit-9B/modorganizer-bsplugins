@@ -25,6 +25,7 @@ static constexpr auto GameMap = std::to_array<std::pair<QStringView, Game>>({
     {u"TTW", Game::FNV},
     {u"Fallout 3", Game::FO3},
     {u"Oblivion", Game::TES4},
+    {u"Oblivion Remastered", Game::TES4},
 });
 
 static Game gameIdentifier(QStringView gameName)

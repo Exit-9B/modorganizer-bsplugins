@@ -1,4 +1,16 @@
-cmake_minimum_required(VERSION 3.27)
+cmake_minimum_required(VERSION 3.28)
+
+find_package(mo2-cmake CONFIG REQUIRED)
+find_package(mo2-uibase CONFIG REQUIRED)
+find_package(mo2-lootcli-header CONFIG REQUIRED)
+find_package(mo2-dds-header CONFIG REQUIRED)
+find_package(mo2-bsatk CONFIG REQUIRED)
+find_package(mo2-libbsarch CONFIG REQUIRED)
+
+find_package(Qt6 REQUIRED COMPONENTS WebEngineWidgets)
+find_package(ZLIB REQUIRED)
+find_package(lz4 CONFIG REQUIRED)
+find_package(Boost CONFIG REQUIRED COMPONENTS program_options thread interprocess signals2 uuid accumulators)
 
 include(FetchContent)
 
@@ -36,12 +48,21 @@ if(MSVC)
 	)
 endif()
 
-mo2_configure_plugin(
-	bsplugins
+mo2_configure_plugin(bsplugins
 	WARNINGS OFF
 	PRIVATE_DEPENDS
-		bsatk lootcli uibase
-		boost fmt zlib
+		mo2::uibase mo2::bsatk mo2::lootcli-header
+		mo2::libbsarch Boost::program_options Boost::signals2
+		Boost::uuid Boost::accumulators ZLIB::ZLIB
 		Qt::WebEngineWidgets
 )
-mo2_install_target(bsplugins)
+mo2_default_source_group()
+target_link_libraries(bsplugins
+	PUBLIC
+		mo2::dds-header
+	PRIVATE
+		mo2::uibase mo2::bsatk mo2::lootcli-header
+		mo2::libbsarch Boost::program_options Boost::signals2
+		Boost::uuid Boost::accumulators ZLIB::ZLIB
+		Qt6::WebEngineWidgets)
+mo2_install_plugin(bsplugins)

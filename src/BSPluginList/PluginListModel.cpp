@@ -152,6 +152,15 @@ QVariant PluginListModel::displayData(const QModelIndex& index) const
     return plugin->priority();
   case COL_MODINDEX:
     return plugin->index();
+  case COL_FORMVERSION:
+    return plugin->formVersion() != 0 ? QString::number(plugin->formVersion())
+                                      : QString();
+  case COL_HEADERVERSION:
+    return QString::number(plugin->headerVersion());
+  case COL_AUTHOR:
+    return plugin->author();
+  case COL_DESCRIPTION:
+    return plugin->description();
   default:
     return QVariant();
   }
@@ -322,6 +331,15 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
                  "</i></b>";
     }
 
+    if (plugin->formVersion() != 0) {
+      // Oblivion-style plugin headers don't have a form version
+      toolTip += "<br><b>" + tr("Form Version") +
+                 "</b>: " + QString::number(plugin->formVersion());
+    }
+
+    toolTip += "<br><b>" + tr("Header Version") +
+               "</b>: " + QString::number(plugin->headerVersion());
+
     if (!plugin->author().isEmpty()) {
       toolTip += "<br><b>" + tr("Author") + "</b>: " + truncateString(plugin->author());
     }
@@ -429,21 +447,38 @@ QVariant PluginListModel::tooltipData(const QModelIndex& index) const
     }
 
     if (plugin->isMasterFile()) {
-      toolTip += tr("This file is flagged as an ESM. It will load before any non-ESM "
+      toolTip += tr("This file is flagged as a master plugin (ESM). It will load "
+                    "before any non-ESM "
                     "files in the load order.") +
                  spacing;
     }
 
     if (plugin->isSmallFile()) {
-      toolTip += tr("This file is flagged as an ESL. It will adhere to its position in "
-                    "the load order but the records will be loaded in ESL space.") +
+      toolTip +=
+          tr("This file is flagged as a light plugin (ESL). It will adhere to its "
+             "position in "
+             "the load order but the records will be loaded in ESL space (FE/FF). You "
+             "can have up to 4096 light plugins in addition to other plugin types.") +
+          spacing;
+    } else if (plugin->isMediumFile()) {
+      toolTip += tr("This file is flagged as a medium plugin (ESH). It will adhere to "
+                    "its position in the load order but the records will be loaded in "
+                    "ESH space (FD). You can have 256 medium plugins in addition to "
+                    "other plugin types.") +
                  spacing;
     }
 
-    if (plugin->isOverlayFlagged()) {
-      toolTip += tr("This plugin is flagged as an overlay plugin. It contains only "
-                    "modified records and will overlay those changes onto the "
-                    "existing records in memory. It takes no memory space.") +
+    if (plugin->isBlueprintFile()) {
+      toolTip += tr("This plugin has the blueprint flag. This forces it to load after "
+                    "every other non-blueprint plugin. Blueprint plugins will adhere "
+                    "to standard load order rules with other blueprint plugins.") +
+                 spacing;
+    }
+
+    if (plugin->isLightFlagged() && plugin->isMediumFlagged()) {
+      toolTip += tr("WARNING: This plugin is both light and medium flagged. This could "
+                    "indicate that the file was saved improperly and may have "
+                    "mismatched record references. Use it at your own risk.") +
                  spacing;
     }
 
@@ -532,12 +567,16 @@ QVariant PluginListModel::iconData(const QModelIndex& index) const
     flag |= FLAG_MASTER;
   }
 
+  if (plugin->isMediumFile()) {
+    flag |= FLAG_MEDIUM;
+  }
+
   if (plugin->isSmallFile()) {
     flag |= FLAG_LIGHT;
   }
 
-  if (plugin->isOverlayFlagged()) {
-    flag |= FLAG_OVERLAY;
+  if (plugin->isBlueprintFile()) {
+    flag |= FLAG_BLUEPRINT;
   }
 
   if (lootInfo && !lootInfo->dirty.empty() && Settings::instance()->lootShowDirty()) {
@@ -563,6 +602,14 @@ QVariant PluginListModel::headerData(int section, Qt::Orientation orientation,
         return tr("Priority");
       case COL_MODINDEX:
         return tr("Mod Index");
+      case COL_FORMVERSION:
+        return tr("Form Version");
+      case COL_HEADERVERSION:
+        return tr("Header Version");
+      case COL_AUTHOR:
+        return tr("Author");
+      case COL_DESCRIPTION:
+        return tr("Description");
       default:
         return tr("unknown");
       }

@@ -1,72 +1,71 @@
 {
-  "version": 3,
   "configurePresets": [
     {
-      "name": "windows-2022",
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/vsbuild",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": {
-          "type": "STRING",
-          "value": "Release"
-        },
-        "DEPENDENCIES_DIR": {
-          "type": "PATH",
-          "value": "${sourceDir}/../.."
-        },
-        "BOOST_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../boost_1_83_0"
-        },
-        "BOOST_LIBRARYDIR": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../boost_1_83_0/lib64-msvc-14.3/lib"
-        },
-        "FMT_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../fmt-8.1.1"
-        },
-        "SPDLOG_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../spdlog-v1.10.0"
-        },
-        "LOOT_PATH": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../libloot-0.22.1-win64"
-        },
-        "LZ4_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../lz4-v1.9.4"
-        },
-        "QT_ROOT": {
-          "type": "PATH",
-          "value": "C:/Qt/6.5.3/msvc2019_64"
-        },
-        "ZLIB_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../zlib-v1.3"
-        },
-        "PYTHON_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../python-3.11.5"
-        },
-        "SEVENZ_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../7zip-23.01"
-        },
-        "LIBBSARCH_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../libbsarch-0.0.9-release-x64"
-        },
-        "BOOST_DI_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../di"
-        },
-        "GTEST_ROOT": {
-          "type": "PATH",
-          "value": "${sourceDir}/../../googletest"
-        }
+      "errors": {
+        "deprecated": true
+      },
+      "hidden": true,
+      "name": "cmake-dev",
+      "warnings": {
+        "deprecated": true,
+        "dev": true
       }
+    },
+    {
+      "cacheVariables": {
+        "VCPKG_MANIFEST_NO_DEFAULT_FEATURES": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      },
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "hidden": true,
+      "name": "vcpkg"
+    },
+    {
+      "binaryDir": "${sourceDir}/vsbuild",
+      "architecture": {
+        "strategy": "set",
+        "value": "x64"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/EHsc /MP /W4",
+        "VCPKG_TARGET_TRIPLET": {
+          "type": "STRING",
+          "value": "x64-windows-static-md"
+        }
+      },
+      "generator": "Visual Studio 17 2022",
+      "inherits": ["cmake-dev", "vcpkg"],
+      "name": "vs2022-windows",
+      "toolset": "v143"
+    },
+    {
+      "cacheVariables": {
+        "VCPKG_MANIFEST_FEATURES": {
+          "type": "STRING",
+          "value": "standalone"
+        },
+        "MO2_INSTALL_IS_BIN": {
+          "type": "BOOL",
+          "value": "ON"
+        }
+      },
+      "inherits": "vs2022-windows",
+      "name": "vs2022-windows-standalone"
     }
-  ]
+  ],
+  "buildPresets": [
+    {
+      "name": "vs2022-windows",
+      "resolvePackageReferences": "on",
+      "configurePreset": "vs2022-windows"
+    },
+    {
+      "name": "vs2022-windows-standalone",
+      "resolvePackageReferences": "on",
+      "configurePreset": "vs2022-windows-standalone"
+    }
+  ],
+  "version": 4
 }

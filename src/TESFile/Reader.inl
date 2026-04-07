@@ -1,9 +1,9 @@
 #include "Reader.h"
 
-#include <fmt/format.h>
 #include <zlib.h>
 
 #include <cstring>
+#include <format>
 #include <fstream>
 #include <stdexcept>
 
@@ -16,7 +16,13 @@ inline void Reader<Handler>::parse(const std::filesystem::path& path, Handler& h
   std::ifstream stream;
   stream.open(path, std::ios_base::binary | std::ios_base::in);
   if (!stream.good()) {
-    throw std::runtime_error(std::strerror(errno));
+    char buffer[256];
+    errno_t error = strerror_s(buffer, sizeof(buffer), errno);
+    if (error != 0) {
+      throw std::runtime_error("Unknown error");  // Handle error if strerror_s fails
+    } else {
+      throw std::runtime_error(buffer);
+    }
   }
   parse(stream, handler);
 }
@@ -54,7 +60,7 @@ inline std::uint32_t Reader<Handler>::parsePluginInfo(std::istream& stream,
     stream.seekg(HeaderSize_Morrowind - sizeof(RecordHeader), std::istream::cur);
   } else {
     throw std::runtime_error(
-        fmt::format("Unrecognized plugin info type: '{}'", header.type.value));
+        std::format("Unrecognized plugin info type: '{}'", header.type.value));
   }
 
   return handleForm(stream, header, handler);
@@ -84,8 +90,13 @@ inline std::uint32_t Reader<Handler>::handleForm(std::istream& stream,
 {
   std::uint32_t dataSize = header.dataSize;
   const bool compressed  = header.formData.flags & RecordFlags::Compressed;
+  // Check for Oblivion plugin data
+  uint16_t version       = 0;
+  if (header.old.firstChunk.string() != "HEDR") {
+    version = header.version;
+  }
   if (handler.Form(
-          FormData(header.type, header.formData.flags, header.formData.formId))) {
+          FormData(header.type, header.formData.flags, header.formData.formId, version))) {
 
     std::string data;
     data.resize(dataSize);
@@ -136,7 +147,7 @@ inline std::uint32_t Reader<Handler>::handleForm(std::istream& stream,
 
       if (fieldSize > dataSize) {
         throw std::runtime_error(
-            fmt::format("Subrecord exceeded record size ({}-{})", dataSize, fieldSize));
+            std::format("Subrecord exceeded record size ({}-{})", dataSize, fieldSize));
       }
 
       dataSize -= fieldSize;
@@ -169,7 +180,7 @@ inline std::uint32_t Reader<Handler>::handleGroup(std::istream& stream,
 
       if (recordSize > dataSize) {
         throw std::runtime_error(
-            fmt::format("Record exceeded group size ({}-{})", dataSize, recordSize));
+            std::format("Record exceeded group size ({}-{})", dataSize, recordSize));
       }
 
       dataSize -= recordSize;
